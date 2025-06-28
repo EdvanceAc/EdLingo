@@ -58,8 +58,8 @@
     "ws": "^8.14.2"
   },
   "build": {
-    "appId": "com.lingo.app",
-    "productName": "Lingo",
+    "appId": "com.edlingo.app",
+    "productName": "EdLingo",
     "directories": {
       "output": "dist"
     },
