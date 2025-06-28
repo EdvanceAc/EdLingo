@@ -630,18 +630,18 @@ function setupIPC() {
         onMessage: (message) => {
           if (message && typeof message === 'object') {
             console.log('Live session message received:', message.type || 'unknown');
-            event.sender.send('ai:liveMessage', message);
+            event.sender.send('live-session:message', message); // Corrected channel
           } else {
             console.warn('Invalid live message received:', message);
           }
         },
         onError: (error) => {
           console.error('Live session error:', error);
-          event.sender.send('ai:liveError', error);
+          event.sender.send('live-session:error', error); // Corrected channel
         },
         onClose: (closeEvent) => {
           console.log('Live session closed:', closeEvent);
-          event.sender.send('ai:liveClose', closeEvent);
+          event.sender.send('live-session:closed', closeEvent); // Corrected channel
         }
       };
       
@@ -659,28 +659,67 @@ function setupIPC() {
   });
 
   // Handle sending messages to live session
-  ipcMain.handle('ai:sendLiveMessage', async (event, sessionId, message) => {
+  ipcMain.handle('ai:sendLiveMessage', async (event, sessionId, messagePayload) => {
     try {
-      // Validate message before processing
-      if (!message || typeof message !== 'string') {
-        console.warn('Invalid message format:', message);
-        return { error: 'Invalid message format' };
-      }
-      
-      // Get the session from stored references
       const session = activeSessions.get(sessionId);
       if (!session) {
-        return { error: 'Session not found' };
+        console.error(`Live session not found for ID: ${sessionId}`);
+        return { success: false, error: 'Session not found' };
       }
-      
-      console.log('Sending live message:', message.substring(0, 100) + (message.length > 100 ? '...' : ''));
-      
-      // Send message through the live session
-      const result = await geminiService.handleLiveMessage(session, message);
-      return { success: result.success, messageId: Date.now().toString() };
+
+      if (!messagePayload || typeof messagePayload !== 'object' || !messagePayload.type) {
+        console.warn('Invalid message payload:', messagePayload);
+        return { success: false, error: 'Invalid message payload' };
+      }
+
+      console.log(`Handling live message type: ${messagePayload.type} for session: ${sessionId}`);
+
+      switch (messagePayload.type) {
+        case 'text':
+          if (typeof messagePayload.content !== 'string') {
+            return { success: false, error: 'Invalid text message content' };
+          }
+          // Use geminiService.handleLiveMessage, which calls session.sendMessage internally
+          const textResult = await geminiService.handleLiveMessage(session, messagePayload.content);
+          return { success: textResult.success, messageId: Date.now().toString() };
+
+        case 'audio':
+          if (!messagePayload.audioData) {
+            return { success: false, error: 'Missing audioData in audio message' };
+          }
+          // We need a way to send raw audio data. LiveSession.js has session.sendAudioData(audioData)
+          // Let's ensure geminiService exposes this or we call it directly if appropriate.
+          // For now, assuming session object from activeSessions is the LiveSession instance.
+          if (typeof session.sendAudioData === 'function') {
+            // The audioData is an array of numbers (bytes). LiveSession.sendAudioData expects this.
+            // It might need to be base64 encoded depending on the WebSocket API requirements.
+            // LiveSession.sendAudioData wraps it in { realtimeInput: { mediaChunks: [...] } }
+            // and it expects the data to be base64.
+            // The data from renderer is Uint8Array converted to Array.
+            // Let's convert to base64 string before sending to sendAudioData.
+            const audioBase64 = Buffer.from(messagePayload.audioData).toString('base64');
+            await session.sendAudioData(audioBase64); // session.sendAudioData is from LiveSession.js
+            return { success: true, messageId: Date.now().toString() };
+          } else {
+            console.error('session.sendAudioData is not a function. Check session object type.');
+            return { success: false, error: 'Audio sending capability not found on session object' };
+          }
+
+        case 'end_session':
+          console.log(`Closing live session: ${sessionId}`);
+          if (typeof session.close === 'function') {
+            session.close();
+          }
+          activeSessions.delete(sessionId);
+          return { success: true, message: 'Session ended' };
+
+        default:
+          console.warn(`Unknown live message type: ${messagePayload.type}`);
+          return { success: false, error: `Unknown message type: ${messagePayload.type}` };
+      }
     } catch (error) {
       console.error('Error sending live message:', error);
-      return { error: error.message };
+      return { success: false, error: error.message };
     }
   });
 

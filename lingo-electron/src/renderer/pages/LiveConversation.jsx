@@ -193,10 +193,7 @@ const LiveConversation = () => {
   const endLiveSession = async () => {
     try {
       if (sessionId) {
-        await window.electronAPI.sendLiveMessage({
-          sessionId,
-          type: 'end_session'
-        });
+        await window.electronAPI.sendLiveMessage(sessionId, { type: 'end_session' });
       }
       
       // Stop recording if active
@@ -241,8 +238,7 @@ const LiveConversation = () => {
         
         // Send audio to live session
         if (sessionId && isSessionActive) {
-          await window.electronAPI.sendLiveMessage({
-            sessionId,
+          await window.electronAPI.sendLiveMessage(sessionId, {
             type: 'audio',
             audioData: Array.from(new Uint8Array(audioBuffer))
           });
@@ -295,12 +291,19 @@ const LiveConversation = () => {
   };
 
   // Play audio response
-  const playAudioResponse = (audioData) => {
+  const playAudioResponse = (base64AudioData) => {
     try {
-      const audioBlob = new Blob([new Uint8Array(audioData)], { type: 'audio/wav' });
+      if (!base64AudioData || typeof base64AudioData !== 'string') {
+        console.error('Invalid audio data for playback:', base64AudioData);
+        return;
+      }
+      // Decode base64 string to Uint8Array
+      const audioBytes = Uint8Array.from(atob(base64AudioData), c => c.charCodeAt(0));
+      const audioBlob = new Blob([audioBytes], { type: 'audio/wav' }); // Assuming WAV, adjust if PCM or other
       const audioUrl = URL.createObjectURL(audioBlob);
       const audio = new Audio(audioUrl);
-      audio.play();
+
+      audio.play().catch(e => console.error('Error playing audio:', e));
       
       audio.onended = () => {
         URL.revokeObjectURL(audioUrl);
@@ -325,8 +328,7 @@ const LiveConversation = () => {
     setIsAIResponding(true);
     
     try {
-      await window.electronAPI.sendLiveMessage({
-        sessionId,
+      await window.electronAPI.sendLiveMessage(sessionId, {
         type: 'text',
         content: text
       });
