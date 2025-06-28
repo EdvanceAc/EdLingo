@@ -11,7 +11,7 @@ import { Slider } from '../ui/Slider';
 const Settings = () => {
   const [settings, setSettings] = useState({
     general: {
-      siteName: 'Lingo Learning Platform',
+      siteName: 'EdLingo Learning Platform',
       siteDescription: 'Interactive language learning application',
       defaultLanguage: 'en',
       timezone: 'UTC',

@@ -13,9 +13,9 @@ const LoadingScreen = () => {
           className="mb-8"
         >
           <div className="w-24 h-24 mx-auto mb-4 bg-gradient-to-br from-primary to-primary/80 rounded-2xl flex items-center justify-center shadow-lg">
-            <span className="text-3xl font-bold text-white">L</span>
+            <span className="text-3xl font-bold text-white">E</span>
           </div>
-          <h1 className="text-2xl font-bold text-foreground mb-2">Lingo</h1>
+          <h1 className="text-2xl font-bold text-foreground mb-2">EdLingo</h1>
           <p className="text-muted-foreground text-sm">Language Learning Made Easy</p>
         </motion.div>
 

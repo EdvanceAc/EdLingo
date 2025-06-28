@@ -1,6 +1,6 @@
-# Lingo Admin Dashboard
+# EdLingo Admin Dashboard
 
-This document explains how to access and use the Lingo Admin Dashboard for owners and teachers to manage courses and assignments.
+This document explains how to access and use the EdLingo Admin Dashboard for owners and teachers to manage courses and assignments.
 
 ## Overview
 

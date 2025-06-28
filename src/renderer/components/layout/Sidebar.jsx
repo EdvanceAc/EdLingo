@@ -83,10 +83,10 @@ const Sidebar = ({ collapsed, onToggle }) => {
               className="flex items-center space-x-3"
             >
               <div className="w-8 h-8 bg-gradient-to-br from-primary to-primary/80 rounded-lg flex items-center justify-center">
-                <span className="text-sm font-bold text-white">L</span>
+                <span className="text-sm font-bold text-white">E</span>
               </div>
               <div>
-                <h1 className="text-lg font-bold text-foreground">Lingo</h1>
+                <h1 className="text-lg font-bold text-foreground">EdLingo</h1>
                 <p className="text-xs text-muted-foreground">Learn & Practice</p>
               </div>
             </motion.div>

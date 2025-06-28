@@ -1,4 +1,4 @@
-# Lingo Electron App - Development Roadmap
+# EdLingo Electron App - Development Roadmap
 
 ## Current Status ✅
 

@@ -1,12 +1,12 @@
-# Supabase Setup Guide for Lingo Language Learning App
+# Supabase Setup Guide for EdLingo Language Learning App
 
-This guide will help you set up Supabase as the database backend for your Lingo Electron app.
+This guide will help you set up Supabase as the database backend for your EdLingo Electron app.
 
 ## Prerequisites
 
 - A Supabase account (sign up at [supabase.com](https://supabase.com))
 - Node.js and npm installed
-- Your Lingo Electron app project
+- Your EdLingo Electron app project
 
 ## Step 1: Create a New Supabase Project
 

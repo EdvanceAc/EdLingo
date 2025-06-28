@@ -2,7 +2,7 @@
 
 ## 📋 Overview
 
-This guide provides comprehensive instructions for setting up the Lingo Language Learning app database using the unified schema.
+This guide provides comprehensive instructions for setting up the EdLingo Language Learning app database using the unified schema.
 
 ## 🎯 Schema Consolidation
 

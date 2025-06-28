@@ -1,4 +1,4 @@
--- Lingo Language Learning App Database Schema
+-- EdLingo Language Learning App Database Schema
 -- This schema defines all tables needed for user progress, vocabulary, grammar lessons, chat history, and settings
 
 -- Enable UUID extension

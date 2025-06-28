@@ -1,6 +1,6 @@
 # Gemini API Migration Guide
 
-This document outlines the migration from OpenRouter to Google Gemini API and Vertex AI for the Lingo language learning application.
+This document outlines the migration from OpenRouter to Google Gemini API and Vertex AI for the EdLingo language learning application.
 
 ## Overview
 

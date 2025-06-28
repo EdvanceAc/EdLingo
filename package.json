@@ -1,11 +1,12 @@
 {
-  "name": "lingo-electron",
+  "name": "edlingo-electron",
   "version": "1.0.0",
   "description": "Modern Language Learning Desktop App",
   "main": "src/main/main.js",
   "scripts": {
     "dev": "concurrently \"vite\" \"wait-on http://localhost:3002 && cross-env NODE_ENV=development electron .\"",
     "build": "vite build && electron-builder",
+    "build:netlify": "vite build",
     "preview": "vite preview",
     "electron": "electron .",
     "pack": "electron-builder --dir",
@@ -18,7 +19,7 @@
     "ai",
     "education"
   ],
-  "author": "Lingo Team",
+  "author": "EdLingo Team",
   "license": "MIT",
   "devDependencies": {
     "@vitejs/plugin-react": "^4.2.1",

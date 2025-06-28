@@ -887,7 +887,7 @@ function setupIPC() {
 // Initialize the app
 app.whenReady().then(async () => {
   try {
-    console.log('🚀 Starting Lingo Electron Application...');
+    console.log('🚀 Starting EdLingo Electron Application...');
     
     // Initialize database
     console.log('📊 Initializing database...');

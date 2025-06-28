@@ -1,7 +1,7 @@
 # Quick Database Connection Fix Guide
 
 ## Issue Identified
-Your Lingo Electron app is experiencing database connection errors due to:
+Your EdLingo Electron app is experiencing database connection errors due to:
 1. Network connectivity issues with Supabase
 2. Missing database tables (schema not yet applied)
 3. Possible Row Level Security (RLS) configuration issues

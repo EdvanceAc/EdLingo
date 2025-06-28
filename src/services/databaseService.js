@@ -454,6 +454,21 @@ class DatabaseService {
       )
       .subscribe()
   }
+
+  // Close database connections
+  async close() {
+    try {
+      // For Supabase, there's no explicit close method needed
+      // The connection is managed automatically
+      // We can set initialized to false to indicate service is closing
+      this.initialized = false
+      console.log('Database service closed successfully')
+      return true
+    } catch (error) {
+      console.error('Error closing database service:', error)
+      return false
+    }
+  }
 }
 
 // Export singleton instance

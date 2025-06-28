@@ -45,8 +45,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
   playAudio: (audioUrl) => ipcRenderer.invoke('audio:play', audioUrl),
   
   // Language learning features
-  saveProgress: (progress) => ipcRenderer.invoke('progress:save', progress),
-  loadProgress: () => ipcRenderer.invoke('progress:load'),
+  saveProgress: (progress) => {
+    // Use a default UUID for user until authentication is implemented
+    const defaultUserId = '00000000-0000-0000-0000-000000000000';
+    return ipcRenderer.invoke('db:updateUserProgress', defaultUserId, progress);
+  },
+  loadProgress: () => {
+    // Use a default UUID for user until authentication is implemented
+    const defaultUserId = '00000000-0000-0000-0000-000000000000';
+    return ipcRenderer.invoke('db:getUserProgress', defaultUserId);
+  },
   
   // Vocabulary management
   addWord: (word) => ipcRenderer.invoke('vocabulary:add', word),
