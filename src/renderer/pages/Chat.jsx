@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Mic, MicOff, Volume2, Bot, User, Loader2, Settings, Zap } from 'lucide-react';
+import { Send, Mic, MicOff, Volume2, Bot, User, Loader2, Zap, Sparkles } from 'lucide-react';
 import { useAudio } from '../providers/AudioProvider';
 import { useProgress } from '../providers/ProgressProvider';
 import { useAI } from '../providers/AIProvider';
+import GeminiSettings from '../components/ui/GeminiSettings';
 
 const Chat = () => {
   const [messages, setMessages] = useState([
@@ -16,6 +17,7 @@ const Chat = () => {
   ]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showGeminiSettings, setShowGeminiSettings] = useState(false);
   // Streaming functionality removed for simple chatbot
   const { isRecording, startRecording, stopRecording, speakText } = useAudio();
   const { addXP } = useProgress();
@@ -26,7 +28,9 @@ const Chat = () => {
     generateResponse,
     getStatusMessage,
     getStatusColor,
-    conversationHistory
+    conversationHistory,
+    isGeminiAvailable,
+    getAIStatus
   } = useAI();
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
@@ -164,6 +168,14 @@ const Chat = () => {
           
           {/* AI Status Indicator */}
           <div className="flex items-center space-x-4">
+            {/* Gemini Status */}
+            {isGeminiAvailable() && (
+              <div className="flex items-center space-x-1 px-2 py-1 bg-gradient-to-r from-blue-50 to-purple-50 rounded-full border border-blue-200">
+                <Sparkles className="w-3 h-3 text-blue-500" />
+                <span className="text-xs font-medium text-blue-700">Gemini</span>
+              </div>
+            )}
+            
             {/* AI Status */}
             <div className="flex items-center space-x-2">
               <div className={`w-2 h-2 rounded-full ${
@@ -178,9 +190,30 @@ const Chat = () => {
                 <Zap className="w-3 h-3 text-green-500" />
               )}
             </div>
+            
+            {/* Settings Button */}
+            <button
+              onClick={() => setShowGeminiSettings(!showGeminiSettings)}
+              className="p-2 hover:bg-accent rounded-lg transition-colors"
+              title="AI Settings"
+            >
+              
+            </button>
           </div>
         </div>
       </div>
+
+      {/* Gemini Settings Panel */}
+      {showGeminiSettings && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          exit={{ opacity: 0, height: 0 }}
+          className="border-b border-border p-4 bg-muted/30"
+        >
+          <GeminiSettings />
+        </motion.div>
+      )}
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">

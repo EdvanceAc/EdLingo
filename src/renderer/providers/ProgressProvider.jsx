@@ -26,13 +26,13 @@ const INITIAL_PROGRESS = {
   totalXP: 0,
   level: 1,
   streak: 0,
-  dailyGoal: 30, // minutes
-  dailyProgress: 0,
+  daily_goal: 30, // minutes
+  daily_progress: 0,
   lastStudyDate: null,
   lessonsCompleted: 0,
   wordsLearned: 0,
   pronunciationAccuracy: 0,
-  chatMessages: 0,
+  chat_messages: 0,
   achievements: [],
   weeklyStats: {
     monday: 0,
@@ -175,7 +175,7 @@ export function ProgressProvider({ children }) {
           earned = newProgress.pronunciationAccuracy >= 95;
           break;
         case 'chat_enthusiast':
-          earned = newProgress.chatMessages >= 100;
+          earned = newProgress.chat_messages >= 100;
           break;
         case 'level_10':
           earned = newProgress.level >= 10;
@@ -187,7 +187,7 @@ export function ProgressProvider({ children }) {
           // Check if daily goal was met for 7 consecutive days
           const weekValues = Object.values(newProgress.weeklyStats);
           const consecutiveDays = weekValues.reduce((count, minutes) => {
-            return minutes >= newProgress.dailyGoal ? count + 1 : 0;
+            return minutes >= newProgress.daily_goal ? count + 1 : 0;
           }, 0);
           earned = consecutiveDays >= 7;
           break;
@@ -277,7 +277,7 @@ export function ProgressProvider({ children }) {
 
   // Set daily goal
   const setDailyGoal = useCallback((minutes) => {
-    setUserProgress(prev => ({ ...prev, dailyGoal: minutes }));
+    setUserProgress(prev => ({ ...prev, daily_goal: minutes }));
   }, []);
 
   // Get progress statistics
@@ -294,9 +294,9 @@ export function ProgressProvider({ children }) {
       progressToNextLevel: Math.min(progressToNextLevel, 100),
       xpToNextLevel: xpForNextLevel - currentXP,
       streak: userProgress.streak,
-      dailyProgress: userProgress.dailyProgress,
-      dailyGoal: userProgress.dailyGoal,
-      dailyGoalProgress: (userProgress.dailyProgress / userProgress.dailyGoal) * 100,
+      dailyProgress: userProgress.daily_progress,
+      dailyGoal: userProgress.daily_goal,
+      dailyGoalProgress: (userProgress.daily_progress / userProgress.daily_goal) * 100,
       achievements: userProgress.achievements.map(id => 
         ACHIEVEMENTS.find(a => a.id === id)
       ).filter(Boolean),
@@ -306,7 +306,7 @@ export function ProgressProvider({ children }) {
 
   const value = {
     userProgress,
-    dailyGoal: userProgress.dailyGoal,
+    dailyGoal: userProgress.daily_goal,
     streak: userProgress.streak,
     totalXP: userProgress.totalXP,
     level: userProgress.level,

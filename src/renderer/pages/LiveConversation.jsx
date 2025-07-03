@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Mic,
@@ -12,9 +12,13 @@ import {
   RotateCcw,
   Settings,
   Zap,
-  Waves
+  Waves,
+  MessageCircle
 } from 'lucide-react';
 import { useProgress } from '../providers/ProgressProvider';
+import { useToast } from '../hooks/use-toast';
+import { useAI } from '../providers/AIProvider';
+import modernGeminiLiveService from '../services/modernGeminiLiveService';
 
 const LiveConversation = () => {
   // Session state
@@ -31,10 +35,19 @@ const LiveConversation = () => {
 
   // Conversation state
   const [messages, setMessages] = useState([]);
-  const [currentMessage, setCurrentMessage] = useState('');
+  const [currentMessage, setCurrentMessage] = useState(''); // For interim STT results
   const [isAIResponding, setIsAIResponding] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isStreaming, setIsStreaming] = useState(false); // For AI response streaming
+  const [streamingMessage, setStreamingMessage] = useState(''); // Current streaming content
+  const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const [sessionStats, setSessionStats] = useState({
+    duration: 0,
+    messagesExchanged: 0,
+    wordsSpoken: 0
+  });
 
-  // Settings
+  // Voice settings
   const [voiceSettings, setVoiceSettings] = useState({
     language: 'en-US',
     voice: 'Alloy',
@@ -47,291 +60,468 @@ const LiveConversation = () => {
   const audioContextRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const audioStreamRef = useRef(null);
+  const sessionStartTime = useRef(null);
 
-  const { awardXP } = useProgress();
+  const { addXP } = useProgress();
+  const { toast } = useToast();
+  const { isGeminiAvailable } = useAI();
+
+  // Duplicate handleLiveMessage removed
 
   // Auto-scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Set up live session event listeners
+  // Set up enhanced STT/TTS event listeners
   useEffect(() => {
-    const handleLiveMessage = (data) => {
-      console.log('Live message received:', data);
-      
-      if (data.type === 'text') {
-        if (data.isComplete) {
-          // Complete message received
-          setMessages(prev => {
-            const newMessages = [...prev];
-            const lastMessage = newMessages[newMessages.length - 1];
-            if (lastMessage && lastMessage.isStreaming) {
-              lastMessage.content = data.content;
-              lastMessage.isStreaming = false;
-              lastMessage.timestamp = new Date().toLocaleTimeString();
-            } else {
-              newMessages.push({
-                id: Date.now(),
-                type: 'ai',
-                content: data.content,
-                timestamp: new Date().toLocaleTimeString(),
-                isStreaming: false
-              });
-            }
-            return newMessages;
-          });
-          setIsAIResponding(false);
-          setCurrentMessage('');
-          
-          // Award XP for successful interaction
-          awardXP(10, 'Live conversation turn');
-        } else {
-          // Streaming message chunk
-          setCurrentMessage(data.content);
-          setMessages(prev => {
-            const newMessages = [...prev];
-            const lastMessage = newMessages[newMessages.length - 1];
-            if (lastMessage && lastMessage.isStreaming) {
-              lastMessage.content = data.content;
-            } else {
-              newMessages.push({
-                id: Date.now(),
-                type: 'ai',
-                content: data.content,
-                timestamp: new Date().toLocaleTimeString(),
-                isStreaming: true
-              });
-            }
-            return newMessages;
-          });
-        }
-      } else if (data.type === 'audio') {
-        // Handle audio response
-        if (isSpeakerEnabled && data.audioData) {
-          playAudioResponse(data.audioData);
-        }
-      }
+    // STT Event Handlers
+    const handleSTTStart = () => {
+      console.log('STT started');
+      setIsRecording(true);
     };
+
+    const handleSTTInterim = (data) => {
+      console.log('STT interim:', data.transcript);
+      setCurrentMessage(data.transcript);
+    };
+
+    const handleSTTFinal = (data) => {
+      console.log('STT final:', data.transcript);
+      setCurrentMessage('');
+      
+      // Add user message
+      setMessages(prev => [...prev, {
+        id: Date.now(),
+        type: 'user',
+        content: data.transcript,
+        timestamp: new Date().toLocaleTimeString()
+      }]);
+      
+      // Update session stats
+      setSessionStats(prev => ({
+        ...prev,
+        messagesExchanged: prev.messagesExchanged + 1,
+        wordsSpoken: prev.wordsSpoken + data.transcript.split(' ').length
+      }));
+    };
+
+    const handleSTTEnd = () => {
+      console.log('STT ended');
+      setIsRecording(false);
+    };
+
+    const handleSTTError = (data) => {
+      console.error('STT error:', data.error);
+      setIsRecording(false);
+      toast({
+        title: "Speech Recognition Error",
+        description: `Failed to recognize speech: ${data.error}`,
+        variant: "destructive"
+      });
+    };
+
+    // TTS Event Handlers
+    const handleTTSStart = (data) => {
+      console.log('TTS started:', data.text);
+      setIsAIResponding(true);
+    };
+
+    const handleTTSEnd = () => {
+      console.log('TTS ended');
+      setIsAIResponding(false);
+    };
+
+    const handleTTSError = (data) => {
+      console.error('TTS error:', data.error);
+      setIsAIResponding(false);
+      toast({
+        title: "Text-to-Speech Error",
+        description: `Failed to play audio: ${data.error}`,
+        variant: "destructive"
+      });
+    };
+
+    // Message Event Handler - removed duplicate, using useCallback version below
 
     const handleLiveError = (error) => {
       console.error('Live session error:', error);
       setConnectionStatus('error');
       setIsSessionActive(false);
       setIsConnecting(false);
+      toast({
+        title: "Session Error",
+        description: error.error || "An error occurred during the live session.",
+        variant: "destructive"
+      });
     };
 
-    const handleLiveClose = () => {
-      console.log('Live session closed');
+    const handleLiveClose = (data) => {
+      console.log('Live session closed:', data);
       setConnectionStatus('disconnected');
       setIsSessionActive(false);
       setIsConnecting(false);
       setSessionId(null);
+      setIsRecording(false);
+      setIsAIResponding(false);
     };
 
-    // Set up event listeners
-    if (window.electronAPI?.onLiveMessage) {
-      window.electronAPI.onLiveMessage(handleLiveMessage);
-    }
-    if (window.electronAPI?.onLiveError) {
-      window.electronAPI.onLiveError(handleLiveError);
-    }
-    if (window.electronAPI?.onLiveClose) {
-      window.electronAPI.onLiveClose(handleLiveClose);
+    // Set up Modern Gemini Live Service event listeners
+    if (modernGeminiLiveService) {
+      modernGeminiLiveService.on('stt-start', handleSTTStart);
+      modernGeminiLiveService.on('stt-interim', handleSTTInterim);
+      modernGeminiLiveService.on('stt-final', handleSTTFinal);
+      modernGeminiLiveService.on('stt-end', handleSTTEnd);
+      modernGeminiLiveService.on('stt-error', handleSTTError);
+      modernGeminiLiveService.on('tts-start', handleTTSStart);
+      modernGeminiLiveService.on('tts-end', handleTTSEnd);
+      modernGeminiLiveService.on('tts-error', handleTTSError);
+      modernGeminiLiveService.on('message', handleLiveMessage);
+      modernGeminiLiveService.on('error', handleLiveError);
+      modernGeminiLiveService.on('close', handleLiveClose);
     }
 
     return () => {
-      // Cleanup event listeners
-      if (window.electronAPI?.removeAllListeners) {
-        window.electronAPI.removeAllListeners('live-session:message');
-        window.electronAPI.removeAllListeners('live-session:error');
-        window.electronAPI.removeAllListeners('live-session:closed');
+      // Cleanup Modern Gemini Live Service event listeners
+      if (modernGeminiLiveService) {
+        modernGeminiLiveService.off('stt-start', handleSTTStart);
+        modernGeminiLiveService.off('stt-interim', handleSTTInterim);
+        modernGeminiLiveService.off('stt-final', handleSTTFinal);
+        modernGeminiLiveService.off('stt-end', handleSTTEnd);
+        modernGeminiLiveService.off('stt-error', handleSTTError);
+        modernGeminiLiveService.off('tts-start', handleTTSStart);
+        modernGeminiLiveService.off('tts-end', handleTTSEnd);
+        modernGeminiLiveService.off('tts-error', handleTTSError);
+        modernGeminiLiveService.off('message', handleLiveMessage);
+        modernGeminiLiveService.off('error', handleLiveError);
+        modernGeminiLiveService.off('close', handleLiveClose);
+      }
+      
+      // Cleanup on unmount
+      if (isSessionActive) {
+        endLiveSession();
+      }
+      if (audioStreamRef.current) {
+        audioStreamRef.current.getTracks().forEach(track => track.stop());
       }
     };
-  }, [isSpeakerEnabled, awardXP]);
+  }, [addXP, toast]);
 
-  // Start live session
-  const startLiveSession = async () => {
-    try {
-      setIsConnecting(true);
-      setConnectionStatus('connecting');
-      
-      const response = await window.electronAPI.startLiveSession({
-        responseModalities: ['text', 'audio'],
-        voiceSettings: voiceSettings,
-        systemInstruction: 'You are a helpful language learning assistant. Engage in natural conversation to help the user practice their language skills. Provide gentle corrections and encouragement.'
+  // Handle live message from Gemini
+  const handleLiveMessage = useCallback((message) => {
+    if (message.type === 'text') {
+      if (message.isComplete) {
+        setMessages(prev => {
+          const newMessages = [...prev];
+          const lastMessage = newMessages[newMessages.length - 1];
+          if (lastMessage && lastMessage.isStreaming) {
+            lastMessage.content = message.content;
+            lastMessage.isStreaming = false;
+            lastMessage.timestamp = new Date().toLocaleTimeString();
+          } else {
+            newMessages.push({
+              id: Date.now(),
+              type: 'ai',
+              content: message.content,
+              timestamp: new Date().toLocaleTimeString(),
+              isStreaming: false
+            });
+          }
+          return newMessages;
+        });
+        setIsAIResponding(false);
+        setIsStreaming(false);
+        setStreamingMessage('');
+        addXP(10, 'conversation');
+        
+        // Play TTS if speaker is enabled
+        if (isSpeakerEnabled && message.content) {
+          modernGeminiLiveService.playTTS(message.content).catch(error => {
+            console.error('Failed to play TTS:', error);
+          });
+        }
+      } else {
+        setIsStreaming(true);
+        setStreamingMessage(message.content);
+        setMessages(prev => {
+          const newMessages = [...prev];
+          const lastMessage = newMessages[newMessages.length - 1];
+          if (lastMessage && lastMessage.isStreaming) {
+            lastMessage.content = message.content;
+          } else {
+            newMessages.push({
+              id: Date.now(),
+              type: 'ai',
+              content: message.content,
+              timestamp: new Date().toLocaleTimeString(),
+              isStreaming: true
+            });
+          }
+          return newMessages;
+        });
+      }
+    }
+  }, [addXP, isSpeakerEnabled]);
+
+  // Handle audio response
+  const handleAudioResponse = useCallback((audioData) => {
+    if (isSpeakerEnabled && audioData) {
+      playAudioResponse(audioData);
+    }
+  }, [isSpeakerEnabled]);
+
+  // Start live session with enhanced STT/TTS
+  const startLiveSession = useCallback(async () => {
+    console.log('Starting live session...');
+    
+    if (!isGeminiAvailable()) {
+      console.log('Gemini not available');
+      toast({
+        title: "AI Service Unavailable",
+        description: "Please configure your AI settings first.",
+        variant: "destructive"
       });
+      return;
+    }
+
+    try {
+      console.log('Setting connection status to connecting...');
+      setConnectionStatus('connecting');
+      setIsConnecting(true);
+      setIsLoading(true);
       
-      if (response.success) {
-        setSessionId(response.sessionId);
-        setIsSessionActive(true);
+      // Get API key from environment variables
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      console.log('API key available:', !!apiKey);
+      if (!apiKey) {
+        throw new Error('Gemini API key not configured in environment variables');
+      }
+      
+      // Initialize Modern Gemini STT/TTS Service
+      console.log('Initializing modernGeminiLiveService...');
+      const initResult = await modernGeminiLiveService.initialize(apiKey);
+      console.log('Initialization result:', initResult);
+      
+      // Start enhanced STT/TTS session
+      console.log('Starting live session with options...');
+      const result = await modernGeminiLiveService.startLiveSession({
+        targetLanguage: 'English',
+        userLevel: 'intermediate',
+        language: voiceSettings.language,
+        temperature: 0.7,
+        autoStartSTT: isMicEnabled
+      });
+      console.log('Live session start result:', result);
+      
+      if (result.success) {
+        setSessionId(result.sessionId);
         setConnectionStatus('connected');
+        setIsSessionActive(true);
+        
         setMessages([{
           id: Date.now(),
           type: 'system',
-          content: 'Live conversation session started! Start speaking or type a message.',
+          content: '🎙️ Live conversation with voice started! Speak naturally or type your messages. The AI will respond with realistic voice.',
           timestamp: new Date().toLocaleTimeString()
         }]);
+        
+        // Start session timer
+        sessionStartTime.current = Date.now();
+        
+        toast({
+          title: "Voice Session Started",
+          description: "Live conversation with STT/TTS is now active. Start speaking!"
+        });
       } else {
-        throw new Error(response.error || 'Failed to start session');
+        throw new Error(result.error || 'Failed to start session');
       }
     } catch (error) {
-      console.error('Failed to start live session:', error);
+      console.error('Failed to start session:', error);
       setConnectionStatus('error');
-      setMessages(prev => [...prev, {
-        id: Date.now(),
-        type: 'error',
-        content: `Failed to start live session: ${error.message}`,
-        timestamp: new Date().toLocaleTimeString()
-      }]);
+      toast({
+        title: "Connection Failed",
+        description: error.message || "Failed to start live session. Please try again.",
+        variant: "destructive"
+      });
     } finally {
       setIsConnecting(false);
+      setIsLoading(false);
     }
-  };
+  }, [isGeminiAvailable, toast, voiceSettings.language, isMicEnabled]);
 
   // End live session
-  const endLiveSession = async () => {
+  const endLiveSession = useCallback(async () => {
     try {
-      if (sessionId) {
-        await window.electronAPI.sendLiveMessage({
-          sessionId,
-          type: 'end_session'
-        });
-      }
+      setIsLoading(true);
       
-      // Stop recording if active
+      // Stop any ongoing recording
       if (isRecording) {
         stopRecording();
       }
       
+      // Calculate final session stats
+      if (sessionStartTime.current) {
+        const duration = Math.floor((Date.now() - sessionStartTime.current) / 1000);
+        setSessionStats(prev => ({ ...prev, duration }));
+      }
+      
+      // End Modern Gemini STT/TTS session
+      if (modernGeminiLiveService.isSessionActive()) {
+        await modernGeminiLiveService.endSession();
+      }
+      
+      // Reset state
       setIsSessionActive(false);
-      setConnectionStatus('disconnected');
       setSessionId(null);
+      setConnectionStatus('disconnected');
+      setIsRecording(false);
+      setIsStreaming(false);
+      setStreamingMessage('');
+      
+      // Add session end message
       setMessages(prev => [...prev, {
         id: Date.now(),
         type: 'system',
-        content: 'Live conversation session ended.',
+        content: `Session ended. Duration: ${sessionStartTime.current ? Math.floor((Date.now() - sessionStartTime.current) / 1000) : 0}s, Messages: ${sessionStats.messagesExchanged}`,
         timestamp: new Date().toLocaleTimeString()
       }]);
+      
+      toast({
+        title: "Session Ended",
+        description: "Your live conversation session has been ended."
+      });
     } catch (error) {
       console.error('Failed to end session:', error);
+      toast({
+        title: "Error",
+        description: "Failed to properly end the session.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
     }
-  };
+  }, [isRecording, sessionStats.messagesExchanged, toast]);
 
-  // Start recording audio
-  const startRecording = async () => {
+  // Toggle speech recognition
+  const toggleRecording = async () => {
+    if (!isSessionActive) {
+      toast({
+        title: "No Active Session",
+        description: "Please start a live session first.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!isMicEnabled) {
+      toast({
+        title: "Microphone Disabled",
+        description: "Please enable the microphone first.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      audioStreamRef.current = stream;
+      const result = await modernGeminiLiveService.toggleSpeechRecognition({
+        language: voiceSettings.language
+      });
       
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
-      
-      const audioChunks = [];
-      
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunks.push(event.data);
-        }
-      };
-      
-      mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-        const audioBuffer = await audioBlob.arrayBuffer();
-        
-        // Send audio to live session
-        if (sessionId && isSessionActive) {
-          await window.electronAPI.sendLiveMessage({
-            sessionId,
-            type: 'audio',
-            audioData: Array.from(new Uint8Array(audioBuffer))
+      if (result.success) {
+        if (result.status === 'stopped') {
+          setIsRecording(false);
+          toast({
+            title: "Speech Recognition Stopped",
+            description: "Voice input has been disabled."
+          });
+        } else {
+          setIsRecording(true);
+          toast({
+            title: "Speech Recognition Started",
+            description: "Listening for your voice input..."
           });
         }
-      };
+      } else {
+        throw new Error(result.error || 'Failed to toggle speech recognition');
+      }
       
-      mediaRecorder.start();
-      setIsRecording(true);
-      
-      // Set up audio level monitoring
-      const audioContext = new AudioContext();
-      audioContextRef.current = audioContext;
-      const analyser = audioContext.createAnalyser();
-      const microphone = audioContext.createMediaStreamSource(stream);
-      microphone.connect(analyser);
-      
-      const dataArray = new Uint8Array(analyser.frequencyBinCount);
-      
-      const updateAudioLevel = () => {
-        if (isRecording) {
-          analyser.getByteFrequencyData(dataArray);
-          const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
-          setAudioLevel(average / 255);
-          requestAnimationFrame(updateAudioLevel);
-        }
-      };
-      
-      updateAudioLevel();
     } catch (error) {
-      console.error('Failed to start recording:', error);
-    }
-  };
-
-  // Stop recording audio
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
+      console.error('Failed to toggle recording:', error);
       setIsRecording(false);
-      setAudioLevel(0);
-    }
-    
-    if (audioStreamRef.current) {
-      audioStreamRef.current.getTracks().forEach(track => track.stop());
-    }
-    
-    if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
-      audioContextRef.current.close();
-      audioContextRef.current = null;
+      toast({
+        title: "Speech Recognition Error",
+        description: error.message || "Failed to control speech recognition.",
+        variant: "destructive"
+      });
     }
   };
 
-  // Play audio response
-  const playAudioResponse = (audioData) => {
-    try {
-      const audioBlob = new Blob([new Uint8Array(audioData)], { type: 'audio/wav' });
-      const audioUrl = URL.createObjectURL(audioBlob);
-      const audio = new Audio(audioUrl);
-      audio.play();
-      
-      audio.onended = () => {
-        URL.revokeObjectURL(audioUrl);
-      };
-    } catch (error) {
-      console.error('Failed to play audio response:', error);
+  // Stop TTS playback
+  const stopTTS = () => {
+    if (modernGeminiLiveService) {
+      modernGeminiLiveService.stopTTS();
     }
+    setIsAIResponding(false);
+    toast({
+      title: "Audio Stopped",
+      description: "Text-to-speech playback has been stopped."
+    });
+  };
+
+  // Play audio response (handled automatically by TTS service)
+  const playAudioResponse = async (audioData) => {
+    // Audio playback is now handled automatically by the TTS service
+    // This function is kept for compatibility but may not be needed
+    console.log('Audio response received:', audioData);
   };
 
   // Send text message
   const sendTextMessage = async (text) => {
     if (!text.trim() || !sessionId || !isSessionActive) return;
     
-    // Add user message
-    setMessages(prev => [...prev, {
-      id: Date.now(),
-      type: 'user',
-      content: text,
-      timestamp: new Date().toLocaleTimeString()
-    }]);
-    
-    setIsAIResponding(true);
-    
     try {
-      await window.electronAPI.sendLiveMessage({
-        sessionId,
-        type: 'text',
-        content: text
-      });
+      setIsAIResponding(true);
+      
+      // Add user message if not already added (for typed messages)
+      if (!messages.some(msg => msg.content === text && msg.type === 'user')) {
+        const userMessage = {
+          id: Date.now(),
+          type: 'user',
+          content: text,
+          timestamp: new Date().toLocaleTimeString()
+        };
+        
+        setMessages(prev => [...prev, userMessage]);
+        
+        // Update session stats
+        setSessionStats(prev => ({
+          ...prev,
+          messagesExchanged: prev.messagesExchanged + 1,
+          wordsSpoken: prev.wordsSpoken + text.split(' ').length
+        }));
+      }
+      
+      // Send message via Modern Gemini STT/TTS Service
+        const response = await modernGeminiLiveService.sendMessage(text);
+      
+      if (response.success) {
+        // Award XP for sending message
+        addXP(5, 'conversation');
+        
+        // The response will be handled by the message event listener
+        // which will add the AI message and play TTS if enabled
+      } else {
+        throw new Error(response.error || 'Failed to send message');
+      }
+      
     } catch (error) {
       console.error('Failed to send message:', error);
+      setMessages(prev => [...prev, {
+        id: Date.now(),
+        type: 'error',
+        content: `Failed to send message: ${error.message}`,
+        timestamp: new Date().toLocaleTimeString()
+      }]);
       setIsAIResponding(false);
     }
   };
@@ -405,6 +595,18 @@ const LiveConversation = () => {
               {isSpeakerEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
             </button>
             
+            <button
+              onClick={() => setVoiceEnabled(!voiceEnabled)}
+              className={`p-2 rounded-lg transition-colors ${
+                voiceEnabled 
+                  ? 'bg-purple-100 text-purple-600 hover:bg-purple-200' 
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+              title={voiceEnabled ? 'Disable voice mode' : 'Enable voice mode'}
+            >
+              <Waves className="w-4 h-4" />
+            </button>
+            
             {/* Clear conversation */}
             <button
               onClick={clearConversation}
@@ -448,9 +650,17 @@ const LiveConversation = () => {
                     </div>
                   )}
                   <div className="flex-1">
-                    <p className="text-sm leading-relaxed">{message.content}</p>
+                    <p className="text-sm leading-relaxed">
+                      {message.content}
+                      {message.isStreaming && (
+                        <span className="inline-block w-2 h-4 bg-current opacity-75 animate-pulse ml-1">|</span>
+                      )}
+                    </p>
                     <div className="flex items-center justify-between mt-2">
                       <span className="text-xs opacity-70">{message.timestamp}</span>
+                      {message.isRecording && (
+                        <span className="text-xs text-red-500">● Recording</span>
+                      )}
                       {message.isStreaming && (
                         <div className="flex items-center space-x-1 text-xs opacity-70">
                           <Radio className="w-3 h-3 animate-pulse" />
@@ -463,6 +673,32 @@ const LiveConversation = () => {
               </div>
             </motion.div>
           ))}
+          
+          {/* Show streaming message if active */}
+          {isStreaming && streamingMessage && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex justify-start"
+            >
+              <div className="max-w-[80%] rounded-lg p-3 bg-card border border-border">
+                <div className="flex items-start space-x-2">
+                  <div className="w-6 h-6 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Zap className="w-3 h-3 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm leading-relaxed">
+                      {streamingMessage}
+                      <span className="inline-block w-2 h-4 bg-current opacity-75 animate-pulse ml-1">|</span>
+                    </p>
+                    <div className="text-xs opacity-70 mt-2">
+                      Streaming...
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
         </AnimatePresence>
         
         {/* AI Responding Indicator */}
@@ -517,49 +753,74 @@ const LiveConversation = () => {
           <div className="space-y-4">
             {/* Voice Controls */}
             <div className="flex items-center justify-center space-x-4">
-              {/* Push to Talk Button */}
-              <div className="flex items-center space-x-2">
+              {/* Speech Recognition Toggle */}
+              <div className="flex items-center space-x-3">
                 <button
-                  onMouseDown={isMicEnabled ? startRecording : undefined}
-                  onMouseUp={stopRecording}
-                  onMouseLeave={stopRecording}
-                  disabled={!isMicEnabled}
+                  onClick={toggleRecording}
+                  disabled={!isMicEnabled || isLoading}
                   className={`relative p-4 rounded-full transition-all duration-200 ${
                     isRecording
-                      ? 'bg-red-500 text-white scale-110 shadow-lg'
+                      ? 'bg-red-500 text-white scale-110 shadow-lg animate-pulse'
                       : isMicEnabled
-                      ? 'bg-primary text-primary-foreground hover:bg-primary/90'
+                      ? 'bg-green-500 text-white hover:bg-green-600'
                       : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                   }`}
-                  title={isMicEnabled ? 'Hold to speak' : 'Microphone disabled'}
+                  title={isRecording ? 'Stop listening' : isMicEnabled ? 'Start listening' : 'Microphone disabled'}
                 >
-                  <Mic className="w-6 h-6" />
+                  {isRecording ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
                   {isRecording && (
                     <motion.div
                       className="absolute inset-0 rounded-full border-2 border-white"
-                      animate={{ scale: [1, 1.2, 1] }}
-                      transition={{ duration: 1, repeat: Infinity }}
+                      animate={{ scale: [1, 1.3, 1] }}
+                      transition={{ duration: 1.5, repeat: Infinity }}
                     />
                   )}
                 </button>
                 
-                {/* Audio Level Indicator */}
+                {/* Voice Activity Indicator */}
                 {isRecording && (
-                  <div className="flex items-center space-x-1">
-                    {[...Array(5)].map((_, i) => (
-                      <div
-                        key={i}
-                        className={`w-1 h-4 rounded-full transition-all duration-100 ${
-                          audioLevel > (i * 0.2) ? 'bg-green-500' : 'bg-gray-300'
-                        }`}
-                        style={{
-                          height: `${Math.max(4, audioLevel * 20)}px`
-                        }}
-                      />
-                    ))}
+                  <div className="flex flex-col items-center space-y-1">
+                    <div className="flex items-center space-x-1">
+                      {[...Array(5)].map((_, i) => (
+                        <motion.div
+                          key={i}
+                          className="w-1 bg-green-500 rounded-full"
+                          animate={{
+                            height: [4, Math.random() * 16 + 4, 4]
+                          }}
+                          transition={{
+                            duration: 0.5 + Math.random() * 0.5,
+                            repeat: Infinity,
+                            repeatType: "reverse"
+                          }}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-xs text-green-600 font-medium">Listening...</span>
+                  </div>
+                )}
+                
+                {/* Current Speech Display */}
+                {currentMessage && (
+                  <div className="max-w-xs p-2 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-sm text-blue-800">
+                      "{currentMessage}"
+                      <span className="inline-block w-1 h-4 bg-blue-500 opacity-75 animate-pulse ml-1">|</span>
+                    </p>
                   </div>
                 )}
               </div>
+              
+              {/* TTS Control */}
+              {isAIResponding && (
+                <button
+                  onClick={stopTTS}
+                  className="p-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+                  title="Stop AI speech"
+                >
+                  <VolumeX className="w-5 h-5" />
+                </button>
+              )}
               
               {/* End Session Button */}
               <button
@@ -592,7 +853,8 @@ const LiveConversation = () => {
                     input.value = '';
                   }
                 }}
-                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+                disabled={isLoading || isAIResponding}
+                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
               >
                 Send
               </button>

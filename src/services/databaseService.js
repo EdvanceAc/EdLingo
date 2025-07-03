@@ -3,6 +3,70 @@ const { createClient } = require('@supabase/supabase-js')
 // Load environment variables
 require('dotenv').config()
 
+// Field mapping between frontend (camelCase) and database (snake_case)
+const FIELD_MAPPINGS = {
+  user_progress: {
+    'lessonsCompleted': 'lessons_completed',
+    'totalXP': 'total_xp',
+    'currentStreak': 'current_streak',
+    'longestStreak': 'longest_streak',
+    'dailyGoal': 'daily_goal',
+    'dailyProgress': 'daily_progress',
+    'lastStudyDate': 'lastStudyDate',
+    'level': 'current_level',
+    'createdAt': 'created_at',
+    'updatedAt': 'updated_at'
+  },
+  users: {
+    'displayName': 'display_name',
+    'avatarUrl': 'avatar_url',
+    'createdAt': 'created_at',
+    'updatedAt': 'updated_at'
+  },
+  user_settings: {
+    'userId': 'user_id',
+    'settingKey': 'setting_key',
+    'settingValue': 'setting_value',
+    'createdAt': 'created_at',
+    'updatedAt': 'updated_at'
+  }
+};
+
+// Reverse mapping (Database -> Frontend)
+const REVERSE_FIELD_MAPPINGS = {};
+Object.keys(FIELD_MAPPINGS).forEach(table => {
+  REVERSE_FIELD_MAPPINGS[table] = {};
+  Object.entries(FIELD_MAPPINGS[table]).forEach(([frontend, database]) => {
+    REVERSE_FIELD_MAPPINGS[table][database] = frontend;
+  });
+});
+
+// Convert frontend object to database format
+function mapToDatabase(tableName, frontendData) {
+  if (!FIELD_MAPPINGS[tableName]) return frontendData;
+  
+  const dbData = {};
+  Object.entries(frontendData).forEach(([key, value]) => {
+    const dbKey = FIELD_MAPPINGS[tableName][key] || key;
+    dbData[dbKey] = value;
+  });
+  
+  return dbData;
+}
+
+// Convert database object to frontend format
+function mapToFrontend(tableName, dbData) {
+  if (!REVERSE_FIELD_MAPPINGS[tableName]) return dbData;
+  
+  const frontendData = {};
+  Object.entries(dbData).forEach(([key, value]) => {
+    const frontendKey = REVERSE_FIELD_MAPPINGS[tableName][key] || key;
+    frontendData[frontendKey] = value;
+  });
+  
+  return frontendData;
+}
+
 // Supabase configuration
 const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL
 const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY
@@ -89,6 +153,9 @@ class DatabaseService {
         return false
       }
 
+      // Ensure user exists before creating settings
+      await this.ensureUserExists(userId);
+      
       const { data, error } = await this.supabase
         .from('user_settings')
         .upsert({
@@ -124,7 +191,9 @@ class DatabaseService {
         .single()
       
       if (error && error.code !== 'PGRST116') throw error
-      return data
+      
+      // Convert database format to frontend format
+      return data ? mapToFrontend('user_progress', data) : null
     } catch (error) {
       console.error('Error fetching user progress:', error)
       throw error
@@ -133,21 +202,102 @@ class DatabaseService {
 
   async updateUserProgress(userId, progressData) {
     try {
+      // Ensure user exists before updating progress
+      await this.ensureUserExists(userId);
+      
+      // Convert frontend format to database format
+      const dbData = mapToDatabase('user_progress', progressData);
+      
       const { data, error } = await this.supabase
         .from('user_progress')
         .upsert({
           user_id: userId,
-          ...progressData,
+          ...dbData,
           updated_at: new Date().toISOString()
         })
         .select()
-        .single()
+        .single();
       
-      if (error) throw error
-      return data
+      if (error) throw error;
+      
+      // Convert back to frontend format
+      return mapToFrontend('user_progress', data);
     } catch (error) {
-      console.error('Error updating user progress:', error)
-      throw error
+      console.error('Error updating user progress:', error);
+      throw error;
+    }
+  }
+
+  // Ensure user exists before creating related records
+  async ensureUserExists(userId) {
+    try {
+      const { data: existingUser, error: userError } = await this.supabase
+        .from('users')
+        .select('id')
+        .eq('id', userId)
+        .single();
+      
+      if (userError && userError.code === 'PGRST116') {
+        // User doesn't exist, create default user
+        console.log(`Creating default user with ID: ${userId}`);
+        
+        const { data: newUser, error: createError } = await this.supabase
+          .from('users')
+          .insert({
+            id: userId,
+            email: `user-${userId}@edlingo.com`,
+            username: `user_${userId.slice(0, 8)}`,
+            display_name: `User ${userId.slice(0, 8)}`,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .select()
+          .single();
+        
+        if (createError) {
+          console.error('Error creating default user:', createError);
+          throw createError;
+        }
+        
+        // Create default progress record
+        await this.createDefaultUserProgress(userId);
+        
+        return newUser;
+      } else if (userError) {
+        throw userError;
+      }
+      
+      return existingUser;
+    } catch (error) {
+      console.error('Error ensuring user exists:', error);
+      throw error;
+    }
+  }
+
+  async createDefaultUserProgress(userId) {
+    try {
+      const { data, error } = await this.supabase
+        .from('user_progress')
+        .insert({
+          user_id: userId,
+          total_xp: 0,
+          current_streak: 0,
+          longest_streak: 0,
+          lessons_completed: 0,
+          daily_goal: 15,
+          daily_progress: 0,
+          lastStudyDate: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error creating default user progress:', error);
+      throw error;
     }
   }
 

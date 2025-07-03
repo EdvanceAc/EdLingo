@@ -161,7 +161,7 @@ const Settings = () => {
                 >
                   <option value="transformers">Transformers.js (Local)</option>
                   <option value="openai">OpenAI API</option>
-                  <option value="gemini">Google Gemini API</option>
+
                 <option value="vertex-ai">Google Vertex AI</option>
                 </select>
               </div>
@@ -189,8 +189,7 @@ const Settings = () => {
                   </div>
                   <p className="text-sm text-gray-500 dark:text-gray-400 ml-[120px]">
                     {aiSettings.provider === 'openai' && 'Get your API key from https://platform.openai.com/api-keys'}
-                    {aiSettings.provider === 'gemini' && 'Get your API key from https://aistudio.google.com/app/apikey'}
-                {aiSettings.provider === 'vertex-ai' && 'Configure Google Cloud authentication with: gcloud auth application-default login'}
+                    {aiSettings.provider === 'vertex-ai' && 'Configure Google Cloud authentication with: gcloud auth application-default login'}
                   </p>
                 </div>
               )}

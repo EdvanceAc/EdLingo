@@ -1,3 +1,5 @@
+import geminiService from './geminiService';
+
 class AIService {
   constructor() {
     this.hfClient = null;
@@ -6,9 +8,39 @@ class AIService {
     this.initializationPromise = null;
     this.modelName = 'microsoft/mai-ds-r1:free';
     this.browserMode = false; // Will be set during initialization
+    this.useGemini = false;
+    this.geminiApiKey = null;
   }
 
-  async initialize() {
+  // Method to configure Gemini API key
+  async configureGemini(apiKey) {
+    try {
+      await geminiService.initialize(apiKey);
+      this.useGemini = true;
+      this.geminiApiKey = apiKey;
+      console.log('Gemini configured successfully');
+      return { success: true };
+    } catch (error) {
+      console.error('Failed to configure Gemini:', error);
+      this.useGemini = false;
+      this.geminiApiKey = null;
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Method to disable Gemini
+  disableGemini() {
+    this.useGemini = false;
+    this.geminiApiKey = null;
+    console.log('Gemini disabled');
+  }
+
+  // Method to check if Gemini is available
+  isGeminiAvailable() {
+    return this.useGemini && geminiService.isReady();
+  }
+
+  async initialize(options = {}) {
     if (this.isInitialized) {
       return;
     }
@@ -18,7 +50,7 @@ class AIService {
     }
 
     this.isInitializing = true;
-    this.initializationPromise = this._initializeModels();
+    this.initializationPromise = this._initializeModels(options);
     
     try {
       await this.initializationPromise;
@@ -31,9 +63,27 @@ class AIService {
     }
   }
 
-  async _initializeModels() {
+  async _initializeModels(options = {}) {
     try {
       console.log('Initializing AI service...');
+      
+      // Check for Gemini API key
+      const geminiApiKey = options.geminiApiKey || import.meta.env.VITE_GEMINI_API_KEY;
+      
+      if (geminiApiKey) {
+        try {
+          console.log('Initializing Gemini service...');
+          await geminiService.initialize(geminiApiKey);
+          this.useGemini = true;
+          this.geminiApiKey = geminiApiKey;
+          console.log('Gemini service initialized successfully');
+        } catch (error) {
+          console.warn('Failed to initialize Gemini, falling back to other providers:', error);
+          this.useGemini = false;
+        }
+      } else {
+        console.log('No Gemini API key provided, using fallback providers');
+      }
       
       // Debug: Check what's available in window
       console.log('window.electronAPI:', typeof window.electronAPI);
@@ -47,7 +97,6 @@ class AIService {
         console.warn('Running in browser mode - AI features will use fallback responses');
         this.browserMode = true;
       } else {
-        console.log('Running in Electron mode - using Google Gemini API');
         this.browserMode = false;
       }
       
@@ -69,6 +118,13 @@ class AIService {
     }
 
     try {
+      // Check backend AI service status first
+      const status = await this.getBackendStatus();
+      if (!status.isReady) {
+        console.warn('Backend AI service not ready:', status);
+        return 'AI chat is currently unavailable. Please check your API configuration.';
+      }
+
       // Use IPC to communicate with main process for AI generation
       const result = await window.electronAPI.invoke('ai:generateResponse', userMessage, conversationContext, options);
       
@@ -94,12 +150,37 @@ class AIService {
     const userLevel = options.userLevel || 'beginner';
     const targetLanguage = options.targetLanguage || 'English';
 
+    // Try Gemini first if available
+    if (this.useGemini && geminiService.isReady()) {
+      try {
+        console.log('Using Gemini for language learning response');
+        const response = await geminiService.generateLanguageLearningResponse(userMessage, {
+          targetLanguage,
+          userLevel,
+          focusArea: chatMode,
+          includeExplanations: true,
+          includePronunciation: false
+        });
+        return response;
+      } catch (error) {
+        console.error('Gemini failed, falling back to other providers:', error);
+        // Continue to fallback options below
+      }
+    }
+
     // If in browser mode, return fallback response
     if (this.browserMode) {
       return this._generateLanguageLearningFallback(userMessage, chatMode, userLevel, targetLanguage);
     }
 
     try {
+      // Check backend AI service status first
+      const status = await this.getBackendStatus();
+      if (!status.isReady) {
+        console.warn('Backend AI service not ready:', status);
+        return 'AI chat is currently unavailable. Please check your API configuration.';
+      }
+
       // Use IPC to communicate with main process for AI generation
       const result = await window.electronAPI.invoke('ai:generateLanguageLearningResponse', userMessage, {
         focusArea: chatMode,
@@ -111,7 +192,7 @@ class AIService {
         return result.response;
       } else {
         console.error('AI generation failed:', result.error);
-        return 'I\'m sorry, I\'m having trouble generating a response right now. Please try again later.';
+        return result.response || 'I\'m sorry, I\'m having trouble generating a response right now. Please try again later.';
       }
     } catch (error) {
       console.error('Error generating language learning response:', error);
@@ -119,7 +200,31 @@ class AIService {
     }
   }
 
-  async analyzeText(text) {
+  async analyzeText(text, options = {}) {
+    if (!this.isInitialized) {
+      await this.initialize();
+    }
+
+    const analysisType = options.type || 'grammar';
+    const targetLanguage = options.targetLanguage || 'English';
+
+    // Try Gemini first if available
+    if (this.useGemini && geminiService.isReady()) {
+      try {
+        console.log('Using Gemini for text analysis');
+        const analysis = await geminiService.analyzeText(text, {
+          targetLanguage,
+          analysisType,
+          includeCorrections: true,
+          includeSuggestions: true
+        });
+        return analysis;
+      } catch (error) {
+        console.error('Gemini text analysis failed, using fallback:', error);
+        // Continue to fallback analysis below
+      }
+    }
+
     // Basic text analysis for fallback
     const wordCount = text.split(/\s+/).filter(word => word.length > 0).length;
     const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0).length;
@@ -135,10 +240,14 @@ class AIService {
     }
     
     return {
+      originalText: text,
       wordCount,
       sentences,
       avgWordsPerSentence,
       suggestions,
+      corrections: [],
+      score: suggestions.length === 0 ? 85 : 70,
+      feedback: suggestions.length === 0 ? 'Good job! Your text looks well-structured.' : 'Good effort! Check the suggestions below.',
       complexity: wordCount > 20 ? 'complex' : wordCount > 10 ? 'medium' : 'simple'
     };
   }
@@ -216,14 +325,86 @@ class AIService {
     return modeResponses[Math.floor(Math.random() * modeResponses.length)];
   }
 
+  async getBackendStatus() {
+    if (this.browserMode) {
+      return {
+        isReady: true,
+        status: 'browser_mode',
+        provider: 'fallback',
+        model: 'local'
+      };
+    }
+
+    try {
+      const status = await window.electronAPI.invoke('ai:getStatus');
+      return status;
+    } catch (error) {
+      console.error('Error getting backend AI status:', error);
+      return {
+        isReady: false,
+        status: 'error',
+        provider: 'unknown',
+        model: 'unknown',
+        error: error.message
+      };
+    }
+  }
+
   isReady() {
     return this.isInitialized;
   }
 
   getStatus() {
-    if (this.isInitialized) return 'ready';
-    if (this.isInitializing) return 'initializing';
-    return 'not_initialized';
+    return {
+      isInitialized: this.isInitialized,
+      isInitializing: this.isInitializing,
+      browserMode: this.browserMode,
+      modelName: this.modelName,
+      useGemini: this.useGemini,
+      geminiReady: this.useGemini ? geminiService.isReady() : false
+    };
+  }
+
+  async getFullStatus() {
+    const baseStatus = this.getStatus();
+    
+    // Add Gemini status
+    const geminiStatus = this.useGemini ? {
+      isReady: geminiService.isReady(),
+      model: geminiService.getModel(),
+      hasApiKey: !!this.geminiApiKey
+    } : null;
+    
+    if (this.browserMode) {
+      return {
+        ...baseStatus,
+        gemini: geminiStatus,
+        backend: {
+          isReady: false,
+          status: 'Browser mode - no backend available',
+          provider: 'fallback'
+        }
+      };
+    }
+
+    try {
+      const backendStatus = await this.getBackendStatus();
+      return {
+        ...baseStatus,
+        gemini: geminiStatus,
+        backend: backendStatus
+      };
+    } catch (error) {
+      return {
+        ...baseStatus,
+        gemini: geminiStatus,
+        backend: {
+          isReady: false,
+          status: 'Error checking backend status',
+          error: error.message
+        }
+      };
+    }
   }
 }
 

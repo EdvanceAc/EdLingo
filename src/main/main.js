@@ -3,7 +3,7 @@ const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 const isDev = process.env.NODE_ENV === 'development';
 const databaseService = require('../services/databaseService');
-const geminiService = require('./geminiService');
+
 
 // Suppress util._extend deprecation warning
 process.noDeprecation = true;
@@ -167,7 +167,7 @@ function setupIPC() {
   // User management
   ipcMain.handle('db:createUser', async (event, userData) => {
     try {
-      const userId = databaseService.createUser(userData);
+      const userId = await databaseService.createUser(userData);
       return { success: true, userId };
     } catch (error) {
       console.error('Error creating user:', error);
@@ -177,7 +177,7 @@ function setupIPC() {
 
   ipcMain.handle('db:getUserById', async (event, userId) => {
     try {
-      const user = databaseService.getUserById(userId);
+      const user = await databaseService.getUserById(userId);
       return { success: true, user };
     } catch (error) {
       console.error('Error getting user:', error);
@@ -187,7 +187,7 @@ function setupIPC() {
 
   ipcMain.handle('db:getUserByUsername', async (event, username) => {
     try {
-      const user = databaseService.getUserByUsername(username);
+      const user = await databaseService.getUserByUsername(username);
       return { success: true, user };
     } catch (error) {
       console.error('Error getting user by username:', error);
@@ -197,7 +197,7 @@ function setupIPC() {
 
   ipcMain.handle('db:updateUser', async (event, userId, updates) => {
     try {
-      const result = databaseService.updateUser(userId, updates);
+      const result = await databaseService.updateUser(userId, updates);
       return { success: true, result };
     } catch (error) {
       console.error('Error updating user:', error);
@@ -208,7 +208,7 @@ function setupIPC() {
   // Progress management
   ipcMain.handle('db:getUserProgress', async (event, userId) => {
     try {
-      const progress = databaseService.getUserProgress(userId);
+      const progress = await databaseService.getUserProgress(userId);
       return { success: true, progress };
     } catch (error) {
       console.error('Error getting user progress:', error);
@@ -218,7 +218,7 @@ function setupIPC() {
 
   ipcMain.handle('db:updateUserProgress', async (event, userId, updates) => {
     try {
-      const result = databaseService.updateUserProgress(userId, updates);
+      const result = await databaseService.updateUserProgress(userId, updates);
       return { success: true, result };
     } catch (error) {
       console.error('Error updating user progress:', error);
@@ -228,7 +228,7 @@ function setupIPC() {
 
   ipcMain.handle('db:addXP', async (event, userId, xpAmount) => {
     try {
-      const result = databaseService.addXP(userId, xpAmount);
+      const result = await databaseService.addXP(userId, xpAmount);
       return { success: true, result };
     } catch (error) {
       console.error('Error adding XP:', error);
@@ -513,6 +513,7 @@ function setupIPC() {
   // AI Service handlers
   ipcMain.handle('ai:generateResponse', async (event, userMessage, conversationContext, options = {}) => {
     try {
+
       
       const {
         maxTokens = 150,
@@ -535,12 +536,7 @@ function setupIPC() {
       // Add current user message
       messages.push({ role: 'user', content: userMessage });
 
-      // Generate response using Gemini
-      const aiResponse = await geminiService.generateResponse(messages, {
-        maxTokens,
-        temperature,
-        systemPrompt
-      });
+
       
       return { success: true, response: aiResponse };
     } catch (error) {
@@ -548,12 +544,14 @@ function setupIPC() {
       
       let errorMessage = 'I\'m sorry, I encountered an error while processing your message. Please try again.';
       
-      if (error.message.includes('API key')) {
-        errorMessage = 'AI service configuration error. Please check your API key settings.';
-      } else if (error.message.includes('quota') || error.message.includes('limit')) {
+      if (error.message.includes('API key') || error.message.includes('403')) {
+        errorMessage = 'AI service configuration error. Please check your API key settings and ensure billing is enabled.';
+      } else if (error.message.includes('quota') || error.message.includes('limit') || error.message.includes('429')) {
         errorMessage = 'AI service quota exceeded. Please try again later.';
       } else if (error.message.includes('network') || error.message.includes('fetch')) {
         errorMessage = 'Unable to connect to AI service. Please check your internet connection.';
+      } else if (error.message.includes('unavailable')) {
+        errorMessage = error.message; // Use the specific error message from the service
       }
       
       return { 
@@ -566,9 +564,9 @@ function setupIPC() {
 
   ipcMain.handle('ai:generateLanguageLearningResponse', async (event, userMessage, learningContext) => {
     try {
+
       
-      // Generate response using Gemini service
-      const aiResponse = await geminiService.generateLanguageLearningResponse(userMessage, learningContext);
+
       
       return { success: true, response: aiResponse };
     } catch (error) {
@@ -576,12 +574,14 @@ function setupIPC() {
       
       let errorMessage = 'I\'m sorry, I encountered an error while processing your message. Please try again.';
       
-      if (error.message.includes('API key')) {
-        errorMessage = 'AI service configuration error. Please check your API key settings.';
-      } else if (error.message.includes('quota') || error.message.includes('limit')) {
+      if (error.message.includes('API key') || error.message.includes('403')) {
+        errorMessage = 'AI service configuration error. Please check your API key settings and ensure billing is enabled.';
+      } else if (error.message.includes('quota') || error.message.includes('limit') || error.message.includes('429')) {
         errorMessage = 'AI service quota exceeded. Please try again later.';
       } else if (error.message.includes('network') || error.message.includes('fetch')) {
         errorMessage = 'Unable to connect to AI service. Please check your internet connection.';
+      } else if (error.message.includes('unavailable')) {
+        errorMessage = error.message; // Use the specific error message from the service
       }
       
       return { 
@@ -595,7 +595,7 @@ function setupIPC() {
   // Handle streaming AI response generation
   ipcMain.handle('ai:generateResponseStream', async (event, messages, options = {}) => {
     try {
-      const stream = await geminiService.generateResponseStream(messages, options);
+
       
       // Send chunks as they arrive
       for await (const chunk of stream) {
@@ -625,6 +625,8 @@ function setupIPC() {
   // Handle live session creation
   ipcMain.handle('ai:startLiveSession', async (event, options) => {
     try {
+
+
       const sessionOptions = {
         ...options,
         onMessage: (message) => {
@@ -645,7 +647,7 @@ function setupIPC() {
         }
       };
       
-      const session = await geminiService.startLiveSession(sessionOptions);
+
       const sessionId = session?.id || Date.now().toString();
       
       // Store session reference
@@ -676,11 +678,27 @@ function setupIPC() {
       console.log('Sending live message:', message.substring(0, 100) + (message.length > 100 ? '...' : ''));
       
       // Send message through the live session
-      const result = await geminiService.handleLiveMessage(session, message);
+
       return { success: result.success, messageId: Date.now().toString() };
     } catch (error) {
       console.error('Error sending live message:', error);
       return { error: error.message };
+    }
+  });
+
+  // Handle AI service status check
+  ipcMain.handle('ai:getStatus', async () => {
+    try {
+
+    } catch (error) {
+      console.error('Error getting AI service status:', error);
+      return {
+        isReady: false,
+        status: 'error',
+        provider: 'unknown',
+        model: 'unknown',
+        error: error.message
+      };
     }
   });
 
@@ -851,6 +869,24 @@ function setupIPC() {
     }
   });
 
+  ipcMain.handle('settings:getAiSettings', async () => {
+    try {
+      const apiKey = process.env.GOOGLE_API_KEY;
+      return {
+        success: true,
+        settings: {
+          provider: 'google',
+          apiKey: apiKey || '',
+          model: 'gemma-7b-it',
+          hasApiKey: !!apiKey
+        }
+      };
+    } catch (error) {
+      console.error('Error getting AI settings:', error);
+      return { success: false, error: error.message, settings: { hasApiKey: false } };
+    }
+  });
+
   // Notifications
   ipcMain.handle('notification:show', async (event, title, body) => {
     try {
@@ -874,8 +910,7 @@ function setupIPC() {
   ipcMain.handle('ai-chat', async (event, message) => {
     console.warn('⚠️  DEPRECATED: ai-chat is deprecated. Use ai:generateResponse instead.');
     try {
-      // Forward to new handler
-      const result = await geminiService.generateResponse([{ role: 'user', content: message }]);
+
       return { success: true, response: result };
     } catch (error) {
       console.error('Error in legacy AI chat:', error);
@@ -894,10 +929,7 @@ app.whenReady().then(async () => {
     await databaseService.initialize();
     console.log('✅ Database initialized successfully');
     
-    // Initialize Gemini service
-    console.log('🤖 Initializing Gemini service...');
-    await geminiService.initialize();
-    console.log('✅ Gemini service initialized successfully');
+
     
     // Create application components
     console.log('🪟 Creating application window...');

@@ -4,7 +4,7 @@ EdLingo is a modern, AI-powered language learning desktop application built with
 
 ## 🚀 Features
 
-- **AI-Powered Conversations**: Practice real-time conversations with Google Gemini AI
+- **AI-Powered Conversations**: Practice real-time conversations with an AI
 - **Interactive Learning**: Engaging UI with modern design and smooth animations
 - **Progress Tracking**: Comprehensive user progress tracking and analytics
 - **Multi-Language Support**: Learn multiple languages with adaptive content
@@ -17,7 +17,7 @@ EdLingo is a modern, AI-powered language learning desktop application built with
 - **Frontend**: React 18, Vite, Tailwind CSS, Framer Motion
 - **Backend**: Electron, Node.js
 - **Database**: Supabase (PostgreSQL)
-- **AI Integration**: Google Gemini API
+- **AI Integration**
 - **UI Components**: Radix UI, Lucide React Icons
 - **Styling**: Tailwind CSS with custom animations
 
@@ -26,7 +26,7 @@ EdLingo is a modern, AI-powered language learning desktop application built with
 - Node.js (v18 or higher)
 - npm or yarn
 - Supabase account (for database)
-- Google Gemini API key (for AI features)
+
 
 ## 🔧 Installation
 
@@ -43,7 +43,7 @@ EdLingo is a modern, AI-powered language learning desktop application built with
 
 3. **Environment Setup**
    - Copy `.env.example` to `.env`
-   - Fill in your Supabase credentials and Google Gemini API key
+   - Fill in your Supabase credentials and AI provider API key
    ```bash
    cp .env.example .env
    ```
@@ -62,7 +62,7 @@ EdLingo is a modern, AI-powered language learning desktop application built with
 - [Database Setup Guide](./DATABASE_SETUP_GUIDE.md)
 - [Supabase Configuration](./SUPABASE_SETUP.md)
 - [Admin Dashboard Guide](./ADMIN_DASHBOARD_README.md)
-- [Gemini API Migration](./GEMINI_MIGRATION.md)
+
 - [Project Roadmap](./PROJECT_ROADMAP.md)
 
 ## 🏗️ Project Structure
@@ -72,7 +72,7 @@ EdLingo/
 ├── src/
 │   ├── main/                 # Electron main process
 │   │   ├── main.js          # Main application entry
-│   │   ├── geminiService.js # AI service integration
+
 │   │   └── LiveSession.js   # Real-time session handling
 │   ├── renderer/            # React frontend
 │   │   ├── components/      # Reusable UI components
@@ -104,8 +104,7 @@ VITE_SUPABASE_URL=your_supabase_url
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 
-# Google Gemini API
-VITE_GEMINI_API_KEY=your_gemini_api_key
+
 
 # Application Settings
 VITE_APP_ENV=development
@@ -143,7 +142,7 @@ Access the admin dashboard at `admin-dashboard.html` or through the main applica
 ### Common Issues
 
 1. **Database Connection Errors**: Check your Supabase configuration in `.env`
-2. **AI Features Not Working**: Verify your Gemini API key is correct
+2. **AI Features Not Working**: Verify your API key is correct
 3. **Build Failures**: Ensure all dependencies are installed correctly
 
 ### Quick Fixes
@@ -158,7 +157,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🙏 Acknowledgments
 
-- Google Gemini AI for powerful language processing
+- AI for powerful language processing
 - Supabase for robust database infrastructure
 - Electron team for cross-platform desktop framework
 - React and Vite communities for excellent development tools

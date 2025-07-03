@@ -67,6 +67,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Settings
   getSetting: (key) => ipcRenderer.invoke('settings:get', key),
   setSetting: (key, value) => ipcRenderer.invoke('settings:set', key, value),
+  getAiSettings: () => ipcRenderer.invoke('settings:getAiSettings'),
   
   // Notifications
   showNotification: (title, body) => ipcRenderer.invoke('notification:show', title, body),

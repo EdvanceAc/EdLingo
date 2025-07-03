@@ -6,7 +6,7 @@ class LiveSession extends EventEmitter {
     super();
     
     this.apiKey = options.apiKey;
-    this.model = options.model || 'gemini-2.0-flash-exp';
+    this.model = options.model;
     this.responseModalities = options.responseModalities || ['TEXT', 'AUDIO'];
     this.systemInstruction = options.systemInstruction;
     this.onMessage = options.onMessage;
@@ -17,8 +17,7 @@ class LiveSession extends EventEmitter {
     this.connected = false;
     this.sessionId = null;
     
-    // Gemini Live API WebSocket endpoint
-    this.endpoint = 'wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent';
+
   }
 
   async connect() {
@@ -81,7 +80,7 @@ class LiveSession extends EventEmitter {
           speechConfig: {
             voiceConfig: {
               prebuiltVoiceConfig: {
-                voiceName: 'Aoede'
+                voiceName: 'Zephyr'
               }
             }
           }

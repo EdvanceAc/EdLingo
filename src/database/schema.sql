@@ -7,6 +7,17 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- Enable Row Level Security
 -- Note: JWT secret is configured in Supabase dashboard, not via SQL
 
+-- Users Table
+CREATE TABLE IF NOT EXISTS users (
+    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    username VARCHAR(255) UNIQUE,
+    display_name VARCHAR(255),
+    avatar_url TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+
 -- User Progress Table
 CREATE TABLE IF NOT EXISTS user_progress (
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
@@ -14,16 +25,24 @@ CREATE TABLE IF NOT EXISTS user_progress (
     current_level VARCHAR(10) DEFAULT 'beginner',
     total_xp INTEGER DEFAULT 0,
     daily_streak INTEGER DEFAULT 0,
+    current_streak INTEGER DEFAULT 0,
+    longest_streak INTEGER DEFAULT 0,
     last_activity_date DATE DEFAULT CURRENT_DATE,
     lessons_completed INTEGER DEFAULT 0,
     vocabulary_learned INTEGER DEFAULT 0,
+    words_learned INTEGER DEFAULT 0,
     grammar_mastered INTEGER DEFAULT 0,
     speaking_practice_minutes INTEGER DEFAULT 0,
     listening_practice_minutes INTEGER DEFAULT 0,
     reading_practice_minutes INTEGER DEFAULT 0,
     writing_practice_minutes INTEGER DEFAULT 0,
+    time_studied INTEGER DEFAULT 0,
+    chat_messages INTEGER DEFAULT 0,
     achievements JSONB DEFAULT '[]'::jsonb,
     weekly_goals JSONB DEFAULT '{"lessons": 5, "vocabulary": 20, "practice_minutes": 60}'::jsonb,
+    daily_goal INTEGER DEFAULT 30,
+    daily_progress INTEGER DEFAULT 0,
+    daily_goal_completed BOOLEAN DEFAULT false,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     UNIQUE(user_id)

@@ -16,7 +16,9 @@ export const AIProvider = ({ children }) => {
   const [aiSettings, setAiSettings] = useState({
     provider: 'transformers',
     apiKey: '',
-    model: 'onnx-community/Qwen2.5-Coder-0.5B-Instruct'
+    model: 'onnx-community/Qwen2.5-Coder-0.5B-Instruct',
+    geminiApiKey: '',
+    useGemini: false
   });
   const [conversationHistory, setConversationHistory] = useState([]);
   const [isInitializing, setIsInitializing] = useState(false);
@@ -32,7 +34,9 @@ export const AIProvider = ({ children }) => {
         ...prev,
         provider: settings.provider || 'transformers',
         apiKey: settings.apiKey || '',
-        model: settings.model || 'onnx-community/Qwen2.5-Coder-0.5B-Instruct'
+        model: settings.model || 'onnx-community/Qwen2.5-Coder-0.5B-Instruct',
+        geminiApiKey: settings.geminiApiKey || '',
+        useGemini: settings.useGemini || false
       }));
     } catch (error) {
       console.error('Failed to load AI settings:', error);
@@ -56,8 +60,25 @@ export const AIProvider = ({ children }) => {
     setAiStatus('initializing');
     
     try {
-      await aiService.initialize();
-      setAiStatus('ready');
+      // Initialize AI service with Gemini options if available
+      const initOptions = {};
+      if (aiSettings.useGemini && aiSettings.geminiApiKey) {
+        initOptions.geminiApiKey = aiSettings.geminiApiKey;
+      }
+      
+      await aiService.initialize(initOptions);
+      
+      // Check if Gemini is available or fall back to backend
+      const fullStatus = await aiService.getFullStatus();
+      const isGeminiReady = fullStatus.gemini?.isReady || false;
+      const isBackendReady = fullStatus.backend?.isReady || false;
+      
+      if (isGeminiReady || isBackendReady || aiService.browserMode) {
+        setAiStatus('ready');
+      } else {
+        setAiStatus('error');
+        throw new Error('No AI providers available');
+      }
     } catch (error) {
       console.error('Failed to initialize AI:', error);
       setAiStatus('error');
@@ -94,13 +115,17 @@ export const AIProvider = ({ children }) => {
     }
   };
 
-  const analyzeText = async (text) => {
+  const analyzeText = async (text, options = {}) => {
     if (aiStatus !== 'ready') {
-      return aiService.analyzeText(text); // Use fallback analysis
+      return aiService.analyzeText(text, options); // Use fallback analysis
     }
 
     try {
-      return await aiService.analyzeText(text);
+      return await aiService.analyzeText(text, {
+        targetLanguage: options.targetLanguage || 'English',
+        type: options.type || 'grammar',
+        ...options
+      });
     } catch (error) {
       console.error('Failed to analyze text:', error);
       throw error;
@@ -109,6 +134,32 @@ export const AIProvider = ({ children }) => {
 
   const clearConversationHistory = () => {
     setConversationHistory([]);
+  };
+
+  const configureGemini = async (apiKey) => {
+    try {
+      const result = await aiService.configureGemini(apiKey);
+      if (result.success) {
+        const newSettings = { ...aiSettings, geminiApiKey: apiKey, useGemini: true };
+        await saveAISettings(newSettings);
+        return { success: true };
+      } else {
+        return result;
+      }
+    } catch (error) {
+      console.error('Failed to configure Gemini:', error);
+      return { success: false, error: error.message };
+    }
+  };
+
+  const disableGemini = async () => {
+    try {
+      aiService.disableGemini();
+      const newSettings = { ...aiSettings, useGemini: false };
+      await saveAISettings(newSettings);
+    } catch (error) {
+      console.error('Failed to disable Gemini:', error);
+    }
   };
 
   const getConversationContext = (limit = 6) => {
@@ -141,7 +192,7 @@ export const AIProvider = ({ children }) => {
       switch (aiStatus) {
         case 'ready': return 'AI Ready';
         case 'initializing': return 'Loading AI...';
-        case 'error': return 'AI Error';
+        case 'error': return 'AI Unavailable - Check API Key';
         default: return 'AI Offline';
       }
     },
@@ -153,7 +204,21 @@ export const AIProvider = ({ children }) => {
         case 'error': return 'text-red-500';
         default: return 'text-gray-400';
       }
-    }
+    },
+    
+    // Gemini specific methods
+    configureGemini,
+    disableGemini,
+    isGeminiAvailable: () => {
+      // Check if Gemini API key is available in environment variables
+      const envApiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      if (envApiKey) {
+        return true;
+      }
+      // Fallback to aiService check
+      return aiService.isGeminiAvailable();
+    },
+    getAIStatus: () => aiService.getFullStatus()
   };
 
   return (
