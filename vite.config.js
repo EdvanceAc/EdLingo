@@ -9,11 +9,56 @@ export default defineConfig({
     outDir: 'dist',
     assetsDir: 'assets',
     sourcemap: true,
+    chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom'],
-          ui: ['@radix-ui/react-dialog', 'framer-motion']
+        manualChunks: (id) => {
+          // Core React libraries
+          if (id.includes('react') || id.includes('react-dom')) {
+            return 'react-vendor';
+          }
+          
+          // AI/ML libraries - these are typically large
+          if (id.includes('@google/generative-ai') || id.includes('@google/genai')) {
+            return 'ai-google';
+          }
+          
+          if (id.includes('@huggingface/transformers')) {
+            return 'ai-huggingface';
+          }
+          
+          // Database and backend services
+          if (id.includes('@supabase/supabase-js')) {
+            return 'supabase';
+          }
+          
+          // UI component libraries
+          if (id.includes('@radix-ui')) {
+            return 'radix-ui';
+          }
+          
+          if (id.includes('framer-motion')) {
+            return 'framer-motion';
+          }
+          
+          if (id.includes('lucide-react')) {
+            return 'lucide-icons';
+          }
+          
+          // Router
+          if (id.includes('react-router-dom')) {
+            return 'router';
+          }
+          
+          // Tailwind and styling
+          if (id.includes('tailwind') || id.includes('clsx') || id.includes('class-variance-authority')) {
+            return 'styling';
+          }
+          
+          // Other vendor libraries
+          if (id.includes('node_modules')) {
+            return 'vendor';
+          }
         }
       }
     }

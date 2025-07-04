@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useAI } from '../../providers/AIProvider';
 import Button from './Button';
-import { Input } from './input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './card';
+import { Input } from './Input';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './Card';
 import { Alert, AlertDescription } from './alert';
 import { CheckCircle, XCircle } from 'lucide-react';
 
