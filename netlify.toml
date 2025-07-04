@@ -5,10 +5,12 @@
 [build.environment]
   NODE_VERSION = "18"
 
+# SPA fallback - serve index.html for all routes except static files
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
+  force = false
 
 [[headers]]
   for = "/*.js"
