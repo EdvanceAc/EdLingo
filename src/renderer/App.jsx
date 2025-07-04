@@ -17,21 +17,29 @@ import Vocabulary from './pages/Vocabulary';
 import Grammar from './pages/Grammar';
 import Settings from './pages/Settings';
 import AdminDashboard from './pages/AdminDashboard';
+import Login from './pages/Login';
+import SignUp from './pages/SignUp';
+import AuthCallback from './pages/AuthCallback';
+
+// Auth Components
+import ProtectedRoute from './components/auth/ProtectedRoute';
 
 // Providers
 import { ThemeProvider } from './providers/ThemeProvider';
 import { AudioProvider } from './providers/AudioProvider';
 import { ProgressProvider } from './providers/ProgressProvider';
 import { AIProvider } from './providers/AIProvider';
+import { AuthProvider } from './contexts/AuthContext';
 
 // Layout component that conditionally renders sidebar and header
 function AppLayout({ children }) {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith('/admin');
+  const isAuthRoute = location.pathname.startsWith('/auth');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
-  if (isAdminRoute) {
-    // Admin layout without sidebar and header
+  if (isAdminRoute || isAuthRoute) {
+    // Admin or Auth layout without sidebar and header
     return (
       <div className="h-screen bg-background text-foreground overflow-hidden">
         {children}
@@ -104,13 +112,57 @@ function App() {
 
   return (
     <ThemeProvider>
-      <AudioProvider>
-        <ProgressProvider>
-          <AIProvider>
-          <Router>
-            <AppLayout>
-              <AnimatePresence mode="wait">
-                <Routes>
+      <AuthProvider>
+        <AudioProvider>
+          <ProgressProvider>
+            <AIProvider>
+            <Router>
+              <AppLayout>
+                <AnimatePresence mode="wait">
+                  <Routes>
+                    {/* Authentication Routes */}
+                    <Route 
+                      path="/auth/login" 
+                      element={
+                        <motion.div
+                          key="login"
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -20 }}
+                          transition={{ duration: 0.3 }}
+                        >
+                          <Login />
+                        </motion.div>
+                      } 
+                    />
+                    <Route 
+                       path="/auth/signup" 
+                       element={
+                         <motion.div
+                           key="signup"
+                           initial={{ opacity: 0, y: 20 }}
+                           animate={{ opacity: 1, y: 0 }}
+                           exit={{ opacity: 0, y: -20 }}
+                           transition={{ duration: 0.3 }}
+                         >
+                           <SignUp />
+                         </motion.div>
+                       } 
+                     />
+                     <Route 
+                       path="/auth/callback" 
+                       element={
+                         <motion.div
+                           key="auth-callback"
+                           initial={{ opacity: 0, y: 20 }}
+                           animate={{ opacity: 1, y: 0 }}
+                           exit={{ opacity: 0, y: -20 }}
+                           transition={{ duration: 0.3 }}
+                         >
+                           <AuthCallback />
+                         </motion.div>
+                       } 
+                     />
                   {/* Admin Dashboard - Separate route with no sidebar/header */}
                   <Route 
                     path="/admin" 
@@ -129,122 +181,139 @@ function App() {
                       <Route 
                         path="/" 
                         element={
-                          <motion.div
-                            key="dashboard"
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -20 }}
-                            transition={{ duration: 0.3 }}
-                          >
-                            <Dashboard />
-                          </motion.div>
+                          <ProtectedRoute>
+                            <motion.div
+                              key="dashboard"
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -20 }}
+                              transition={{ duration: 0.3 }}
+                            >
+                              <Dashboard />
+                            </motion.div>
+                          </ProtectedRoute>
                         } 
                       />
                       <Route 
                         path="/chat" 
                         element={
-                          <motion.div
-                            key="chat"
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -20 }}
-                            transition={{ duration: 0.3 }}
-                          >
-                            <Chat />
-                          </motion.div>
+                          <ProtectedRoute>
+                            <motion.div
+                              key="chat"
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -20 }}
+                              transition={{ duration: 0.3 }}
+                            >
+                              <Chat />
+                            </motion.div>
+                          </ProtectedRoute>
                         } 
                       />
                       <Route 
                         path="/enhanced-chat" 
                         element={
-                          <motion.div
-                            key="enhanced-chat"
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -20 }}
-                            transition={{ duration: 0.3 }}
-                          >
-                            <EnhancedChat />
-                          </motion.div>
+                          <ProtectedRoute>
+                            <motion.div
+                              key="enhanced-chat"
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -20 }}
+                              transition={{ duration: 0.3 }}
+                            >
+                              <EnhancedChat />
+                            </motion.div>
+                          </ProtectedRoute>
                         } 
                       />
                       <Route 
                         path="/live-conversation" 
                         element={
-                          <motion.div
-                            key="live-conversation"
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -20 }}
-                            transition={{ duration: 0.3 }}
-                          >
-                            <LiveConversation />
-                          </motion.div>
+                          <ProtectedRoute>
+                            <motion.div
+                              key="live-conversation"
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -20 }}
+                              transition={{ duration: 0.3 }}
+                            >
+                              <LiveConversation />
+                            </motion.div>
+                          </ProtectedRoute>
                         } 
                       />
                       <Route 
                         path="/pronunciation" 
                         element={
-                          <motion.div
-                            key="pronunciation"
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -20 }}
-                            transition={{ duration: 0.3 }}
-                          >
-                            <Pronunciation />
-                          </motion.div>
+                          <ProtectedRoute>
+                            <motion.div
+                              key="pronunciation"
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -20 }}
+                              transition={{ duration: 0.3 }}
+                            >
+                              <Pronunciation />
+                            </motion.div>
+                          </ProtectedRoute>
                         } 
                       />
                       <Route 
                         path="/vocabulary" 
                         element={
-                          <motion.div
-                            key="vocabulary"
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -20 }}
-                            transition={{ duration: 0.3 }}
-                          >
-                            <Vocabulary />
-                          </motion.div>
+                          <ProtectedRoute>
+                            <motion.div
+                              key="vocabulary"
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -20 }}
+                              transition={{ duration: 0.3 }}
+                            >
+                              <Vocabulary />
+                            </motion.div>
+                          </ProtectedRoute>
                         } 
                       />
                       <Route 
                         path="/grammar" 
                         element={
-                          <motion.div
-                            key="grammar"
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -20 }}
-                            transition={{ duration: 0.3 }}
-                          >
-                            <Grammar />
-                          </motion.div>
+                          <ProtectedRoute>
+                            <motion.div
+                              key="grammar"
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -20 }}
+                              transition={{ duration: 0.3 }}
+                            >
+                              <Grammar />
+                            </motion.div>
+                          </ProtectedRoute>
                         } 
                       />
                       <Route 
                         path="/settings" 
                         element={
-                          <motion.div
-                            key="settings"
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -20 }}
-                            transition={{ duration: 0.3 }}
-                          >
-                            <Settings />
-                          </motion.div>
+                          <ProtectedRoute>
+                            <motion.div
+                              key="settings"
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -20 }}
+                              transition={{ duration: 0.3 }}
+                            >
+                              <Settings />
+                            </motion.div>
+                          </ProtectedRoute>
                         } 
                       />
-                </Routes>
-              </AnimatePresence>
-            </AppLayout>
-          </Router>
-          </AIProvider>
-        </ProgressProvider>
-      </AudioProvider>
+                  </Routes>
+                </AnimatePresence>
+              </AppLayout>
+            </Router>
+            </AIProvider>
+          </ProgressProvider>
+        </AudioProvider>
+      </AuthProvider>
     </ThemeProvider>
   );
 }

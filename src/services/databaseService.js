@@ -561,6 +561,22 @@ class DatabaseService {
     }
   }
 
+  async signInWithGoogle() {
+    try {
+      const { data, error } = await this.supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`
+        }
+      })
+      if (error) throw error
+      return data
+    } catch (error) {
+      console.error('Error signing in with Google:', error)
+      throw error
+    }
+  }
+
   async signOut() {
     try {
       const { error } = await this.supabase.auth.signOut()
