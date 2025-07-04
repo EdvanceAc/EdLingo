@@ -122,13 +122,11 @@ const SignUp = () => {
   const handleGoogleSignUp = async () => {
     setError('');
     setSuccess('');
-    setIsLoading(true);
     
     const { error } = await signInWithGoogle();
     
     if (error) {
       setError(error.message);
-      setIsLoading(false);
     }
   };
 

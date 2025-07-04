@@ -49,13 +49,11 @@ const Login = () => {
 
   const handleGoogleSignIn = async () => {
     setError('');
-    setIsLoading(true);
     
     const { error } = await signInWithGoogle();
     
     if (error) {
       setError(error.message);
-      setIsLoading(false);
     }
   };
 

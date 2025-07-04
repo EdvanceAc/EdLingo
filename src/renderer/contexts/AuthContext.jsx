@@ -131,7 +131,6 @@ export const AuthProvider = ({ children }) => {
 
   const signInWithGoogle = async () => {
     try {
-      setLoading(true);
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -144,8 +143,6 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error('Error signing in with Google:', error);
       return { data: null, error };
-    } finally {
-      setLoading(false);
     }
   };
 
