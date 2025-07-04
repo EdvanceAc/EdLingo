@@ -391,7 +391,7 @@ class DatabaseService {
         query = query.eq('level', filters.level)
       }
       
-      const { data, error } = await query.order('lesson_order', { ascending: true })
+      const { data, error } = await query.order('created_at', { ascending: true })
       
       if (error) throw error
       return data

@@ -116,7 +116,12 @@ function App() {
         <AudioProvider>
           <ProgressProvider>
             <AIProvider>
-            <Router>
+            <Router
+              future={{
+                v7_startTransition: true,
+                v7_relativeSplatPath: true
+              }}
+            >
               <AppLayout>
                 <AnimatePresence mode="wait">
                   <Routes>
