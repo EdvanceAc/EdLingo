@@ -16,7 +16,7 @@ EdLingo is a modern, AI-powered language learning desktop application built with
 
 - **Frontend**: React 18, Vite, Tailwind CSS, Framer Motion
 - **Backend**: Electron, Node.js
-- **Database**: Supabase (PostgreSQL)
+- **Database**: Local Database
 - **AI Integration**
 - **UI Components**: Radix UI, Lucide React Icons
 - **Styling**: Tailwind CSS with custom animations
@@ -25,7 +25,7 @@ EdLingo is a modern, AI-powered language learning desktop application built with
 
 - Node.js (v18 or higher)
 - npm or yarn
-- Supabase account (for database)
+
 
 
 ## 🔧 Installation
@@ -43,14 +43,12 @@ EdLingo is a modern, AI-powered language learning desktop application built with
 
 3. **Environment Setup**
    - Copy `.env.example` to `.env`
-   - Fill in your Supabase credentials and AI provider API key
+   - Fill in your AI provider API key
    ```bash
    cp .env.example .env
    ```
 
-4. **Database Setup**
-   - Follow the [Supabase Setup Guide](./SUPABASE_SETUP.md)
-   - Run the database schema: `src/database/schema.sql`
+
 
 5. **Start the application**
    ```bash
@@ -59,8 +57,7 @@ EdLingo is a modern, AI-powered language learning desktop application built with
 
 ## 📖 Documentation
 
-- [Database Setup Guide](./DATABASE_SETUP_GUIDE.md)
-- [Supabase Configuration](./SUPABASE_SETUP.md)
+
 - [Admin Dashboard Guide](./ADMIN_DASHBOARD_README.md)
 
 - [Project Roadmap](./PROJECT_ROADMAP.md)
@@ -99,10 +96,7 @@ EdLingo/
 Create a `.env` file with the following variables:
 
 ```env
-# Supabase Configuration
-VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+
 
 
 
@@ -141,14 +135,14 @@ Access the admin dashboard at `admin-dashboard.html` or through the main applica
 
 ### Common Issues
 
-1. **Database Connection Errors**: Check your Supabase configuration in `.env`
+1. **Database Connection Errors**: Check your database configuration.
 2. **AI Features Not Working**: Verify your API key is correct
 3. **Build Failures**: Ensure all dependencies are installed correctly
 
 ### Quick Fixes
 
 - Run `npm install` to update dependencies
-- Check the [Quick Database Fix Guide](./QUICK_DATABASE_FIX.md)
+
 - Verify environment variables are set correctly
 
 ## 📄 License
@@ -158,7 +152,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🙏 Acknowledgments
 
 - AI for powerful language processing
-- Supabase for robust database infrastructure
+
 - Electron team for cross-platform desktop framework
 - React and Vite communities for excellent development tools
 

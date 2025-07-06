@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from './components/layout/Sidebar';
 import Header from './components/layout/Header';
 import LoadingScreen from './components/ui/LoadingScreen';
+import DatabaseStatus from './components/DatabaseStatus';
 
 // Pages
 import Dashboard from './pages/Dashboard';
@@ -31,6 +32,10 @@ import { ProgressProvider } from './providers/ProgressProvider';
 import { AIProvider } from './providers/AIProvider';
 import { AuthProvider } from './contexts/AuthContext';
 
+// Database
+import { AppConfig } from '../config/AppConfig.js';
+import databaseSyncService from './services/databaseSyncService.js';
+
 // Layout component that conditionally renders sidebar and header
 function AppLayout({ children }) {
   const location = useLocation();
@@ -41,7 +46,7 @@ function AppLayout({ children }) {
   if (isAdminRoute || isAuthRoute) {
     // Admin or Auth layout without sidebar and header
     return (
-      <div className="h-screen bg-background text-foreground overflow-hidden">
+      <div className="min-h-screen bg-background text-foreground">
         {children}
       </div>
     );
@@ -86,12 +91,23 @@ function App() {
     // Simulate app initialization
     const initializeApp = async () => {
       try {
+        // Validate environment configuration
+        AppConfig.validate();
+        
         // Load user preferences
         const theme = await window.electronAPI?.getTheme?.() || 'light';
         document.documentElement.classList.toggle('dark', theme === 'dark');
         
         // Load user progress
         await window.electronAPI?.loadProgress?.();
+        
+        // Initialize database services
+        if (AppConfig.isDatabaseEnabled()) {
+          console.log('🗄️ Database services initialized');
+          // Database sync service is automatically initialized
+        } else {
+          console.warn('⚠️ Database services disabled - check environment variables');
+        }
         
         // Initialize audio services
         // Add any other initialization logic here

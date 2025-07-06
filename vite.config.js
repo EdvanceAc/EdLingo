@@ -28,10 +28,7 @@ export default defineConfig({
             return 'ai-huggingface';
           }
           
-          // Database and backend services
-          if (id.includes('@supabase/supabase-js')) {
-            return 'supabase';
-          }
+
           
           // UI component libraries
           if (id.includes('@radix-ui')) {
@@ -83,6 +80,11 @@ export default defineConfig({
   define: {
     __IS_DEV__: JSON.stringify(process.env.NODE_ENV === 'development'),
     global: 'globalThis',
-    'process.env': {}
+    'process.env': {},
+    'process.stdout': '{ isTTY: false }',
+    'process.stderr': '{ isTTY: false }'
+  },
+  optimizeDeps: {
+    include: ['googleapis', 'google-auth-library']
   }
 });

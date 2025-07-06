@@ -88,7 +88,7 @@ const getUserFriendlyMessage = (error) => {
   }
   
   // Database-related errors
-  if (message.includes('database') || message.includes('supabase')) {
+  if (message.includes('database')) {
     return '💾 Database connection issue. Please try again later.';
   }
   

@@ -1,276 +1,227 @@
-import { supabase } from '../config/supabase.js';
+import googleDriveService from './googleDriveService';
+import { AppConfig } from '../../config/AppConfig';
 
 class AdminService {
-  // Course Management
-  async getCourses() {
+  constructor() {
+    this.googleDriveService = googleDriveService;
+    this.isAuthenticated = false;
+    this.adminCredentials = {
+      username: 'admin',
+      password: 'admin123' // In production, this should be properly secured
+    };
+  }
+
+  /**
+   * Authenticate admin user
+   * @param {string} username 
+   * @param {string} password 
+   * @returns {Promise<boolean>}
+   */
+  async authenticate(username, password) {
     try {
-      const { data, error } = await supabase
-        .from('grammar_lessons')
-        .select('*')
-        .order('created_at', { ascending: true });
-      
-      if (error) throw error;
-      return data || [];
+      // Simple authentication - in production, use proper auth service
+      if (username === this.adminCredentials.username && password === this.adminCredentials.password) {
+        this.isAuthenticated = true;
+        localStorage.setItem('admin_authenticated', 'true');
+        return true;
+      }
+      return false;
     } catch (error) {
-      console.error('Error fetching courses:', error);
+      console.error('Admin authentication error:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Check if admin is authenticated
+   * @returns {boolean}
+   */
+  isAdminAuthenticated() {
+    return this.isAuthenticated || localStorage.getItem('admin_authenticated') === 'true';
+  }
+
+  /**
+   * Logout admin
+   */
+  logout() {
+    this.isAuthenticated = false;
+    localStorage.removeItem('admin_authenticated');
+  }
+
+  /**
+   * Upload file to Google Drive
+   * @param {File} file 
+   * @param {string} category 
+   * @param {string} subcategory 
+   * @param {Function} onProgress 
+   * @returns {Promise<Object>}
+   */
+  async uploadFile(file, category = 'shared_resources', subcategory = null, onProgress = null) {
+    if (!this.isAdminAuthenticated()) {
+      throw new Error('Admin authentication required');
+    }
+
+    try {
+      const result = await this.googleDriveService.uploadFile(file, category, subcategory, onProgress);
+      return result;
+    } catch (error) {
+      console.error('File upload error:', error);
       throw error;
     }
   }
 
-  async createCourse(courseData) {
+  /**
+   * List files from Google Drive
+   * @param {string} category 
+   * @param {string} subcategory 
+   * @returns {Promise<Array>}
+   */
+  async listFiles(category = null, subcategory = null) {
+    if (!this.isAdminAuthenticated()) {
+      throw new Error('Admin authentication required');
+    }
+
     try {
-      const { data, error } = await supabase
-        .from('grammar_lessons')
-        .insert([
-          {
-            title: courseData.title,
-            description: courseData.description,
-            language: courseData.language || 'spanish',
-            content: courseData.content || {},
-            level: courseData.level || 'beginner'
-          }
-        ])
-        .select();
-      
-      if (error) throw error;
-      return data[0];
+      const files = await this.googleDriveService.listFiles(category, subcategory);
+      return files;
     } catch (error) {
-      console.error('Error creating course:', error);
+      console.error('File listing error:', error);
       throw error;
     }
   }
 
-  async updateCourse(courseId, courseData) {
+  /**
+   * Delete file from Google Drive
+   * @param {string} fileId 
+   * @returns {Promise<boolean>}
+   */
+  async deleteFile(fileId) {
+    if (!this.isAdminAuthenticated()) {
+      throw new Error('Admin authentication required');
+    }
+
     try {
-      const { data, error } = await supabase
-        .from('grammar_lessons')
-        .update({
-          title: courseData.title,
-          description: courseData.description,
-          language: courseData.language,
-          content: courseData.content,
-          level: courseData.level,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', courseId)
-        .select();
-      
-      if (error) throw error;
-      return data[0];
+      const result = await this.googleDriveService.deleteFile(fileId);
+      return result;
     } catch (error) {
-      console.error('Error updating course:', error);
+      console.error('File deletion error:', error);
       throw error;
     }
   }
 
-  async deleteCourse(courseId) {
+  /**
+   * Get file download URL
+   * @param {string} fileId 
+   * @returns {Promise<string>}
+   */
+  async getFileUrl(fileId) {
+    if (!this.isAdminAuthenticated()) {
+      throw new Error('Admin authentication required');
+    }
+
     try {
-      const { error } = await supabase
-        .from('grammar_lessons')
-        .delete()
-        .eq('id', courseId);
-      
-      if (error) throw error;
-      return true;
+      const url = await this.googleDriveService.getFileUrl(fileId);
+      return url;
     } catch (error) {
-      console.error('Error deleting course:', error);
+      console.error('Get file URL error:', error);
       throw error;
     }
   }
 
-  // Assignment Management (using learning_sessions as assignments)
-  async getAssignments() {
-    try {
-      const { data, error } = await supabase
-        .from('learning_sessions')
-        .select('*')
-        .order('started_at', { ascending: false });
-      
-      if (error) throw error;
-      return data || [];
-    } catch (error) {
-      console.error('Error fetching assignments:', error);
-      throw error;
+  /**
+   * Get system statistics
+   * @returns {Promise<Object>}
+   */
+  async getSystemStats() {
+    if (!this.isAdminAuthenticated()) {
+      throw new Error('Admin authentication required');
     }
-  }
 
-  async createAssignment(assignmentData) {
     try {
-      const { data, error } = await supabase
-        .from('learning_sessions')
-        .insert([
-          {
-            user_id: assignmentData.user_id,
-            session_type: assignmentData.session_type || 'assignment',
-            duration_minutes: assignmentData.duration_minutes || 0,
-            xp_earned: assignmentData.xp_earned || 0,
-            activities_completed: assignmentData.activities_completed || 0,
-            accuracy_percentage: assignmentData.accuracy_percentage || null,
-            session_data: assignmentData.session_data || {},
-            started_at: assignmentData.started_at || new Date().toISOString(),
-            completed_at: assignmentData.completed_at || null
-          }
-        ])
-        .select();
-      
-      if (error) throw error;
-      return data[0];
-    } catch (error) {
-      console.error('Error creating assignment:', error);
-      throw error;
-    }
-  }
-
-  // User Management
-  async getUsers() {
-    try {
-      const { data, error } = await supabase
-        .from('users')
-        .select(`
-          *,
-          user_progress (*)
-        `)
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      return data || [];
-    } catch (error) {
-      console.error('Error fetching users:', error);
-      throw error;
-    }
-  }
-
-  async getUserProgress(userId) {
-    try {
-      const { data, error } = await supabase
-        .from('user_progress')
-        .select('*')
-        .eq('user_id', userId)
-        .single();
-      
-      if (error) throw error;
-      return data;
-    } catch (error) {
-      console.error('Error fetching user progress:', error);
-      throw error;
-    }
-  }
-
-  // Statistics
-  async getStatistics() {
-    try {
-      const [usersResult, coursesResult, assignmentsResult] = await Promise.all([
-        supabase.from('users').select('id', { count: 'exact', head: true }),
-        supabase.from('grammar_lessons').select('id', { count: 'exact', head: true }),
-        supabase.from('learning_sessions').select('id', { count: 'exact', head: true })
-      ]);
-
-      return {
-        totalStudents: usersResult.count || 0,
-        activeCourses: coursesResult.count || 0,
-        totalAssignments: assignmentsResult.count || 0,
-        totalTeachers: 1 // For now, we'll assume 1 admin/teacher
+      const stats = {
+        totalFiles: 0,
+        totalSize: 0,
+        categories: {},
+        lastUpdated: new Date().toISOString()
       };
-    } catch (error) {
-      console.error('Error fetching statistics:', error);
-      return {
-        totalStudents: 0,
-        activeCourses: 0,
-        totalAssignments: 0,
-        totalTeachers: 1
-      };
-    }
-  }
 
-  // Recent Activity
-  async getRecentActivity() {
-    try {
-      const { data, error } = await supabase
-        .from('learning_sessions')
-        .select('*')
-        .order('started_at', { ascending: false })
-        .limit(10);
-      
-      if (error) throw error;
-      
-      // Transform to activity format
-      return (data || []).map(session => ({
-        id: session.id,
-        type: session.session_type,
-        description: `User completed ${session.session_type}`,
-        timestamp: session.started_at,
-        user: { id: session.user_id }
-      }));
-    } catch (error) {
-      console.error('Error fetching recent activity:', error);
-      return [];
-    }
-  }
+      // Get files from all categories
+      const allFiles = await this.googleDriveService.listFiles();
+      stats.totalFiles = allFiles.length;
+      stats.totalSize = allFiles.reduce((total, file) => total + (file.size || 0), 0);
 
-  // Vocabulary Management
-  async getVocabulary() {
-    try {
-      const { data, error } = await supabase
-        .from('vocabulary')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      return data || [];
+      // Group by categories
+      allFiles.forEach(file => {
+        const category = file.category || 'uncategorized';
+        if (!stats.categories[category]) {
+          stats.categories[category] = {
+            count: 0,
+            size: 0
+          };
+        }
+        stats.categories[category].count++;
+        stats.categories[category].size += file.size || 0;
+      });
+
+      return stats;
     } catch (error) {
-      console.error('Error fetching vocabulary:', error);
+      console.error('Get system stats error:', error);
       throw error;
     }
   }
 
-  async createVocabularyWord(wordData) {
+  /**
+   * Initialize Google Drive service
+   * @returns {Promise<boolean>}
+   */
+  async initializeGoogleDrive() {
+    if (!this.isAdminAuthenticated()) {
+      throw new Error('Admin authentication required');
+    }
+
     try {
-      const { data, error } = await supabase
-        .from('vocabulary')
-        .insert([
-          {
-            word: wordData.word,
-            translation: wordData.translation,
-            language: wordData.language || 'Spanish',
-            pronunciation: wordData.pronunciation || null,
-            part_of_speech: wordData.part_of_speech || null,
-            difficulty_level: wordData.difficulty_level || 'beginner',
-            example_sentence: wordData.example_sentence || null,
-            example_translation: wordData.example_translation || null
-          }
-        ])
-        .select();
-      
-      if (error) throw error;
-      return data[0];
+      const result = await this.googleDriveService.initialize();
+      return result;
     } catch (error) {
-      console.error('Error creating vocabulary word:', error);
+      console.error('Google Drive initialization error:', error);
       throw error;
     }
   }
 
-  // Authentication helpers
-  async getCurrentUser() {
+  /**
+   * Check Google Drive connection status
+   * @returns {Promise<boolean>}
+   */
+  async checkGoogleDriveStatus() {
     try {
-      const { data: { user }, error } = await supabase.auth.getUser();
-      if (error) throw error;
-      return user;
+      const status = await this.googleDriveService.checkConnection();
+      return status;
     } catch (error) {
-      console.error('Error getting current user:', error);
-      return null;
+      console.error('Google Drive status check error:', error);
+      return false;
     }
   }
 
-  async signOut() {
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      return true;
-    } catch (error) {
-      console.error('Error signing out:', error);
-      throw error;
+  /**
+   * Get application configuration
+   * @returns {Object}
+   */
+  getAppConfig() {
+    if (!this.isAdminAuthenticated()) {
+      throw new Error('Admin authentication required');
     }
+
+    return {
+      googleDrive: AppConfig.getGoogleDriveSettings(),
+      database: AppConfig.getDatabaseSettings(),
+      ai: AppConfig.getAISettings(),
+      version: AppConfig.getVersion(),
+      environment: AppConfig.getEnvironment()
+    };
   }
 }
 
-export default new AdminService();
+// Create and export singleton instance
+const adminService = new AdminService();
+export default adminService;
+export { AdminService };

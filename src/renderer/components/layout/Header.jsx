@@ -17,6 +17,8 @@ import {
 import { useTheme } from '../../providers/ThemeProvider';
 import { useProgress } from '../../providers/ProgressProvider';
 import { useAudio } from '../../providers/AudioProvider';
+import DatabaseStatus from '../DatabaseStatus';
+import { AppConfig } from '../../../config/AppConfig';
 
 const Header = () => {
   const { theme, toggleTheme } = useTheme();
@@ -122,6 +124,9 @@ const Header = () => {
 
       {/* Right Section - Controls */}
       <div className="flex items-center space-x-2 flex-1 justify-end">
+        {/* Database Status */}
+        {AppConfig.isDatabaseEnabled() && <DatabaseStatus />}
+        
         {/* Audio Status */}
         <button
           onClick={toggleMute}

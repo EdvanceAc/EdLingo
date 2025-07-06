@@ -1,161 +1,134 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { supabase } from '../services/supabaseClient';
-import LoadingSpinner from '../components/ui/LoadingSpinner';
-import { Card } from '../components/ui/Card';
-import { AlertCircle, CheckCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { CheckCircle, XCircle, Loader } from 'lucide-react';
+import { useDatabase } from '../hooks/useDatabase';
 
 const AuthCallback = () => {
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { user, loading } = useAuth();
-  const [status, setStatus] = useState('processing'); // 'processing', 'success', 'error'
+  const [searchParams] = useSearchParams();
+  const { supabase } = useDatabase();
+  const [status, setStatus] = useState('loading'); // loading, success, error
   const [message, setMessage] = useState('Processing authentication...');
 
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
-        // Check for error parameters first
-        const error = searchParams.get('error');
-        const errorDescription = searchParams.get('error_description');
+        // Handle the auth callback from Supabase
+        const { data, error } = await supabase.auth.getSession();
         
         if (error) {
-          console.error('OAuth error:', error, errorDescription);
+          console.error('Auth callback error:', error);
           setStatus('error');
-          setMessage(errorDescription || 'Authentication failed. Please try again.');
-          setTimeout(() => {
-            navigate('/auth/login', { replace: true });
-          }, 3000);
+          setMessage(error.message || 'Authentication failed');
+          setTimeout(() => navigate('/auth/login'), 3000);
           return;
         }
 
-        // For Supabase OAuth, we need to handle the session exchange
-        // Supabase automatically processes the OAuth callback and updates the session
-        console.log('Processing OAuth callback...');
-        
-        // Get the current session to see if authentication was successful
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
-        if (sessionError) {
-          console.error('Session error:', sessionError);
-          setStatus('error');
-          setMessage('Failed to retrieve authentication session.');
-          setTimeout(() => {
-            navigate('/auth/login', { replace: true });
-          }, 3000);
-          return;
-        }
-
-        if (session && session.user) {
-          console.log('Authentication successful:', session.user.email);
+        if (data.session) {
           setStatus('success');
           setMessage('Authentication successful! Redirecting...');
-          
-          // Wait a moment for the auth context to update
-          setTimeout(() => {
-            navigate('/', { replace: true });
-          }, 2000);
+          setTimeout(() => navigate('/dashboard'), 2000);
         } else {
-          // Wait a bit more for the session to be established
-          console.log('No session found, waiting for auth state change...');
-          // The useEffect below will handle the redirect once user is set
+          setStatus('error');
+          setMessage('No session found. Redirecting to login...');
+          setTimeout(() => navigate('/auth/login'), 3000);
         }
-      } catch (error) {
-        console.error('Auth callback error:', error);
+      } catch (err) {
+        console.error('Unexpected error during auth callback:', err);
         setStatus('error');
-        setMessage('An unexpected error occurred during authentication.');
-        setTimeout(() => {
-          navigate('/auth/login', { replace: true });
-        }, 3000);
+        setMessage('An unexpected error occurred');
+        setTimeout(() => navigate('/auth/login'), 3000);
       }
     };
 
     handleAuthCallback();
-  }, [searchParams, navigate]);
+  }, [navigate, supabase.auth]);
 
-  // Monitor auth state changes
-  useEffect(() => {
-    if (!loading) {
-      if (user) {
-        console.log('User authenticated via context:', user.email);
-        setStatus('success');
-        setMessage('Authentication successful! Redirecting...');
-        setTimeout(() => {
-          navigate('/', { replace: true });
-        }, 1000);
-      } else if (status === 'processing') {
-        // If we're still processing and no user after loading is complete,
-        // wait a bit more before showing error
-        setTimeout(() => {
-          if (!user && status === 'processing') {
-            setStatus('error');
-            setMessage('Authentication failed - no user data received.');
-            setTimeout(() => {
-              navigate('/auth/login', { replace: true });
-            }, 3000);
-          }
-        }, 3000);
-      }
-    }
-  }, [user, loading, status, navigate]);
-
-  const getStatusIcon = () => {
+  const getIcon = () => {
     switch (status) {
+      case 'loading':
+        return <Loader className="w-12 h-12 animate-spin text-primary" />;
       case 'success':
-        return <CheckCircle className="w-8 h-8 text-green-500" />;
+        return <CheckCircle className="w-12 h-12 text-green-500" />;
       case 'error':
-        return <AlertCircle className="w-8 h-8 text-red-500" />;
+        return <XCircle className="w-12 h-12 text-red-500" />;
       default:
-        return <LoadingSpinner className="w-8 h-8 text-blue-500" />;
+        return <Loader className="w-12 h-12 animate-spin text-primary" />;
     }
   };
 
   const getStatusColor = () => {
     switch (status) {
       case 'success':
-        return 'text-green-700 dark:text-green-400';
+        return 'text-green-600';
       case 'error':
-        return 'text-red-700 dark:text-red-400';
+        return 'text-red-600';
       default:
-        return 'text-blue-700 dark:text-blue-400';
+        return 'text-gray-600';
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
-      <Card className="p-8 shadow-xl max-w-md w-full">
-        <div className="text-center">
-          <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mx-auto mb-6">
-            <span className="text-2xl font-bold text-white">EL</span>
-          </div>
-          
-          <div className="mb-6">
-            {getStatusIcon()}
-          </div>
-          
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-            {status === 'processing' && 'Processing Authentication'}
-            {status === 'success' && 'Authentication Successful'}
-            {status === 'error' && 'Authentication Failed'}
-          </h1>
-          
-          <p className={`text-sm ${getStatusColor()}`}>
-            {message}
-          </p>
-          
-          {status === 'error' && (
-            <div className="mt-6">
-              <button
-                onClick={() => navigate('/auth/login', { replace: true })}
-                className="text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 font-medium"
-              >
-                Return to Login
-              </button>
-            </div>
-          )}
-        </div>
-      </Card>
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 flex items-center justify-center p-4">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5 }}
+        className="bg-card border border-border rounded-2xl shadow-xl p-8 w-full max-w-md text-center"
+      >
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+          className="flex justify-center mb-6"
+        >
+          {getIcon()}
+        </motion.div>
+
+        <motion.h1
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="text-2xl font-bold text-foreground mb-4"
+        >
+          Authentication
+        </motion.h1>
+
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className={`text-lg ${getStatusColor()} mb-6`}
+        >
+          {message}
+        </motion.p>
+
+        {status === 'loading' && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            className="flex justify-center space-x-1"
+          >
+            <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+            <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+            <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+          </motion.div>
+        )}
+
+        {status === 'error' && (
+          <motion.button
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+            onClick={() => navigate('/auth/login')}
+            className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+          >
+            Return to Login
+          </motion.button>
+        )}
+      </motion.div>
     </div>
   );
 };

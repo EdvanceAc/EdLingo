@@ -63,6 +63,7 @@
     "cross-env": "^7.0.3",
     "dotenv": "^16.6.1",
     "framer-motion": "^10.16.16",
+    "googleapis": "^144.0.0",
     "lucide-react": "^0.303.0",
     "mime": "^4.0.7",
     "react": "^18.2.0",
