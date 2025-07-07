@@ -80,7 +80,9 @@ export default defineConfig({
   define: {
     __IS_DEV__: JSON.stringify(process.env.NODE_ENV === 'development'),
     global: 'globalThis',
-    'process.env': {},
+    'process.env': {
+      NODE_ENV: JSON.stringify(process.env.NODE_ENV)
+    },
     'process.stdout': '{ isTTY: false }',
     'process.stderr': '{ isTTY: false }'
   },
