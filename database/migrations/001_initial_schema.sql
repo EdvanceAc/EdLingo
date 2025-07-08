@@ -203,6 +203,10 @@ DROP POLICY IF EXISTS "Instructors can manage their courses" ON public.courses;
 CREATE POLICY "Instructors can manage their courses" ON public.courses
     FOR ALL USING (auth.uid() = instructor_id);
 
+DROP POLICY IF EXISTS "Authenticated users can create courses" ON public.courses;
+CREATE POLICY "Authenticated users can create courses" ON public.courses
+    FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+
 -- Assignments policies (public read, admin write)
 DROP POLICY IF EXISTS "Anyone can view active assignments" ON public.assignments;
 CREATE POLICY "Anyone can view active assignments" ON public.assignments
@@ -217,6 +221,10 @@ CREATE POLICY "Course instructors can manage assignments" ON public.assignments
             AND courses.instructor_id = auth.uid()
         )
     );
+
+DROP POLICY IF EXISTS "Authenticated users can create assignments" ON public.assignments;
+CREATE POLICY "Authenticated users can create assignments" ON public.assignments
+    FOR INSERT WITH CHECK (auth.role() = 'authenticated');
 
 -- Create functions for automatic profile creation
 CREATE OR REPLACE FUNCTION public.handle_new_user()

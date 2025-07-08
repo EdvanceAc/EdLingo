@@ -18,7 +18,8 @@ async function runMigrations() {
     '002_add_grammar_lessons.sql',
     '003_fix_user_progress_columns.sql',
     '004_fix_learning_sessions_relationship.sql', 
-    '005_add_sample_vocabulary.sql'
+    '005_add_sample_vocabulary.sql',
+    '006_add_admin_policies.sql'
 ];
   
   for (const migrationFile of migrationFiles) {

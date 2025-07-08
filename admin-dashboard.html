@@ -38,7 +38,7 @@
                     <button class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg transition-all" onclick="refreshData()">
                         <i data-lucide="refresh-cw" class="w-4 h-4"></i>
                     </button>
-                    <button class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg transition-all">
+                    <button class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg transition-all" onclick="logout()">
                         <i data-lucide="log-out" class="w-4 h-4"></i>
                     </button>
                 </div>
@@ -313,15 +313,15 @@
                 <form id="courseForm" class="p-6 space-y-6">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Course Title</label>
-                        <input type="text" id="courseTitle" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                        <input type="text" id="courseTitle" name="title" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
-                        <textarea id="courseDescription" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
+                        <textarea id="courseDescription" name="description" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Course Level</label>
-                        <select id="courseLevel" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <select id="courseLevel" name="level" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                             <option value="beginner">Beginner</option>
                             <option value="intermediate">Intermediate</option>
                             <option value="advanced">Advanced</option>
@@ -392,20 +392,20 @@
                 <form id="assignmentForm" class="p-6 space-y-6">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Assignment Title</label>
-                        <input type="text" id="assignmentTitle" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                        <input type="text" id="assignmentTitle" name="title" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Instructions</label>
-                        <textarea id="assignmentInstructions" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
+                        <textarea id="assignmentInstructions" name="description" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
                     </div>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Due Date</label>
-                            <input type="datetime-local" id="assignmentDueDate" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <input type="datetime-local" id="assignmentDueDate" name="dueDate" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Points</label>
-                            <input type="number" id="assignmentPoints" min="0" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <input type="number" id="assignmentPoints" name="points" min="0" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                         </div>
                     </div>
                     <div>
@@ -493,6 +493,15 @@
         document.addEventListener('DOMContentLoaded', async function() {
             lucide.createIcons();
             
+            // Check authentication first
+            if (!checkAuthentication()) {
+                redirectToLogin();
+                return;
+            }
+            
+            // Authenticate with Supabase using a demo user
+            await authenticateWithSupabase();
+            
             // Check connection first
             const isConnected = await checkConnection();
             if (isConnected) {
@@ -501,6 +510,75 @@
                 showConnectionError();
             }
         });
+        
+        function checkAuthentication() {
+            return localStorage.getItem('adminAuthenticated') === 'true';
+        }
+        
+        function redirectToLogin() {
+            if (window.electronAPI) {
+                window.location.href = '#/admin-login';
+            } else {
+                window.location.href = 'admin-login.html';
+            }
+        }
+        
+        async function authenticateWithSupabase() {
+             try {
+                 // Sign in with a demo admin user for development
+                 // In production, this should use proper authentication
+                 const { data, error } = await supabase.auth.signInWithPassword({
+                     email: 'admin@example.com',
+                     password: 'admin123456'
+                 });
+                 
+                 if (error) {
+                     console.warn('Admin auth failed, creating demo user:', error.message);
+                     // Try to create the demo admin user if it doesn't exist
+                     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+                         email: 'admin@example.com',
+                         password: 'admin123456'
+                     });
+                     
+                     if (signUpError) {
+                         console.error('Failed to create demo admin user:', signUpError);
+                         // If signup fails, try anonymous authentication as fallback
+                         const { data: anonData, error: anonError } = await supabase.auth.signInAnonymously();
+                         if (anonError) {
+                             console.error('Anonymous auth also failed:', anonError);
+                         } else {
+                             console.log('✅ Authenticated anonymously with Supabase');
+                         }
+                     } else {
+                         console.log('Demo admin user created successfully');
+                         // After creating user, sign in
+                         const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+                             email: 'admin@example.com',
+                             password: 'admin123456'
+                         });
+                         if (signInError) {
+                             console.error('Failed to sign in after creation:', signInError);
+                         } else {
+                             console.log('✅ Signed in with newly created admin user');
+                         }
+                     }
+                 } else {
+                     console.log('✅ Authenticated with Supabase as admin');
+                 }
+             } catch (error) {
+                 console.error('Authentication error:', error);
+             }
+         }
+         
+         async function logout() {
+             try {
+                 await supabase.auth.signOut();
+                 localStorage.removeItem('adminAuthenticated');
+                 redirectToLogin();
+             } catch (error) {
+                 console.error('Logout error:', error);
+             }
+         }
         
         function showConnectionError() {
             const errorMessage = `
@@ -655,13 +733,13 @@
                                     ${assignment.title || 'Untitled Assignment'}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    ${assignment.instructions || 'No instructions'}
+                                    ${assignment.description || 'No description'}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                     ${dueDate}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    ${assignment.points || 0} points
+                                    ${assignment.max_score || 0} points
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                     <button class="text-blue-600 hover:text-blue-900 mr-3" onclick="editAssignment('${assignment.id}')">
@@ -1218,13 +1296,145 @@ After running this SQL, refresh the admin dashboard to see the user management w
          // Course form submission
          document.getElementById('courseForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-            // This function is disabled as it depends on the database.
+            
+            const formData = new FormData(e.target);
+            const title = formData.get('title');
+            const description = formData.get('description');
+            const level = formData.get('level');
+            const pdfFiles = document.getElementById('coursePdfs').files;
+            const audioFiles = document.getElementById('courseAudio').files;
+            const videoFiles = document.getElementById('courseVideos').files;
+            const imageFiles = document.getElementById('courseImages').files;
+            
+            if (!title || !description) {
+                showError('Please fill in all required fields');
+                return;
+            }
+            
+            // Show loading state
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            
+            try {
+                submitBtn.textContent = 'Creating...';
+                submitBtn.disabled = true;
+                
+                // Upload files if any
+                let uploadedFiles = [];
+                if (pdfFiles.length > 0 || audioFiles.length > 0 || videoFiles.length > 0 || imageFiles.length > 0) {
+                    const allFiles = [...pdfFiles, ...audioFiles, ...videoFiles, ...imageFiles];
+                    uploadedFiles = await uploadFiles(allFiles, 'courses');
+                }
+                
+                // Create course in database
+                 const { data, error } = await supabase
+                     .from('courses')
+                     .insert({
+                         title: title,
+                         description: description,
+                         language: 'Spanish', // Default language
+                         level: level || 'beginner', // Default to beginner if not specified
+                         duration_hours: 10, // Default duration
+                         instructor_id: null, // Will be set by admin later
+                         is_active: true
+                     })
+                     .select();
+                
+                if (error) throw error;
+                
+                // Reset form and close modal
+                e.target.reset();
+                closeCourseModal();
+                
+                // Refresh courses list
+                await loadCourses();
+                updateLastUpdated();
+                
+                // Show success message
+                alert('Course created successfully!');
+                
+            } catch (error) {
+                console.error('Error creating course:', error);
+                showError('Failed to create course: ' + error.message);
+            } finally {
+                // Reset button state
+                const submitBtn = e.target.querySelector('button[type="submit"]');
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            }
          });
 
         // Assignment form submission
         document.getElementById('assignmentForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-            // This function is disabled as it depends on the database.
+            
+            const formData = new FormData(e.target);
+            const title = formData.get('title');
+            const description = formData.get('description');
+            const dueDate = formData.get('dueDate');
+            const points = formData.get('points');
+            const pdfFiles = document.getElementById('assignmentPdfs').files;
+            const audioFiles = document.getElementById('assignmentAudio').files;
+            const videoFiles = document.getElementById('assignmentVideos').files;
+            const imageFiles = document.getElementById('assignmentImages').files;
+            
+            if (!title || !description) {
+                showError('Please fill in all required fields');
+                return;
+            }
+            
+            // Show loading state
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            
+            try {
+                submitBtn.textContent = 'Creating...';
+                submitBtn.disabled = true;
+                
+                // Upload files if any
+                let uploadedFiles = [];
+                if (pdfFiles.length > 0 || audioFiles.length > 0 || videoFiles.length > 0 || imageFiles.length > 0) {
+                    const allFiles = [...pdfFiles, ...audioFiles, ...videoFiles, ...imageFiles];
+                    uploadedFiles = await uploadFiles(allFiles, 'assignments');
+                }
+                
+                // Create assignment in database
+                 const { data, error } = await supabase
+                     .from('assignments')
+                     .insert({
+                         course_id: null, // Will be set by admin later
+                         title: title,
+                         description: description,
+                         assignment_type: 'exercise',
+                         difficulty_level: 'beginner',
+                         max_score: parseInt(points) || 100, // Default to 100 points if not specified
+                         due_date: dueDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Default to 7 days from now
+                         is_active: true
+                     })
+                     .select();
+                
+                if (error) throw error;
+                
+                // Reset form and close modal
+                e.target.reset();
+                closeAssignmentModal();
+                
+                // Refresh assignments list
+                await loadAssignments();
+                updateLastUpdated();
+                
+                // Show success message
+                alert('Assignment created successfully!');
+                
+            } catch (error) {
+                console.error('Error creating assignment:', error);
+                showError('Failed to create assignment: ' + error.message);
+            } finally {
+                // Reset button state
+                const submitBtn = e.target.querySelector('button[type="submit"]');
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            }
         });
 
         // Action functions
