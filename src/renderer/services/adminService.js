@@ -1,5 +1,6 @@
 import googleDriveService from './googleDriveService';
 import { AppConfig } from '../../config/AppConfig';
+import adminDatabaseService from './adminDatabaseService.js';
 
 class AdminService {
   constructor() {
@@ -9,6 +10,19 @@ class AdminService {
       username: 'admin',
       password: 'admin123' // In production, this should be properly secured
     };
+    this.initializeDatabase();
+  }
+
+  /**
+   * Initialize database service
+   */
+  async initializeDatabase() {
+    try {
+      await adminDatabaseService.initialize();
+      console.log('Admin database service initialized');
+    } catch (error) {
+      console.error('Failed to initialize admin database service:', error);
+    }
   }
 
   /**
@@ -218,6 +232,131 @@ class AdminService {
       version: AppConfig.getVersion(),
       environment: AppConfig.getEnvironment()
     };
+  }
+
+  /**
+   * Get dashboard statistics
+   * @returns {Promise<Object>}
+   */
+  async getStatistics() {
+    if (!this.isAdminAuthenticated()) {
+      throw new Error('Admin authentication required');
+    }
+
+    try {
+      return await adminDatabaseService.getStatistics();
+    } catch (error) {
+      console.error('Error fetching statistics:', error);
+      throw new Error('Failed to fetch dashboard statistics');
+    }
+  }
+
+  /**
+   * Get courses
+   * @returns {Promise<Array>}
+   */
+  async getCourses() {
+    if (!this.isAdminAuthenticated()) {
+      throw new Error('Admin authentication required');
+    }
+
+    try {
+      return await adminDatabaseService.getCourses();
+    } catch (error) {
+      console.error('Error fetching courses:', error);
+      // Return empty array for now since course table doesn't exist yet
+      return [];
+    }
+  }
+
+  /**
+   * Get assignments
+   * @returns {Promise<Array>}
+   */
+  async getAssignments() {
+    if (!this.isAdminAuthenticated()) {
+      throw new Error('Admin authentication required');
+    }
+
+    try {
+      return await adminDatabaseService.getAssignments();
+    } catch (error) {
+      console.error('Error fetching assignments:', error);
+      // Return empty array for now since assignment table doesn't exist yet
+      return [];
+    }
+  }
+
+  /**
+   * Get recent activity
+   * @returns {Promise<Array>}
+   */
+  async getRecentActivity() {
+    if (!this.isAdminAuthenticated()) {
+      throw new Error('Admin authentication required');
+    }
+
+    try {
+      return await adminDatabaseService.getRecentActivity();
+    } catch (error) {
+      console.error('Error fetching recent activity:', error);
+      throw new Error('Failed to fetch recent activity');
+    }
+  }
+
+  /**
+   * Get user activity data for charts
+   * @returns {Promise<Array>}
+   */
+  async getUserActivityData() {
+    if (!this.isAdminAuthenticated()) {
+      throw new Error('Admin authentication required');
+    }
+
+    try {
+      return await adminDatabaseService.getUserActivityData();
+    } catch (error) {
+      console.error('Error fetching user activity data:', error);
+      throw new Error('Failed to fetch user activity data');
+    }
+  }
+
+  /**
+   * Get users with filtering and pagination
+   * @param {Object} options - Query options
+   * @returns {Promise<Array>}
+   */
+  async getUsers(options = {}) {
+    if (!this.isAdminAuthenticated()) {
+      throw new Error('Admin authentication required');
+    }
+
+    try {
+      return await adminDatabaseService.getUsers(options);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      throw new Error('Failed to fetch users');
+    }
+  }
+
+  /**
+   * Delete course
+   * @param {string} courseId - Course ID to delete
+   * @returns {Promise<boolean>}
+   */
+  async deleteCourse(courseId) {
+    if (!this.isAdminAuthenticated()) {
+      throw new Error('Admin authentication required');
+    }
+
+    try {
+      // TODO: Implement when course table is created
+      console.log(`Course deletion not yet implemented for ID: ${courseId}`);
+      return true;
+    } catch (error) {
+      console.error('Error deleting course:', error);
+      throw new Error('Failed to delete course');
+    }
   }
 }
 

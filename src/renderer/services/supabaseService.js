@@ -18,11 +18,33 @@ class SupabaseService {
       
       if (this.isConnected) {
         console.log('✅ Supabase connected successfully');
+        // Test if required tables exist
+        await this.verifyDatabaseSchema();
       } else {
         console.warn('⚠️ Supabase connection failed:', connectionStatus.error);
+        console.warn('📋 Please check SETUP_DATABASE.md for database setup instructions');
       }
     } catch (error) {
       console.error('❌ Failed to initialize Supabase service:', error);
+      console.warn('📋 Please check SETUP_DATABASE.md for database setup instructions');
+    }
+  }
+
+  async verifyDatabaseSchema() {
+    try {
+      // Test if core tables exist by attempting a simple query
+      const { error } = await this.client
+        .from('user_profiles')
+        .select('id')
+        .limit(1);
+      
+      if (error && error.code === '42P01') {
+        console.error('❌ Database tables not found. Please run the database migration.');
+        console.warn('📋 See SETUP_DATABASE.md for setup instructions');
+        this.isConnected = false;
+      }
+    } catch (error) {
+      console.warn('⚠️ Could not verify database schema:', error.message);
     }
   }
 
@@ -221,6 +243,13 @@ class SupabaseService {
   // Vocabulary Management
   async saveVocabulary(userId, vocabularyData) {
     try {
+      if (!this.isConnected) {
+        return { 
+          success: false, 
+          error: 'Database not connected. Please check SETUP_DATABASE.md for setup instructions.' 
+        };
+      }
+
       const { data, error } = await this.client
         .from('user_vocabulary')
         .upsert({
@@ -229,27 +258,59 @@ class SupabaseService {
           updated_at: new Date().toISOString()
         });
       
-      if (error) throw error;
+      if (error) {
+        if (error.code === '42P01') {
+          return { 
+            success: false, 
+            error: 'Database tables not found. Please run the database migration. See SETUP_DATABASE.md' 
+          };
+        }
+        throw error;
+      }
       return { success: true, data };
     } catch (error) {
       console.error('Save vocabulary error:', error);
-      return { success: false, error: error.message };
+      return { 
+        success: false, 
+        error: error.message || 'Failed to save vocabulary. Please check your database connection.' 
+      };
     }
   }
 
   async getUserVocabulary(userId) {
     try {
+      if (!this.isConnected) {
+        return { 
+          success: false, 
+          error: 'Database not connected. Please check SETUP_DATABASE.md for setup instructions.',
+          data: [] 
+        };
+      }
+
       const { data, error } = await this.client
         .from('user_vocabulary')
         .select('*')
         .eq('user_id', userId)
         .order('updated_at', { ascending: false });
       
-      if (error) throw error;
+      if (error) {
+        if (error.code === '42P01') {
+          return { 
+            success: false, 
+            error: 'Database tables not found. Please run the database migration. See SETUP_DATABASE.md',
+            data: [] 
+          };
+        }
+        throw error;
+      }
       return { success: true, data: data || [] };
     } catch (error) {
       console.error('Get vocabulary error:', error);
-      return { success: false, error: error.message };
+      return { 
+        success: false, 
+        error: error.message || 'Failed to load vocabulary. Please check your database connection.',
+        data: [] 
+      };
     }
   }
 

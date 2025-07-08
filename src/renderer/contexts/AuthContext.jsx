@@ -23,13 +23,37 @@ export const AuthProvider = ({ children }) => {
     // Get initial session
     const getInitialSession = async () => {
       try {
-        const { success, session: currentSession } = await supabaseService.getSession();
-        if (mounted && success && currentSession) {
-          setSession(currentSession);
-          setUser(currentSession.user);
+        // Check if Supabase is properly configured
+        const connectionStatus = await supabaseService.getConnectionStatus();
+        
+        if (connectionStatus) {
+          const { success, session: currentSession } = await supabaseService.getSession();
+          if (mounted && success && currentSession) {
+            setSession(currentSession);
+            setUser(currentSession.user);
+          }
+        } else {
+          // Fallback for development - create a mock user
+          console.warn('Supabase not connected, using fallback authentication');
+          const mockUser = {
+            id: 'dev-user-123',
+            email: 'dev@edlingo.com',
+            user_metadata: { name: 'Development User' }
+          };
+          setUser(mockUser);
+          setSession({ user: mockUser });
         }
       } catch (error) {
         console.error('Error getting initial session:', error);
+        // Fallback for development - create a mock user
+        console.warn('Authentication error, using fallback user');
+        const mockUser = {
+          id: 'dev-user-123',
+          email: 'dev@edlingo.com',
+          user_metadata: { name: 'Development User' }
+        };
+        setUser(mockUser);
+        setSession({ user: mockUser });
       } finally {
         if (mounted) {
           setLoading(false);
@@ -39,16 +63,22 @@ export const AuthProvider = ({ children }) => {
 
     getInitialSession();
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabaseService.onAuthStateChange(
-      async (event, session) => {
-        if (mounted) {
-          setSession(session);
-          setUser(session?.user ?? null);
-          setLoading(false);
+    // Listen for auth changes only if Supabase is available
+    let subscription;
+    try {
+      const authListener = supabaseService.onAuthStateChange(
+        async (event, session) => {
+          if (mounted) {
+            setSession(session);
+            setUser(session?.user ?? null);
+            setLoading(false);
+          }
         }
-      }
-    );
+      );
+      subscription = authListener?.data?.subscription;
+    } catch (error) {
+      console.warn('Could not set up auth state listener:', error);
+    }
 
     return () => {
       mounted = false;

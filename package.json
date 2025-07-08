@@ -16,7 +16,8 @@
     "test": "vitest",
     "test:coverage": "vitest --coverage",
     "check-health": "node check-service-health.js",
-    "analyze-bundle": "npm run build && npx webpack-bundle-analyzer dist/static/js/*.js"
+    "analyze-bundle": "npm run build && npx webpack-bundle-analyzer dist/static/js/*.js",
+    "setup:admin-db": "node scripts/setup-admin-database.js"
   },
   "keywords": [
     "electron",

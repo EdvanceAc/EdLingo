@@ -27,6 +27,26 @@ export const AIProvider = ({ children }) => {
     loadAISettings();
   }, []);
 
+  // Auto-initialize AI service when settings are loaded
+  useEffect(() => {
+    const autoInitializeAI = async () => {
+      // Only auto-initialize if AI is not already initialized or initializing
+      if (!isInitializing && aiStatus === 'not_initialized') {
+        console.log('Auto-initializing AI service at startup...');
+        try {
+          await initializeAI();
+        } catch (error) {
+          console.warn('Auto-initialization failed, AI will initialize on first use:', error);
+        }
+      }
+    };
+
+    // Auto-initialize after a short delay to ensure settings are loaded
+    const timeoutId = setTimeout(autoInitializeAI, 500);
+    
+    return () => clearTimeout(timeoutId);
+  }, [aiStatus, isInitializing]);
+
   const loadAISettings = async () => {
     try {
       const settings = await window.electronAPI?.getAiSettings?.() || {};
@@ -62,8 +82,11 @@ export const AIProvider = ({ children }) => {
     try {
       // Initialize AI service with Gemini options if available
       const initOptions = {};
-      if (aiSettings.useGemini && aiSettings.geminiApiKey) {
-        initOptions.geminiApiKey = aiSettings.geminiApiKey;
+      const envGeminiApiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      const geminiApiKey = aiSettings.geminiApiKey || envGeminiApiKey;
+      
+      if (geminiApiKey) {
+        initOptions.geminiApiKey = geminiApiKey;
       }
       
       await aiService.initialize(initOptions);

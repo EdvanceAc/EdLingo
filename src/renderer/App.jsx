@@ -24,6 +24,7 @@ import AuthCallback from './pages/AuthCallback';
 
 // Auth Components
 import ProtectedRoute from './components/auth/ProtectedRoute';
+import DatabaseHealthCheck from './components/DatabaseHealthCheck';
 
 // Providers
 import { ThemeProvider } from './providers/ThemeProvider';
@@ -184,21 +185,22 @@ function App() {
                          </motion.div>
                        } 
                      />
-                  {/* Admin Dashboard - Separate route with no sidebar/header */}
-                  <Route 
-                    path="/admin" 
-                    element={
-                      <motion.div
-                        key="admin-dashboard"
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -20 }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        <AdminDashboard />
-                      </motion.div>
-                    } 
-                  />
+                     
+                     {/* Admin Dashboard Route */}
+                     <Route 
+                       path="/admin" 
+                       element={
+                         <motion.div
+                           key="admin-dashboard"
+                           initial={{ opacity: 0, y: 20 }}
+                           animate={{ opacity: 1, y: 0 }}
+                           exit={{ opacity: 0, y: -20 }}
+                           transition={{ duration: 0.3 }}
+                         >
+                           <AdminDashboard />
+                         </motion.div>
+                       } 
+                     />
                       <Route 
                         path="/" 
                         element={
@@ -325,6 +327,20 @@ function App() {
                               <Settings />
                             </motion.div>
                           </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/database-health" 
+                        element={
+                          <motion.div
+                            key="database-health"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -20 }}
+                            transition={{ duration: 0.3 }}
+                          >
+                            <DatabaseHealthCheck />
+                          </motion.div>
                         } 
                       />
                   </Routes>

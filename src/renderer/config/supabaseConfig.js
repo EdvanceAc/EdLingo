@@ -21,8 +21,14 @@ export const supabaseConfig = {
 // Helper function to check connection
 export const checkSupabaseConnection = async () => {
   try {
-    const { data, error } = await supabase.from('_health').select('*').limit(1);
-    if (error && error.code !== 'PGRST116') { // PGRST116 is "relation does not exist" which is fine
+    // Use a simple query to test connection - check if user_profiles table exists
+    const { data, error } = await supabase.from('user_profiles').select('id').limit(1);
+    if (error && error.code === '42P01') {
+      // Table doesn't exist - database schema not set up
+      console.warn('Database schema not found. Please run migrations.');
+      return { connected: true, error: 'Database schema not set up' };
+    }
+    if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned" which is fine
       throw error;
     }
     return { connected: true, error: null };

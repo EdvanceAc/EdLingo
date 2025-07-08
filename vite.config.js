@@ -1,9 +1,31 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
+import fs from 'fs';
+
+// Plugin to serve admin-dashboard.html at /admin route
+const adminRoutePlugin = () => {
+  return {
+    name: 'admin-route',
+    configureServer(server) {
+      server.middlewares.use('/admin', (req, res, next) => {
+        const adminHtmlPath = path.resolve(__dirname, 'admin-dashboard.html');
+        
+        if (fs.existsSync(adminHtmlPath)) {
+          const html = fs.readFileSync(adminHtmlPath, 'utf-8');
+          res.setHeader('Content-Type', 'text/html');
+          res.end(html);
+        } else {
+          res.statusCode = 404;
+          res.end('Admin dashboard not found');
+        }
+      });
+    }
+  };
+};
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), adminRoutePlugin()],
   base: './',
   publicDir: 'public',
   build: {

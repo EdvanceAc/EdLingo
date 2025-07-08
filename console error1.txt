@@ -1,0 +1,9 @@
+admin:1001 Error loading recent activity: TypeError: Cannot set properties of null (setting 'innerHTML')
+    at loadRecentActivity (admin:971:44)
+    at async Promise.all (index 6)
+    at async loadDashboardData (admin:515:17)
+overrideMethod	@	hook.js:608
+loadRecentActivity	@	admin:1001
+await in loadRecentActivity		
+loadDashboardData	@	admin:522
+(anonymous)	@	admin:487

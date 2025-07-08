@@ -69,6 +69,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   setSetting: (key, value) => ipcRenderer.invoke('settings:set', key, value),
   getAiSettings: () => ipcRenderer.invoke('settings:getAiSettings'),
   
+  // MCP (Model Context Protocol) functionality
+  runMcp: (serverName, toolName, args) => ipcRenderer.invoke('mcp:run', serverName, toolName, args),
+  
   // Notifications
   showNotification: (title, body) => ipcRenderer.invoke('notification:show', title, body),
   

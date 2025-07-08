@@ -1,8 +1,7 @@
 -- EdLingo Database Schema
 -- Initial migration for Supabase database
 
--- Enable Row Level Security
-ALTER DATABASE postgres SET "app.jwt_secret" TO 'your-jwt-secret';
+-- Note: JWT secret is configured at the project level in Supabase dashboard
 
 -- Create users profile table (extends auth.users)
 CREATE TABLE IF NOT EXISTS public.user_profiles (
@@ -88,6 +87,35 @@ CREATE TABLE IF NOT EXISTS public.user_achievements (
     metadata JSONB
 );
 
+-- Create courses table for admin dashboard
+CREATE TABLE IF NOT EXISTS public.courses (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    title TEXT NOT NULL,
+    description TEXT,
+    language TEXT NOT NULL,
+    level TEXT DEFAULT 'beginner',
+    duration_hours INTEGER,
+    instructor_id UUID REFERENCES auth.users(id),
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create assignments table for admin dashboard
+CREATE TABLE IF NOT EXISTS public.assignments (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    course_id UUID REFERENCES public.courses(id) ON DELETE CASCADE,
+    title TEXT NOT NULL,
+    description TEXT,
+    assignment_type TEXT DEFAULT 'exercise',
+    difficulty_level TEXT DEFAULT 'beginner',
+    max_score INTEGER DEFAULT 100,
+    due_date TIMESTAMP WITH TIME ZONE,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Create indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_user_progress_user_id ON public.user_progress(user_id);
 CREATE INDEX IF NOT EXISTS idx_learning_sessions_user_id ON public.learning_sessions(user_id);
@@ -96,6 +124,10 @@ CREATE INDEX IF NOT EXISTS idx_user_vocabulary_user_id ON public.user_vocabulary
 CREATE INDEX IF NOT EXISTS idx_user_vocabulary_language ON public.user_vocabulary(language);
 CREATE INDEX IF NOT EXISTS idx_conversation_history_session_id ON public.conversation_history(session_id);
 CREATE INDEX IF NOT EXISTS idx_user_achievements_user_id ON public.user_achievements(user_id);
+CREATE INDEX IF NOT EXISTS idx_courses_language ON public.courses(language);
+CREATE INDEX IF NOT EXISTS idx_courses_level ON public.courses(level);
+CREATE INDEX IF NOT EXISTS idx_assignments_course_id ON public.assignments(course_id);
+CREATE INDEX IF NOT EXISTS idx_assignments_due_date ON public.assignments(due_date);
 
 -- Enable Row Level Security (RLS)
 ALTER TABLE public.user_profiles ENABLE ROW LEVEL SECURITY;
@@ -104,49 +136,87 @@ ALTER TABLE public.learning_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_vocabulary ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.conversation_history ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_achievements ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.courses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.assignments ENABLE ROW LEVEL SECURITY;
 
 -- Create RLS policies
 -- User profiles policies
+DROP POLICY IF EXISTS "Users can view own profile" ON public.user_profiles;
 CREATE POLICY "Users can view own profile" ON public.user_profiles
     FOR SELECT USING (auth.uid() = id);
 
+DROP POLICY IF EXISTS "Users can update own profile" ON public.user_profiles;
 CREATE POLICY "Users can update own profile" ON public.user_profiles
     FOR UPDATE USING (auth.uid() = id);
 
+DROP POLICY IF EXISTS "Users can insert own profile" ON public.user_profiles;
 CREATE POLICY "Users can insert own profile" ON public.user_profiles
     FOR INSERT WITH CHECK (auth.uid() = id);
 
 -- User progress policies
+DROP POLICY IF EXISTS "Users can view own progress" ON public.user_progress;
 CREATE POLICY "Users can view own progress" ON public.user_progress
     FOR SELECT USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update own progress" ON public.user_progress;
 CREATE POLICY "Users can update own progress" ON public.user_progress
     FOR ALL USING (auth.uid() = user_id);
 
 -- Learning sessions policies
+DROP POLICY IF EXISTS "Users can view own sessions" ON public.learning_sessions;
 CREATE POLICY "Users can view own sessions" ON public.learning_sessions
     FOR SELECT USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert own sessions" ON public.learning_sessions;
 CREATE POLICY "Users can insert own sessions" ON public.learning_sessions
     FOR INSERT WITH CHECK (auth.uid() = user_id);
 
 -- User vocabulary policies
+DROP POLICY IF EXISTS "Users can manage own vocabulary" ON public.user_vocabulary;
 CREATE POLICY "Users can manage own vocabulary" ON public.user_vocabulary
     FOR ALL USING (auth.uid() = user_id);
 
 -- Conversation history policies
+DROP POLICY IF EXISTS "Users can view own conversations" ON public.conversation_history;
 CREATE POLICY "Users can view own conversations" ON public.conversation_history
     FOR SELECT USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert own conversations" ON public.conversation_history;
 CREATE POLICY "Users can insert own conversations" ON public.conversation_history
     FOR INSERT WITH CHECK (auth.uid() = user_id);
 
 -- User achievements policies
+DROP POLICY IF EXISTS "Users can view own achievements" ON public.user_achievements;
 CREATE POLICY "Users can view own achievements" ON public.user_achievements
     FOR SELECT USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert own achievements" ON public.user_achievements;
 CREATE POLICY "Users can insert own achievements" ON public.user_achievements
     FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+-- Courses policies (public read, admin write)
+DROP POLICY IF EXISTS "Anyone can view active courses" ON public.courses;
+CREATE POLICY "Anyone can view active courses" ON public.courses
+    FOR SELECT USING (is_active = true);
+
+DROP POLICY IF EXISTS "Instructors can manage their courses" ON public.courses;
+CREATE POLICY "Instructors can manage their courses" ON public.courses
+    FOR ALL USING (auth.uid() = instructor_id);
+
+-- Assignments policies (public read, admin write)
+DROP POLICY IF EXISTS "Anyone can view active assignments" ON public.assignments;
+CREATE POLICY "Anyone can view active assignments" ON public.assignments
+    FOR SELECT USING (is_active = true);
+
+DROP POLICY IF EXISTS "Course instructors can manage assignments" ON public.assignments;
+CREATE POLICY "Course instructors can manage assignments" ON public.assignments
+    FOR ALL USING (
+        EXISTS (
+            SELECT 1 FROM public.courses 
+            WHERE courses.id = assignments.course_id 
+            AND courses.instructor_id = auth.uid()
+        )
+    );
 
 -- Create functions for automatic profile creation
 CREATE OR REPLACE FUNCTION public.handle_new_user()
@@ -159,7 +229,8 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Create trigger for automatic profile creation
-CREATE OR REPLACE TRIGGER on_auth_user_created
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
     AFTER INSERT ON auth.users
     FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
@@ -173,14 +244,27 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Create triggers for updated_at
+DROP TRIGGER IF EXISTS update_user_profiles_updated_at ON public.user_profiles;
 CREATE TRIGGER update_user_profiles_updated_at
     BEFORE UPDATE ON public.user_profiles
     FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_user_progress_updated_at ON public.user_progress;
 CREATE TRIGGER update_user_progress_updated_at
     BEFORE UPDATE ON public.user_progress
     FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_user_vocabulary_updated_at ON public.user_vocabulary;
 CREATE TRIGGER update_user_vocabulary_updated_at
     BEFORE UPDATE ON public.user_vocabulary
+    FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_courses_updated_at ON public.courses;
+CREATE TRIGGER update_courses_updated_at
+    BEFORE UPDATE ON public.courses
+    FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_assignments_updated_at ON public.assignments;
+CREATE TRIGGER update_assignments_updated_at
+    BEFORE UPDATE ON public.assignments
     FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
