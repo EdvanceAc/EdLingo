@@ -20,6 +20,22 @@ const adminRoutePlugin = () => {
           res.end('Admin dashboard not found');
         }
       });
+    },
+    generateBundle() {
+      // Copy admin HTML files to dist folder during build
+      const adminFiles = ['admin-dashboard.html', 'admin-login.html'];
+      
+      adminFiles.forEach(file => {
+        const filePath = path.resolve(__dirname, file);
+        if (fs.existsSync(filePath)) {
+          const content = fs.readFileSync(filePath, 'utf-8');
+          this.emitFile({
+            type: 'asset',
+            fileName: file,
+            source: content
+          });
+        }
+      });
     }
   };
 };

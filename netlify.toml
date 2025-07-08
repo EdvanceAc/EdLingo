@@ -5,6 +5,13 @@
 [build.environment]
   NODE_VERSION = "18"
 
+# Admin dashboard route - serve admin-dashboard.html for /admin
+[[redirects]]
+  from = "/admin"
+  to = "/admin-dashboard.html"
+  status = 200
+  force = false
+
 # SPA fallback - serve index.html for all routes except static files
 [[redirects]]
   from = "/*"
@@ -41,6 +48,20 @@
   for = "/*.css"
   [headers.values]
     Content-Type = "text/css"
+
+[[headers]]
+  for = "/admin-dashboard.html"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+    Pragma = "no-cache"
+    Expires = "0"
+
+[[headers]]
+  for = "/admin-login.html"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+    Pragma = "no-cache"
+    Expires = "0"
 
 [[headers]]
   for = "/*.svg"
