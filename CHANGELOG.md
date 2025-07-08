@@ -5,6 +5,20 @@ All notable changes to the EdLingo project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.2] - 2024-12-20
+
+### Fixed
+- **Netlify Deployment**: Fixed admin page routing issue on Netlify deployment
+  - Added proper redirect rule for `/admin` route to serve `admin-dashboard.html`
+  - Updated Vite build configuration to copy admin HTML files to dist folder
+  - Added cache-busting headers for admin HTML files to prevent caching issues
+  - Resolved issue where admin page was loading old cached version after deployment
+
+### Technical Improvements
+- Enhanced `vite.config.js` with `generateBundle` hook to copy admin files during build
+- Updated `netlify.toml` with specific routing and caching rules for admin pages
+- Improved deployment reliability for standalone admin HTML files
+
 ## [1.0.1] - 2024-12-20
 
 ### 🔧 Enhanced Database Management & Admin Features
