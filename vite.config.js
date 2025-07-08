@@ -105,8 +105,8 @@ export default defineConfig({
     'process.env': {
       NODE_ENV: JSON.stringify(process.env.NODE_ENV)
     },
-    'process.stdout': '{ isTTY: false }',
-    'process.stderr': '{ isTTY: false }'
+    'process.stdout': JSON.stringify({ isTTY: false }),
+    'process.stderr': JSON.stringify({ isTTY: false })
   },
   optimizeDeps: {
     include: ['googleapis', 'google-auth-library']

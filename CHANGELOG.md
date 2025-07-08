@@ -5,6 +5,47 @@ All notable changes to the EdLingo project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2024-12-20
+
+### 🔧 Enhanced Database Management & Admin Features
+
+#### ✨ Added
+- **Database Health Monitoring**: Real-time database connection status and health checks
+- **Database Migration System**: Automated database schema migration scripts
+- **Admin Database Service**: Dedicated service for admin database operations
+- **Enhanced Error Handling**: Improved error reporting and debugging capabilities
+- **Migration Scripts**: Complete set of database migration files (002-005)
+  - Grammar lessons table structure
+  - User progress columns fixes
+  - Learning sessions relationship improvements
+  - Sample vocabulary data
+
+#### 🛠️ Technical Improvements
+- **DatabaseHealthCheck Component**: React component for monitoring database status
+- **Admin Database Service**: Centralized admin database operations
+- **Migration Runner**: Automated database migration execution
+- **Setup Scripts**: Admin database initialization and setup
+
+#### 📁 New Files
+- `src/renderer/components/DatabaseHealthCheck.jsx`
+- `src/renderer/services/adminDatabaseService.js`
+- `run-migrations.js`
+- `scripts/setup-admin-database.js`
+- `database/migrations/002_add_grammar_lessons.sql`
+- `database/migrations/003_fix_user_progress_columns.sql`
+- `database/migrations/004_fix_learning_sessions_relationship.sql`
+- `database/migrations/005_add_sample_vocabulary.sql`
+- `SETUP_DATABASE.md`
+
+#### 🔄 Updated
+- Enhanced admin dashboard functionality
+- Improved database service configurations
+- Updated authentication context
+- Refined AI provider services
+- Enhanced Supabase service integration
+
+---
+
 ## [1.0.0] - 2024-12-20
 
 ### 🎉 Initial Release
