@@ -21,6 +21,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import Login from './pages/Login';
 import SignUp from './pages/SignUp';
 import AuthCallback from './pages/AuthCallback';
+import AssessmentPage from './pages/AssessmentPage';
 
 // Auth Components
 import ProtectedRoute from './components/auth/ProtectedRoute';
@@ -325,6 +326,22 @@ function App() {
                               transition={{ duration: 0.3 }}
                             >
                               <Settings />
+                            </motion.div>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/assessment" 
+                        element={
+                          <ProtectedRoute>
+                            <motion.div
+                              key="assessment"
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -20 }}
+                              transition={{ duration: 0.3 }}
+                            >
+                              <AssessmentPage />
                             </motion.div>
                           </ProtectedRoute>
                         } 

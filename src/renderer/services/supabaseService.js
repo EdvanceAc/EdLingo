@@ -331,6 +331,273 @@ class SupabaseService {
       .subscribe();
   }
 
+  // Assessment Management
+  async createAssessmentSession(userId, targetLanguage, assessmentType) {
+    try {
+      const { data, error } = await this.client
+        .from('assessment_sessions')
+        .insert({
+          user_id: userId,
+          target_language: targetLanguage,
+          assessment_type: assessmentType,
+          status: 'in_progress',
+          created_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return { success: true, data };
+    } catch (error) {
+      console.error('Create assessment session error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  async getAssessmentTasks(sessionId) {
+    try {
+      const { data, error } = await this.client
+        .from('assessment_tasks')
+        .select('*')
+        .eq('session_id', sessionId)
+        .order('task_order');
+      
+      if (error) throw error;
+      return { success: true, data: data || [] };
+    } catch (error) {
+      console.error('Get assessment tasks error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  async submitAssessmentResponse(taskId, response, audioUrl = null) {
+    try {
+      const { data, error } = await this.client
+        .from('assessment_tasks')
+        .update({
+          user_response: response,
+          audio_response_url: audioUrl,
+          completed_at: new Date().toISOString()
+        })
+        .eq('id', taskId)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return { success: true, data };
+    } catch (error) {
+      console.error('Submit assessment response error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  async updateAssessmentSession(sessionId, updates) {
+    try {
+      const { data, error } = await this.client
+        .from('assessment_sessions')
+        .update({
+          ...updates,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', sessionId)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return { success: true, data };
+    } catch (error) {
+      console.error('Update assessment session error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  async getAssessmentCriteria(skillArea, cefrLevel) {
+    try {
+      const { data, error } = await this.client
+        .from('assessment_criteria')
+        .select('*')
+        .eq('skill_area', skillArea)
+        .eq('cefr_level', cefrLevel)
+        .single();
+      
+      if (error && error.code !== 'PGRST116') throw error;
+      return { success: true, data: data || null };
+    } catch (error) {
+      console.error('Get assessment criteria error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  async saveUserProficiencyProfile(userId, proficiencyData) {
+    try {
+      const { data, error } = await this.client
+        .from('user_proficiency_profiles')
+        .upsert({
+          user_id: userId,
+          ...proficiencyData,
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return { success: true, data };
+    } catch (error) {
+      console.error('Save proficiency profile error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  async getUserProficiencyProfile(userId) {
+    try {
+      const { data, error } = await this.client
+        .from('user_proficiency_profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+      
+      if (error && error.code !== 'PGRST116') throw error;
+      return { success: true, data: data || null };
+    } catch (error) {
+      console.error('Get proficiency profile error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Content Modules Management
+  async getContentModules(language = null, cefrLevel = null, moduleType = null) {
+    try {
+      let query = this.client
+        .from('content_modules')
+        .select('*')
+        .eq('is_active', true)
+        .order('order_index');
+      
+      if (language) query = query.eq('language', language);
+      if (cefrLevel) query = query.eq('cefr_level', cefrLevel);
+      if (moduleType) query = query.eq('module_type', moduleType);
+      
+      const { data, error } = await query;
+      
+      if (error) throw error;
+      return { success: true, data: data || [] };
+    } catch (error) {
+      console.error('Get content modules error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  async getContentModule(moduleId) {
+    try {
+      const { data, error } = await this.client
+        .from('content_modules')
+        .select('*')
+        .eq('id', moduleId)
+        .eq('is_active', true)
+        .single();
+      
+      if (error) throw error;
+      return { success: true, data };
+    } catch (error) {
+      console.error('Get content module error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  async createContentModule(moduleData) {
+    try {
+      const { data, error } = await this.client
+        .from('content_modules')
+        .insert({
+          ...moduleData,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return { success: true, data };
+    } catch (error) {
+      console.error('Create content module error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  async updateContentModule(moduleId, updates) {
+    try {
+      const { data, error } = await this.client
+        .from('content_modules')
+        .update({
+          ...updates,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', moduleId)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return { success: true, data };
+    } catch (error) {
+      console.error('Update content module error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  async deleteContentModule(moduleId) {
+    try {
+      const { data, error } = await this.client
+        .from('content_modules')
+        .update({ is_active: false })
+        .eq('id', moduleId)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return { success: true, data };
+    } catch (error) {
+      console.error('Delete content module error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Assignments and Tests (using content_modules table)
+  async getAssignment(assignmentId) {
+    try {
+      const { data, error } = await this.client
+        .from('content_modules')
+        .select('*')
+        .eq('id', assignmentId)
+        .eq('module_type', 'assignment')
+        .eq('is_active', true)
+        .single();
+      
+      if (error) throw error;
+      return { success: true, data };
+    } catch (error) {
+      console.error('Get assignment error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  async getTest(testId) {
+    try {
+      const { data, error } = await this.client
+        .from('content_modules')
+        .select('*')
+        .eq('id', testId)
+        .eq('module_type', 'test')
+        .eq('is_active', true)
+        .single();
+      
+      if (error) throw error;
+      return { success: true, data };
+    } catch (error) {
+      console.error('Get test error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
   // Utility methods
   async testConnection() {
     return await checkSupabaseConnection();

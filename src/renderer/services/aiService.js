@@ -252,6 +252,248 @@ class AIService {
     };
   }
 
+  // Assessment-specific methods
+  async analyzeConversation(conversationText, options = {}) {
+    if (!this.isInitialized) {
+      await this.initialize();
+    }
+
+    const targetLanguage = options.targetLanguage || 'English';
+    
+    // Try Gemini first if available
+    if (this.useGemini && geminiService.isReady()) {
+      try {
+        const prompt = `Analyze this conversation for language proficiency assessment:
+
+"${conversationText}"
+
+Provide a detailed analysis including:
+1. Fluency score (0-100)
+2. Grammar accuracy (0-100)
+3. Vocabulary range (0-100)
+4. Pronunciation quality (0-100) - estimate based on text patterns
+5. Overall CEFR level (A1, A2, B1, B2, C1, C2)
+6. Specific strengths and areas for improvement
+7. IELTS equivalent score (1-9)
+
+Return as JSON format.`;
+        
+        const response = await geminiService.generateResponse(prompt);
+        
+        try {
+          const analysis = JSON.parse(response);
+          return {
+            success: true,
+            analysis: {
+              fluency: analysis.fluency || 70,
+              grammar: analysis.grammar || 70,
+              vocabulary: analysis.vocabulary || 70,
+              pronunciation: analysis.pronunciation || 70,
+              cefrLevel: analysis.cefrLevel || 'B1',
+              ieltsEquivalent: analysis.ieltsEquivalent || 5.5,
+              strengths: analysis.strengths || ['Good effort'],
+              improvements: analysis.improvements || ['Continue practicing'],
+              overallScore: Math.round((analysis.fluency + analysis.grammar + analysis.vocabulary + analysis.pronunciation) / 4)
+            }
+          };
+        } catch (parseError) {
+          console.warn('Failed to parse Gemini response, using fallback analysis');
+        }
+      } catch (error) {
+        console.error('Gemini conversation analysis failed:', error);
+      }
+    }
+
+    // Fallback analysis
+    return this._analyzeConversationFallback(conversationText);
+  }
+
+  async evaluateWriting(writingText, options = {}) {
+    if (!this.isInitialized) {
+      await this.initialize();
+    }
+
+    const targetLanguage = options.targetLanguage || 'English';
+    
+    // Try Gemini first if available
+    if (this.useGemini && geminiService.isReady()) {
+      try {
+        const prompt = `Evaluate this writing sample for language proficiency assessment:
+
+"${writingText}"
+
+Provide a detailed evaluation including:
+1. Grammar accuracy (0-100)
+2. Vocabulary sophistication (0-100)
+3. Coherence and cohesion (0-100)
+4. Task achievement (0-100)
+5. Overall CEFR level (A1, A2, B1, B2, C1, C2)
+6. Specific feedback and suggestions
+7. IELTS writing equivalent score (1-9)
+
+Return as JSON format.`;
+        
+        const response = await geminiService.generateResponse(prompt);
+        
+        try {
+          const evaluation = JSON.parse(response);
+          return {
+            success: true,
+            evaluation: {
+              grammar: evaluation.grammar || 70,
+              vocabulary: evaluation.vocabulary || 70,
+              coherence: evaluation.coherence || 70,
+              taskAchievement: evaluation.taskAchievement || 70,
+              cefrLevel: evaluation.cefrLevel || 'B1',
+              ieltsEquivalent: evaluation.ieltsEquivalent || 5.5,
+              feedback: evaluation.feedback || 'Good writing effort',
+              suggestions: evaluation.suggestions || ['Continue practicing'],
+              overallScore: Math.round((evaluation.grammar + evaluation.vocabulary + evaluation.coherence + evaluation.taskAchievement) / 4)
+            }
+          };
+        } catch (parseError) {
+          console.warn('Failed to parse Gemini response, using fallback evaluation');
+        }
+      } catch (error) {
+        console.error('Gemini writing evaluation failed:', error);
+      }
+    }
+
+    // Fallback evaluation
+    return this._evaluateWritingFallback(writingText);
+  }
+
+  async determineCEFRLevel(skillScores, options = {}) {
+    const { grammar, vocabulary, fluency, pronunciation, writing } = skillScores;
+    const averageScore = Object.values(skillScores).reduce((sum, score) => sum + score, 0) / Object.values(skillScores).length;
+    
+    // CEFR level mapping based on average score
+    let cefrLevel;
+    let ieltsEquivalent;
+    
+    if (averageScore >= 90) {
+      cefrLevel = 'C2';
+      ieltsEquivalent = 8.5;
+    } else if (averageScore >= 80) {
+      cefrLevel = 'C1';
+      ieltsEquivalent = 7.5;
+    } else if (averageScore >= 70) {
+      cefrLevel = 'B2';
+      ieltsEquivalent = 6.5;
+    } else if (averageScore >= 60) {
+      cefrLevel = 'B1';
+      ieltsEquivalent = 5.5;
+    } else if (averageScore >= 45) {
+      cefrLevel = 'A2';
+      ieltsEquivalent = 4.5;
+    } else {
+      cefrLevel = 'A1';
+      ieltsEquivalent = 3.5;
+    }
+    
+    return {
+      cefrLevel,
+      ieltsEquivalent,
+      overallScore: Math.round(averageScore),
+      skillBreakdown: skillScores,
+      recommendations: this._generateRecommendations(cefrLevel, skillScores)
+    };
+  }
+
+  _analyzeConversationFallback(conversationText) {
+    const wordCount = conversationText.split(/\s+/).filter(word => word.length > 0).length;
+    const sentences = conversationText.split(/[.!?]+/).filter(s => s.trim().length > 0).length;
+    const avgWordsPerSentence = sentences > 0 ? Math.round(wordCount / sentences) : 0;
+    
+    // Basic scoring based on text characteristics
+    let fluency = Math.min(90, Math.max(40, wordCount * 2 + avgWordsPerSentence * 5));
+    let grammar = conversationText.match(/[A-Z]/) ? 75 : 65; // Basic capitalization check
+    let vocabulary = Math.min(85, Math.max(50, wordCount * 1.5));
+    let pronunciation = 70; // Default estimate
+    
+    const overallScore = Math.round((fluency + grammar + vocabulary + pronunciation) / 4);
+    
+    return {
+      success: true,
+      analysis: {
+        fluency,
+        grammar,
+        vocabulary,
+        pronunciation,
+        cefrLevel: overallScore >= 70 ? 'B1' : overallScore >= 55 ? 'A2' : 'A1',
+        ieltsEquivalent: overallScore >= 70 ? 5.5 : overallScore >= 55 ? 4.5 : 3.5,
+        strengths: ['Participated in conversation'],
+        improvements: ['Continue practicing speaking'],
+        overallScore
+      }
+    };
+  }
+
+  _evaluateWritingFallback(writingText) {
+    const wordCount = writingText.split(/\s+/).filter(word => word.length > 0).length;
+    const sentences = writingText.split(/[.!?]+/).filter(s => s.trim().length > 0).length;
+    const paragraphs = writingText.split(/\n\s*\n/).filter(p => p.trim().length > 0).length;
+    
+    // Basic scoring
+    let grammar = writingText.match(/[A-Z].*[.!?]/) ? 75 : 65;
+    let vocabulary = Math.min(85, Math.max(50, wordCount * 1.2));
+    let coherence = paragraphs > 1 ? 75 : 65;
+    let taskAchievement = wordCount >= 50 ? 75 : 60;
+    
+    const overallScore = Math.round((grammar + vocabulary + coherence + taskAchievement) / 4);
+    
+    return {
+      success: true,
+      evaluation: {
+        grammar,
+        vocabulary,
+        coherence,
+        taskAchievement,
+        cefrLevel: overallScore >= 70 ? 'B1' : overallScore >= 55 ? 'A2' : 'A1',
+        ieltsEquivalent: overallScore >= 70 ? 5.5 : overallScore >= 55 ? 4.5 : 3.5,
+        feedback: 'Good writing effort. Keep practicing!',
+        suggestions: ['Focus on sentence structure', 'Expand vocabulary'],
+        overallScore
+      }
+    };
+  }
+
+  _generateRecommendations(cefrLevel, skillScores) {
+    const recommendations = {
+      focusAreas: [],
+      suggestedActivities: []
+    };
+    
+    // Find weakest skills
+    const sortedSkills = Object.entries(skillScores).sort((a, b) => a[1] - b[1]);
+    const weakestSkills = sortedSkills.slice(0, 2).map(([skill]) => skill);
+    
+    recommendations.focusAreas = weakestSkills;
+    
+    // Generate activity suggestions based on level and weak areas
+    if (weakestSkills.includes('grammar')) {
+      recommendations.suggestedActivities.push('Practice grammar exercises daily');
+      recommendations.suggestedActivities.push('Focus on verb tenses and sentence structure');
+    }
+    
+    if (weakestSkills.includes('vocabulary')) {
+      recommendations.suggestedActivities.push('Learn 10 new words daily');
+      recommendations.suggestedActivities.push('Read articles in your target language');
+    }
+    
+    if (weakestSkills.includes('fluency')) {
+      recommendations.suggestedActivities.push('Practice speaking with native speakers');
+      recommendations.suggestedActivities.push('Record yourself speaking daily');
+    }
+    
+    if (weakestSkills.includes('pronunciation')) {
+      recommendations.suggestedActivities.push('Use pronunciation apps and tools');
+      recommendations.suggestedActivities.push('Listen to native speakers and repeat');
+    }
+    
+    return recommendations;
+  }
+
   _generateFallbackResponse(userMessage, options = {}) {
     const responses = [
       "That's interesting! Can you tell me more about that?",

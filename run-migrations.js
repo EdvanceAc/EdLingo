@@ -1,6 +1,6 @@
-const { createClient } = require('@supabase/supabase-js');
 const fs = require('fs');
 const path = require('path');
+const { createClient } = require('@supabase/supabase-js');
 require('dotenv').config();
 
 // Initialize Supabase client
@@ -19,7 +19,9 @@ async function runMigrations() {
     '003_fix_user_progress_columns.sql',
     '004_fix_learning_sessions_relationship.sql', 
     '005_add_sample_vocabulary.sql',
-    '006_add_admin_policies.sql'
+    '006_add_admin_policies.sql',
+    '006_add_assessment_columns.sql',
+    '008_add_assessment_system.sql'
 ];
   
   for (const migrationFile of migrationFiles) {

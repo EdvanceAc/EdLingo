@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import QuestionForm from '../../components/admin/QuestionForm';
 import {
   Users,
   BookOpen,
@@ -19,7 +20,10 @@ import {
   Download,
   Eye,
   Edit,
-  Trash2
+  Trash2,
+  FileText,
+  Save,
+  X
 } from 'lucide-react';
 
 const AdminDashboard = () => {
@@ -31,9 +35,20 @@ const AdminDashboard = () => {
   });
   const [recentActivity, setRecentActivity] = useState([]);
   const [students, setStudents] = useState([]);
+  const [contentModules, setContentModules] = useState([]);
+  const [selectedModule, setSelectedModule] = useState(null);
+  const [editingQuestion, setEditingQuestion] = useState(null);
+  const [showAddQuestion, setShowAddQuestion] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
+
+  useEffect(() => {
+    loadDashboardData();
+    if (activeTab === 'questions') {
+      loadContentModules();
+    }
+  }, [activeTab]);
 
   useEffect(() => {
     loadDashboardData();
@@ -133,6 +148,90 @@ const AdminDashboard = () => {
     }
   };
 
+  const loadContentModules = async () => {
+    try {
+      const { default: supabaseService } = await import('../services/supabaseService.js');
+      const result = await supabaseService.getContentModules();
+      if (result.success) {
+        setContentModules(result.data.filter(module => 
+          module.module_type === 'assignment' || module.module_type === 'test'
+        ));
+      } else {
+        setError('Failed to load content modules');
+      }
+    } catch (error) {
+      console.error('Error loading content modules:', error);
+      setError('Failed to load content modules');
+    }
+  };
+
+  const saveQuestion = async (moduleId, questionData) => {
+    try {
+      const { default: supabaseService } = await import('../services/supabaseService.js');
+      const module = contentModules.find(m => m.id === moduleId);
+      if (!module) return;
+
+      const updatedContent = { ...module.content };
+      if (!updatedContent.questions) updatedContent.questions = [];
+
+      if (editingQuestion) {
+        // Update existing question
+        const questionIndex = updatedContent.questions.findIndex(q => q.id === editingQuestion.id);
+        if (questionIndex !== -1) {
+          updatedContent.questions[questionIndex] = { ...questionData, id: editingQuestion.id };
+        }
+      } else {
+        // Add new question
+        const newQuestion = {
+          ...questionData,
+          id: Date.now().toString()
+        };
+        updatedContent.questions.push(newQuestion);
+      }
+
+      const result = await supabaseService.updateContentModule(moduleId, {
+        content: updatedContent
+      });
+
+      if (result.success) {
+        await loadContentModules();
+        setEditingQuestion(null);
+        setShowAddQuestion(false);
+      } else {
+        setError('Failed to save question');
+      }
+    } catch (error) {
+      console.error('Error saving question:', error);
+      setError('Failed to save question');
+    }
+  };
+
+  const deleteQuestion = async (moduleId, questionId) => {
+    try {
+      const { default: supabaseService } = await import('../services/supabaseService.js');
+      const module = contentModules.find(m => m.id === moduleId);
+      if (!module) return;
+
+      const updatedContent = { ...module.content };
+      if (updatedContent.questions) {
+        updatedContent.questions = updatedContent.questions.filter(q => q.id !== questionId);
+      }
+
+      const result = await supabaseService.updateContentModule(moduleId, {
+        content: updatedContent
+      });
+
+      if (result.success) {
+        await loadContentModules();
+      } else {
+        setError('Failed to delete question');
+      }
+    } catch (error) {
+      console.error('Error deleting question:', error);
+      setError('Failed to delete question');
+    }
+  };
+
   const StatCard = ({ title, value, icon: Icon, color, change }) => (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -213,6 +312,7 @@ const AdminDashboard = () => {
           { id: 'overview', label: 'Overview', icon: BarChart3 },
           { id: 'students', label: 'Students', icon: Users },
           { id: 'courses', label: 'Courses', icon: BookOpen },
+          { id: 'questions', label: 'Questions', icon: FileText },
           { id: 'settings', label: 'Settings', icon: Settings }
         ].map((tab) => {
           const Icon = tab.icon;
@@ -386,7 +486,137 @@ const AdminDashboard = () => {
             </div>
           </div>
         </motion.div>
-      )}
+      )})}}
+
+      {/* Questions Tab */}
+      {activeTab === 'questions' && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="space-y-6"
+        >
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold">Question Management</h2>
+            <div className="flex items-center space-x-2">
+              <select
+                value={selectedModule?.id || ''}
+                onChange={(e) => {
+                  const module = contentModules.find(m => m.id === e.target.value);
+                  setSelectedModule(module || null);
+                }}
+                className="px-3 py-2 border border-border rounded-lg bg-background"
+              >
+                <option value="">Select Assignment/Test</option>
+                {contentModules.map((module) => (
+                  <option key={module.id} value={module.id}>
+                    {module.title} ({module.module_type})
+                  </option>
+                ))}
+              </select>
+              {selectedModule && (
+                <button
+                  onClick={() => setShowAddQuestion(true)}
+                  className="btn btn-primary"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Question
+                </button>
+              )}
+            </div>
+          </div>
+
+          {selectedModule ? (
+            <div className="card p-6">
+              <div className="mb-4">
+                <h3 className="text-lg font-semibold">{selectedModule.title}</h3>
+                <p className="text-sm text-muted-foreground">
+                  {selectedModule.description} • Level: {selectedModule.cefr_level}
+                </p>
+              </div>
+
+              {selectedModule.content?.questions?.length > 0 ? (
+                <div className="space-y-4">
+                  {selectedModule.content.questions.map((question, index) => (
+                    <div key={question.id} className="border border-border rounded-lg p-4">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2 mb-2">
+                            <span className="text-sm font-medium text-primary">
+                              Question {index + 1}
+                            </span>
+                            <span className="px-2 py-1 bg-muted text-muted-foreground rounded text-xs">
+                              {question.type || 'multiple-choice'}
+                            </span>
+                          </div>
+                          <p className="font-medium mb-2">{question.question}</p>
+                          {question.options && (
+                            <div className="space-y-1">
+                              {question.options.map((option, optIndex) => (
+                                <div key={optIndex} className="flex items-center space-x-2">
+                                  <span className={`w-2 h-2 rounded-full ${
+                                    option === question.correct_answer ? 'bg-green-500' : 'bg-muted'
+                                  }`} />
+                                  <span className={option === question.correct_answer ? 'text-green-700 font-medium' : ''}>
+                                    {option}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <button
+                            onClick={() => setEditingQuestion(question)}
+                            className="p-1 hover:bg-muted rounded"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => deleteQuestion(selectedModule.id, question.id)}
+                            className="p-1 hover:bg-muted rounded text-red-600"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">No questions found</p>
+                  <p className="text-sm text-muted-foreground">Add your first question to get started</p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="card p-8 text-center">
+              <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Select an Assignment or Test</h3>
+              <p className="text-muted-foreground">
+                Choose an assignment or test from the dropdown above to manage its questions
+              </p>
+            </div>
+          )}
+
+          {/* Question Form Modal */}
+          {(showAddQuestion || editingQuestion) && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+              <div className="bg-background rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                <QuestionForm
+                  question={editingQuestion}
+                  onSave={(questionData) => saveQuestion(selectedModule.id, questionData)}
+                  onCancel={() => {
+                    setEditingQuestion(null);
+                    setShowAddQuestion(false);
+                  }}
+                />
+              </div>
+            </div>
+          )}
+        </motion.div>
+      )}}
 
       {/* Placeholder for other tabs */}
       {(activeTab === 'courses' || activeTab === 'settings') && (

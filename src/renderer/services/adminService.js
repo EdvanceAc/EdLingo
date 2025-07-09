@@ -1,3 +1,6 @@
+import { supabase } from './supabaseService.js';
+import supabaseStorageService from './supabaseStorageService.js';
+import bcrypt from 'bcryptjs';
 import googleDriveService from './googleDriveService';
 import { AppConfig } from '../../config/AppConfig';
 import adminDatabaseService from './adminDatabaseService.js';
@@ -5,6 +8,8 @@ import adminDatabaseService from './adminDatabaseService.js';
 class AdminService {
   constructor() {
     this.googleDriveService = googleDriveService;
+    this.storageService = supabaseStorageService;
+    this.currentAdmin = null;
     this.isAuthenticated = false;
     this.adminCredentials = {
       username: 'admin',
@@ -356,6 +361,313 @@ class AdminService {
     } catch (error) {
       console.error('Error deleting course:', error);
       throw new Error('Failed to delete course');
+    }
+  }
+
+  /**
+   * Delete user
+   * @param {string} userId - User ID to delete
+   * @returns {Promise<Object>}
+   */
+  async deleteUser(userId) {
+    if (!this.isAdminAuthenticated()) {
+      throw new Error('Admin authentication required');
+    }
+
+    try {
+      const { error } = await supabase
+        .from('users')
+        .delete()
+        .eq('id', userId);
+
+      if (error) throw error;
+      return { success: true };
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      throw error;
+    }
+  }
+
+  // File Management Methods
+  async uploadFiles(files, category = 'general') {
+    if (!this.isAdminAuthenticated()) {
+      throw new Error('Admin authentication required');
+    }
+
+    try {
+      const bucketName = this.storageService.buckets.shared;
+      const result = await this.storageService.uploadFiles(files, bucketName, category);
+      return result;
+    } catch (error) {
+      console.error('Error uploading files:', error);
+      throw error;
+    }
+  }
+
+  async getFiles(category = null) {
+    if (!this.isAdminAuthenticated()) {
+      throw new Error('Admin authentication required');
+    }
+
+    try {
+      const bucketName = this.storageService.buckets.shared;
+      const folder = category || '';
+      const files = await this.storageService.listFiles(bucketName, folder);
+      return files;
+    } catch (error) {
+      console.error('Error getting files:', error);
+      throw error;
+    }
+  }
+
+  async deleteFile(filePath) {
+    if (!this.isAdminAuthenticated()) {
+      throw new Error('Admin authentication required');
+    }
+
+    try {
+      const bucketName = this.storageService.buckets.shared;
+      const result = await this.storageService.deleteFile(bucketName, filePath);
+      return { success: result };
+    } catch (error) {
+      console.error('Error deleting file:', error);
+      throw error;
+    }
+  }
+
+  async getStorageStats() {
+    if (!this.isAdminAuthenticated()) {
+      throw new Error('Admin authentication required');
+    }
+
+    try {
+      return await this.storageService.getStorageStats();
+    } catch (error) {
+      console.error('Error getting storage stats:', error);
+      throw error;
+    }
+  }
+
+  // System Analytics Methods
+  async getSystemAnalytics() {
+    if (!this.isAdminAuthenticated()) {
+      throw new Error('Admin authentication required');
+    }
+
+    try {
+      const [userStats, courseStats, storageStats] = await Promise.all([
+        this.getUserStats(),
+        this.getCourseStats(),
+        this.getStorageStats()
+      ]);
+
+      return {
+        users: userStats,
+        courses: courseStats,
+        storage: storageStats,
+        timestamp: new Date().toISOString()
+      };
+    } catch (error) {
+      console.error('Error getting system analytics:', error);
+      throw error;
+    }
+  }
+
+  async getUserStats() {
+    if (!this.isAdminAuthenticated()) {
+      throw new Error('Admin authentication required');
+    }
+
+    try {
+      const { data: users, error } = await supabase
+        .from('users')
+        .select('id, role, created_at');
+
+      if (error) throw error;
+
+      const stats = {
+        total: users.length,
+        byRole: {},
+        recentSignups: 0
+      };
+
+      const oneWeekAgo = new Date();
+      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+      users.forEach(user => {
+        // Count by role
+        stats.byRole[user.role] = (stats.byRole[user.role] || 0) + 1;
+        
+        // Count recent signups
+        if (new Date(user.created_at) > oneWeekAgo) {
+          stats.recentSignups++;
+        }
+      });
+
+      return stats;
+    } catch (error) {
+      console.error('Error getting user stats:', error);
+      throw error;
+    }
+  }
+
+  async getCourseStats() {
+    if (!this.isAdminAuthenticated()) {
+      throw new Error('Admin authentication required');
+    }
+
+    try {
+      const { data: courses, error } = await supabase
+        .from('courses')
+        .select('id, created_at, status');
+
+      if (error) throw error;
+
+      const stats = {
+        total: courses.length,
+        byStatus: {},
+        recentlyCreated: 0
+      };
+
+      const oneWeekAgo = new Date();
+      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+      courses.forEach(course => {
+        // Count by status
+        stats.byStatus[course.status] = (stats.byStatus[course.status] || 0) + 1;
+        
+        // Count recently created
+        if (new Date(course.created_at) > oneWeekAgo) {
+          stats.recentlyCreated++;
+        }
+      });
+
+      return stats;
+    } catch (error) {
+      console.error('Error getting course stats:', error);
+      throw error;
+    }
+  }
+
+  // System Settings Methods
+  async getSystemSettings() {
+    if (!this.isAdminAuthenticated()) {
+      throw new Error('Admin authentication required');
+    }
+
+    try {
+      const { data: settings, error } = await supabase
+        .from('system_settings')
+        .select('*');
+
+      if (error) throw error;
+
+      // Convert array to object for easier access
+      const settingsObj = {};
+      settings.forEach(setting => {
+        settingsObj[setting.key] = setting.value;
+      });
+
+      return settingsObj;
+    } catch (error) {
+      console.error('Error getting system settings:', error);
+      // Return default settings if table doesn't exist
+      return {
+        site_name: 'EdLingo',
+        max_file_size: '50MB',
+        allowed_file_types: 'pdf,doc,docx,txt,jpg,png,gif,mp4,mp3',
+        registration_enabled: true,
+        maintenance_mode: false
+      };
+    }
+  }
+
+  async updateSystemSettings(settings) {
+    if (!this.isAdminAuthenticated()) {
+      throw new Error('Admin authentication required');
+    }
+
+    try {
+      const updates = [];
+      
+      for (const [key, value] of Object.entries(settings)) {
+        updates.push({
+          key,
+          value: typeof value === 'object' ? JSON.stringify(value) : String(value),
+          updated_at: new Date().toISOString()
+        });
+      }
+
+      const { error } = await supabase
+        .from('system_settings')
+        .upsert(updates, { onConflict: 'key' });
+
+      if (error) throw error;
+      return { success: true };
+    } catch (error) {
+      console.error('Error updating system settings:', error);
+      throw error;
+    }
+  }
+
+  // Backup and Maintenance Methods
+  async createBackup() {
+    if (!this.isAdminAuthenticated()) {
+      throw new Error('Admin authentication required');
+    }
+
+    try {
+      // This is a simplified backup - in a real app you'd want more comprehensive backup
+      const timestamp = new Date().toISOString();
+      const backupData = {
+        timestamp,
+        users: await this.getUsers(),
+        courses: await this.getCourses(),
+        settings: await this.getSystemSettings()
+      };
+
+      // In a real implementation, you'd save this to a backup storage
+      console.log('Backup created:', backupData);
+      
+      return {
+        success: true,
+        backupId: `backup_${Date.now()}`,
+        timestamp,
+        size: JSON.stringify(backupData).length
+      };
+    } catch (error) {
+      console.error('Error creating backup:', error);
+      throw error;
+    }
+  }
+
+  async getSystemLogs() {
+    if (!this.isAdminAuthenticated()) {
+      throw new Error('Admin authentication required');
+    }
+
+    try {
+      // This would typically come from a logging system
+      // For now, return mock data
+      return [
+        {
+          id: 1,
+          timestamp: new Date().toISOString(),
+          level: 'info',
+          message: 'System started successfully',
+          source: 'system'
+        },
+        {
+          id: 2,
+          timestamp: new Date(Date.now() - 3600000).toISOString(),
+          level: 'warning',
+          message: 'High memory usage detected',
+          source: 'monitor'
+        }
+      ];
+    } catch (error) {
+      console.error('Error getting system logs:', error);
+      throw error;
     }
   }
 }

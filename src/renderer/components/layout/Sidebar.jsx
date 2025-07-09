@@ -12,7 +12,8 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
-  Zap
+  Zap,
+  ClipboardCheck
 } from 'lucide-react';
 import { useProgress } from '../../providers/ProgressProvider';
 
@@ -58,6 +59,12 @@ const navigationItems = [
     href: '/grammar',
     icon: GraduationCap,
     description: 'Grammar exercises and rules'
+  },
+  {
+    name: 'Assessment',
+    href: '/assessment',
+    icon: ClipboardCheck,
+    description: 'Language proficiency assessment'
   },
 ];
 
