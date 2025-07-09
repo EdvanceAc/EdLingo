@@ -191,17 +191,28 @@ class AssessmentService {
       
       // Use Gemini if available, fallback to other AI service
       if (geminiService.isReady()) {
+        console.log('Using Gemini for assessment analysis');
         aiResponse = await geminiService.generateResponse(analysisPrompt);
       } else {
+        console.log('Using fallback AI service for assessment analysis');
         aiResponse = await aiService.generateResponse(analysisPrompt);
       }
+
+      console.log('AI response received, length:', aiResponse?.length || 0);
 
       // Parse AI response to extract structured data
       const analysis = this.parseAIAnalysis(aiResponse, task.task_type);
       
+      console.log('Analysis parsed successfully:', {
+        score: analysis.score,
+        cefrLevel: analysis.cefrLevel,
+        hasSkillScores: !!analysis.skillScores
+      });
+      
       return analysis;
     } catch (error) {
       console.error('AI analysis failed:', error);
+      console.log('Falling back to basic analysis');
       // Return fallback analysis
       return this.getFallbackAnalysis(task, response);
     }
@@ -230,22 +241,26 @@ Provide a detailed analysis including:
 5. Detailed feedback for improvement
 6. Examples of errors with corrections
 
+IMPORTANT: Respond with ONLY valid JSON. No additional text before or after the JSON.
+
 Format your response as JSON with the following structure:
 {
-  "overall_score": number,
-  "cefr_level": "string",
+  "overall_score": 75,
+  "cefr_level": "B1",
   "skill_scores": {
-    "grammar": number,
-    "vocabulary": number,
-    "fluency": number,
-    "accuracy": number,
-    "complexity": number
+    "grammar": 70,
+    "vocabulary": 80,
+    "fluency": 75,
+    "accuracy": 70,
+    "complexity": 65
   },
-  "strengths": ["string"],
-  "weaknesses": ["string"],
-  "feedback": "detailed feedback string",
-  "error_examples": [{"error": "string", "correction": "string", "explanation": "string"}]
+  "strengths": ["Good vocabulary usage", "Clear communication"],
+  "weaknesses": ["Minor grammar errors", "Could improve complexity"],
+  "feedback": "Overall good performance with room for improvement in grammar accuracy.",
+  "error_examples": [{"error": "I was go", "correction": "I went", "explanation": "Past tense form needed"}]
 }
+
+Ensure all strings are properly quoted and no trailing commas exist.
 `;
 
     // Add task-specific analysis criteria
@@ -270,10 +285,14 @@ Format your response as JSON with the following structure:
    */
   parseAIAnalysis(aiResponse, taskType) {
     try {
-      // Try to extract JSON from AI response
-      const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0]);
+      // Clean the response and try multiple extraction methods
+      let jsonString = this.extractJsonFromResponse(aiResponse);
+      
+      if (jsonString) {
+        // Clean common JSON formatting issues
+        jsonString = this.cleanJsonString(jsonString);
+        
+        const parsed = JSON.parse(jsonString);
         return {
           score: parsed.overall_score || 50,
           cefrLevel: parsed.cefr_level || 'A2',
@@ -288,10 +307,63 @@ Format your response as JSON with the following structure:
       }
     } catch (error) {
       console.error('Failed to parse AI analysis:', error);
+      console.log('Raw AI response:', aiResponse.substring(0, 500) + '...');
     }
 
     // Fallback parsing
     return this.extractAnalysisFromText(aiResponse, taskType);
+  }
+
+  /**
+   * Extract JSON from AI response using multiple strategies
+   */
+  extractJsonFromResponse(response) {
+    // Strategy 1: Look for JSON code blocks
+    const codeBlockMatch = response.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (codeBlockMatch) {
+      return codeBlockMatch[1].trim();
+    }
+
+    // Strategy 2: Look for balanced braces
+    const braceStart = response.indexOf('{');
+    if (braceStart !== -1) {
+      let braceCount = 0;
+      let jsonEnd = braceStart;
+      
+      for (let i = braceStart; i < response.length; i++) {
+        if (response[i] === '{') braceCount++;
+        if (response[i] === '}') braceCount--;
+        
+        if (braceCount === 0) {
+          jsonEnd = i;
+          break;
+        }
+      }
+      
+      if (braceCount === 0) {
+        return response.substring(braceStart, jsonEnd + 1);
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Clean common JSON formatting issues
+   */
+  cleanJsonString(jsonString) {
+    return jsonString
+      // Remove trailing commas
+      .replace(/,\s*([}\]])/g, '$1')
+      // Fix unquoted property names
+      .replace(/([{,]\s*)([a-zA-Z_][a-zA-Z0-9_]*)\s*:/g, '$1"$2":')
+      // Fix single quotes to double quotes
+      .replace(/'/g, '"')
+      // Remove comments
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/\/\/.*$/gm, '')
+      // Clean up whitespace
+      .trim();
   }
 
   /**

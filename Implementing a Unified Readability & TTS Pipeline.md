@@ -1,5 +1,3 @@
-<img src="https://r2cdn.perplexity.ai/pplx-full-logo-primary-dark%402x.png" class="logo" width="120"/>
-
 # Implementing a Unified Readability \& TTS Pipeline in EdLingo
 
 Below is a step-by-step Markdown guide to integrate the combined Flesch Reading Ease + Flesch–Kincaid Grade Level composite score into your five-level EdLingo app, and to leverage Google Generative AI + Hugging Face Transformers for personalized text-to-speech instruction.

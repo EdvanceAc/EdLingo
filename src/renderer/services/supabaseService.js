@@ -598,6 +598,98 @@ class SupabaseService {
     }
   }
 
+  // CEFR Assessment Questions Management
+  async createCEFRAssessmentQuestion(questionData) {
+    try {
+      const { data, error } = await this.client
+        .from('cefr_assessment_questions')
+        .insert({
+          question_type: questionData.questionType,
+          cefr_level: questionData.cefrLevel,
+          skill_type: questionData.skillType,
+          question_text: questionData.questionText,
+          instructions: questionData.instructions,
+          points: questionData.points,
+          options: questionData.options || null,
+          correct_answer: questionData.correctAnswer || null,
+          media_files: questionData.mediaFiles || null,
+          assessment_criteria: questionData.assessmentCriteria || null,
+          expected_response: questionData.expectedResponse || null,
+          difficulty_level: questionData.difficultyLevel || 'medium',
+          is_active: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return { success: true, data };
+    } catch (error) {
+      console.error('Create CEFR assessment question error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  async getCEFRAssessmentQuestions(filters = {}) {
+    try {
+      let query = this.client
+        .from('cefr_assessment_questions')
+        .select('*')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
+      
+      if (filters.cefrLevel) query = query.eq('cefr_level', filters.cefrLevel);
+      if (filters.skillType) query = query.eq('skill_type', filters.skillType);
+      if (filters.questionType) query = query.eq('question_type', filters.questionType);
+      
+      const { data, error } = await query;
+      
+      if (error) throw error;
+      return { success: true, data: data || [] };
+    } catch (error) {
+      console.error('Get CEFR assessment questions error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  async updateCEFRAssessmentQuestion(questionId, updates) {
+    try {
+      const { data, error } = await this.client
+        .from('cefr_assessment_questions')
+        .update({
+          ...updates,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', questionId)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return { success: true, data };
+    } catch (error) {
+      console.error('Update CEFR assessment question error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  async deleteCEFRAssessmentQuestion(questionId) {
+    try {
+      const { data, error } = await this.client
+        .from('cefr_assessment_questions')
+        .update({ is_active: false })
+        .eq('id', questionId)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return { success: true, data };
+    } catch (error) {
+      console.error('Delete CEFR assessment question error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
   // Utility methods
   async testConnection() {
     return await checkSupabaseConnection();

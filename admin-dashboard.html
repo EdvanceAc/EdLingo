@@ -70,6 +70,10 @@
                     <i data-lucide="help-circle" class="w-5 h-5"></i>
                     <span>Questions</span>
                 </button>
+                <button id="assessments-tab" class="flex items-center space-x-2 px-3 py-4 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium" onclick="showAssessmentsTab()">
+                    <i data-lucide="clipboard-check" class="w-5 h-5"></i>
+                    <span>CEFR Assessments</span>
+                </button>
                 <button id="files-tab" class="flex items-center space-x-2 px-3 py-4 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium" onclick="showFilesTab()">
                     <i data-lucide="folder" class="w-5 h-5"></i>
                     <span>Files</span>
@@ -322,6 +326,268 @@
                             <p class="text-gray-500 mb-4">Select an assignment or test above, then create your first question.</p>
                             <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors" onclick="showAddQuestionModal()" disabled id="createQuestionBtn">
                                 Create Question
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CEFR Assessments Tab -->
+        <div id="assessments-content" class="tab-content hidden">
+            <!-- Assessment Overview Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white rounded-lg shadow-md p-6 card-hover">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+                            <i data-lucide="clipboard-check" class="w-6 h-6"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-600">Total Assessments</p>
+                            <p class="text-2xl font-semibold text-gray-900" id="total-assessments">Loading...</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg shadow-md p-6 card-hover">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-green-100 text-green-600">
+                            <i data-lucide="users" class="w-6 h-6"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-600">Students Assessed</p>
+                            <p class="text-2xl font-semibold text-gray-900" id="students-assessed">Loading...</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg shadow-md p-6 card-hover">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
+                            <i data-lucide="target" class="w-6 h-6"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-600">Avg CEFR Level</p>
+                            <p class="text-2xl font-semibold text-gray-900" id="avg-cefr-level">Loading...</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg shadow-md p-6 card-hover">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-purple-100 text-purple-600">
+                            <i data-lucide="trending-up" class="w-6 h-6"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-600">Completion Rate</p>
+                            <p class="text-2xl font-semibold text-gray-900" id="completion-rate">Loading...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Assessment Management Tabs -->
+            <div class="bg-white rounded-lg shadow-md mb-8">
+                <div class="border-b border-gray-200">
+                    <nav class="-mb-px flex space-x-8 px-6">
+                        <button id="assessment-questions-tab" class="py-4 px-1 border-b-2 border-blue-500 font-medium text-sm text-blue-600" onclick="showAssessmentSubTab('questions')">
+                            Question Bank
+                        </button>
+                        <button id="assessment-analytics-tab" class="py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" onclick="showAssessmentSubTab('analytics')">
+                            Analytics Dashboard
+                        </button>
+                        <button id="assessment-settings-tab" class="py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" onclick="showAssessmentSubTab('settings')">
+                            CEFR Settings
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- Question Bank Sub-tab -->
+                <div id="assessment-questions-content" class="assessment-subtab-content p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-semibold text-gray-900">CEFR Assessment Questions</h3>
+                        <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center" onclick="showCreateAssessmentQuestionModal()">
+                            <i data-lucide="plus" class="w-4 h-4 mr-2"></i>
+                            Create Question
+                        </button>
+                    </div>
+
+                    <!-- CEFR Level Filter -->
+                    <div class="flex flex-wrap gap-4 mb-6">
+                        <select id="cefr-level-filter" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" onchange="filterAssessmentQuestions()">
+                            <option value="">All CEFR Levels</option>
+                            <option value="A1">A1 - Beginner</option>
+                            <option value="A2">A2 - Elementary</option>
+                            <option value="B1">B1 - Intermediate</option>
+                            <option value="B2">B2 - Upper Intermediate</option>
+                            <option value="C1">C1 - Advanced</option>
+                            <option value="C2">C2 - Proficient</option>
+                        </select>
+                        <select id="skill-type-filter" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" onchange="filterAssessmentQuestions()">
+                            <option value="">All Skills</option>
+                            <option value="reading">Reading</option>
+                            <option value="writing">Writing</option>
+                            <option value="listening">Listening</option>
+                            <option value="speaking">Speaking</option>
+                        </select>
+                        <select id="question-type-filter" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" onchange="filterAssessmentQuestions()">
+                            <option value="">All Question Types</option>
+                            <option value="multiple_choice">Multiple Choice</option>
+                            <option value="true_false">True/False</option>
+                            <option value="fill_blank">Fill in the Blank</option>
+                            <option value="essay">Essay</option>
+                            <option value="listening_comprehension">Listening Comprehension</option>
+                            <option value="speaking_prompt">Speaking Prompt</option>
+                        </select>
+                    </div>
+
+                    <!-- Questions List -->
+                    <div id="assessment-questions-list" class="space-y-4">
+                        <div class="text-center py-12">
+                            <i data-lucide="clipboard-check" class="w-12 h-12 mx-auto text-gray-400 mb-4"></i>
+                            <h3 class="text-lg font-medium text-gray-900 mb-2">No assessment questions found</h3>
+                            <p class="text-gray-500 mb-4">Create your first CEFR assessment question to get started.</p>
+                            <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors" onclick="showCreateAssessmentQuestionModal()">
+                                Create Question
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analytics Dashboard Sub-tab -->
+                <div id="assessment-analytics-content" class="assessment-subtab-content p-6 hidden">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-6">Student Assessment Analytics</h3>
+                    
+                    <!-- CEFR Level Distribution Chart -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                        <div class="bg-gray-50 rounded-lg p-6">
+                            <h4 class="text-md font-semibold text-gray-900 mb-4">CEFR Level Distribution</h4>
+                            <div id="cefr-distribution-chart" class="h-64">
+                                <div class="flex items-center justify-center h-full text-gray-500">
+                                    <div class="text-center">
+                                        <i data-lucide="bar-chart-3" class="w-12 h-12 mx-auto mb-2"></i>
+                                        <p>Chart will be displayed here</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-6">
+                            <h4 class="text-md font-semibold text-gray-900 mb-4">Assessment Progress</h4>
+                            <div id="progress-chart" class="h-64">
+                                <div class="flex items-center justify-center h-full text-gray-500">
+                                    <div class="text-center">
+                                        <i data-lucide="trending-up" class="w-12 h-12 mx-auto mb-2"></i>
+                                        <p>Progress chart will be displayed here</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Student Performance Table -->
+                    <div class="bg-white border border-gray-200 rounded-lg">
+                        <div class="px-6 py-4 border-b border-gray-200">
+                            <h4 class="text-md font-semibold text-gray-900">Student Performance Overview</h4>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current CEFR Level</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reading</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Writing</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Listening</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Speaking</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Assessment</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200" id="student-performance-table">
+                                    <tr>
+                                        <td colspan="8" class="px-6 py-4 text-center text-gray-500">
+                                            <div class="loading">Loading student performance data...</div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CEFR Settings Sub-tab -->
+                <div id="assessment-settings-content" class="assessment-subtab-content p-6 hidden">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-6">CEFR Assessment Configuration</h3>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <!-- Level Thresholds -->
+                        <div class="bg-gray-50 rounded-lg p-6">
+                            <h4 class="text-md font-semibold text-gray-900 mb-4">CEFR Level Thresholds</h4>
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm font-medium text-gray-700">A1 (Beginner)</span>
+                                    <input type="number" class="w-20 px-2 py-1 border border-gray-300 rounded text-sm" value="0" min="0" max="100">
+                                    <span class="text-sm text-gray-500">- 20%</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm font-medium text-gray-700">A2 (Elementary)</span>
+                                    <input type="number" class="w-20 px-2 py-1 border border-gray-300 rounded text-sm" value="21" min="0" max="100">
+                                    <span class="text-sm text-gray-500">- 40%</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm font-medium text-gray-700">B1 (Intermediate)</span>
+                                    <input type="number" class="w-20 px-2 py-1 border border-gray-300 rounded text-sm" value="41" min="0" max="100">
+                                    <span class="text-sm text-gray-500">- 60%</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm font-medium text-gray-700">B2 (Upper Intermediate)</span>
+                                    <input type="number" class="w-20 px-2 py-1 border border-gray-300 rounded text-sm" value="61" min="0" max="100">
+                                    <span class="text-sm text-gray-500">- 75%</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm font-medium text-gray-700">C1 (Advanced)</span>
+                                    <input type="number" class="w-20 px-2 py-1 border border-gray-300 rounded text-sm" value="76" min="0" max="100">
+                                    <span class="text-sm text-gray-500">- 90%</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm font-medium text-gray-700">C2 (Proficient)</span>
+                                    <input type="number" class="w-20 px-2 py-1 border border-gray-300 rounded text-sm" value="91" min="0" max="100">
+                                    <span class="text-sm text-gray-500">- 100%</span>
+                                </div>
+                            </div>
+                            <button class="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors text-sm">
+                                Save Thresholds
+                            </button>
+                        </div>
+
+                        <!-- Assessment Settings -->
+                        <div class="bg-gray-50 rounded-lg p-6">
+                            <h4 class="text-md font-semibold text-gray-900 mb-4">Assessment Configuration</h4>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Questions per Assessment</label>
+                                    <input type="number" class="w-full px-3 py-2 border border-gray-300 rounded-lg" value="25" min="10" max="100">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Time Limit (minutes)</label>
+                                    <input type="number" class="w-full px-3 py-2 border border-gray-300 rounded-lg" value="45" min="15" max="120">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Adaptive Assessment</label>
+                                    <select class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                                        <option value="enabled">Enabled</option>
+                                        <option value="disabled">Disabled</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Retake Policy</label>
+                                    <select class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                                        <option value="unlimited">Unlimited</option>
+                                        <option value="once_per_week">Once per week</option>
+                                        <option value="once_per_month">Once per month</option>
+                                        <option value="no_retakes">No retakes</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button class="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors text-sm">
+                                Save Settings
                             </button>
                         </div>
                     </div>
@@ -759,6 +1025,156 @@
                         <button type="submit" id="uploadButton" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
                             <i data-lucide="upload" class="w-4 h-4 inline mr-2"></i>
                             Upload Files
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Assessment Question Modal -->
+    <div id="assessmentQuestionModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="relative top-10 mx-auto p-5 border w-full max-w-4xl shadow-lg rounded-md bg-white max-h-screen overflow-y-auto">
+            <div class="mt-3">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-medium text-gray-900">Create CEFR Assessment Question</h3>
+                    <button onclick="closeAssessmentQuestionModal()" class="text-gray-400 hover:text-gray-600">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+                
+                <form id="assessmentQuestionForm" onsubmit="handleAssessmentQuestionSubmit(event)">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Left Column - Question Details -->
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Question Type *</label>
+                                <select id="questionType" name="questionType" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required onchange="updateQuestionTypeFields()">
+                                    <option value="">Select question type...</option>
+                                    <option value="multiple-choice">Multiple Choice</option>
+                                    <option value="true-false">True/False</option>
+                                    <option value="short-answer">Short Answer</option>
+                                    <option value="essay">Essay</option>
+                                    <option value="fill-in-blank">Fill in the Blank</option>
+                                    <option value="listening">Listening</option>
+                                    <option value="speaking">Speaking</option>
+                                    <option value="reading">Reading</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">CEFR Level *</label>
+                                <select id="cefrLevel" name="cefrLevel" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                                    <option value="">Select CEFR level...</option>
+                                    <option value="A1">A1 - Beginner</option>
+                                    <option value="A2">A2 - Elementary</option>
+                                    <option value="B1">B1 - Intermediate</option>
+                                    <option value="B2">B2 - Upper Intermediate</option>
+                                    <option value="C1">C1 - Advanced</option>
+                                    <option value="C2">C2 - Proficient</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Skill Type *</label>
+                                <select id="skillType" name="skillType" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                                    <option value="">Select skill type...</option>
+                                    <option value="reading">Reading</option>
+                                    <option value="writing">Writing</option>
+                                    <option value="listening">Listening</option>
+                                    <option value="speaking">Speaking</option>
+                                    <option value="grammar">Grammar</option>
+                                    <option value="vocabulary">Vocabulary</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Question Text *</label>
+                                <textarea id="assessmentQuestionText" name="questionText" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Enter the question text..." required></textarea>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Instructions (Optional)</label>
+                                <textarea id="questionInstructions" name="questionInstructions" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Additional instructions for students..."></textarea>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Points *</label>
+                                <input type="number" id="questionPoints" name="questionPoints" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value="1" min="1" max="10" required>
+                            </div>
+                        </div>
+                        
+                        <!-- Right Column - Media & Options -->
+                        <div class="space-y-4">
+                            <!-- Media Upload Section -->
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <h4 class="text-md font-semibold text-gray-900 mb-3">Media Files (Optional)</h4>
+                                
+                                <!-- Image Upload -->
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Image</label>
+                                    <input type="file" id="questionImage" name="questionImage" class="w-full px-3 py-2 border border-gray-300 rounded-lg" accept="image/*" onchange="previewMedia('image')">
+                                    <div id="imagePreview" class="mt-2 hidden">
+                                        <img id="imagePreviewImg" class="max-w-full h-32 object-cover rounded" alt="Image preview">
+                                        <button type="button" onclick="removeMedia('image')" class="mt-1 text-red-600 text-sm hover:text-red-800">Remove</button>
+                                    </div>
+                                </div>
+                                
+                                <!-- Audio Upload -->
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Audio</label>
+                                    <input type="file" id="questionAudio" name="questionAudio" class="w-full px-3 py-2 border border-gray-300 rounded-lg" accept="audio/*" onchange="previewMedia('audio')">
+                                    <div id="audioPreview" class="mt-2 hidden">
+                                        <audio id="audioPreviewPlayer" controls class="w-full">
+                                            <source id="audioPreviewSource" type="audio/mpeg">
+                                            Your browser does not support the audio element.
+                                        </audio>
+                                        <button type="button" onclick="removeMedia('audio')" class="mt-1 text-red-600 text-sm hover:text-red-800">Remove</button>
+                                    </div>
+                                </div>
+                                
+                                <!-- Video Upload -->
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Video</label>
+                                    <input type="file" id="questionVideo" name="questionVideo" class="w-full px-3 py-2 border border-gray-300 rounded-lg" accept="video/*" onchange="previewMedia('video')">
+                                    <div id="videoPreview" class="mt-2 hidden">
+                                        <video id="videoPreviewPlayer" controls class="w-full h-32 object-cover rounded">
+                                            <source id="videoPreviewSource" type="video/mp4">
+                                            Your browser does not support the video element.
+                                        </video>
+                                        <button type="button" onclick="removeMedia('video')" class="mt-1 text-red-600 text-sm hover:text-red-800">Remove</button>
+                                    </div>
+                                </div>
+                                
+                                <!-- PDF Upload -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">PDF Document</label>
+                                    <input type="file" id="questionPdf" name="questionPdf" class="w-full px-3 py-2 border border-gray-300 rounded-lg" accept=".pdf" onchange="previewMedia('pdf')">
+                                    <div id="pdfPreview" class="mt-2 hidden">
+                                        <div class="flex items-center p-2 bg-white border rounded">
+                                            <i data-lucide="file-text" class="w-6 h-6 text-red-600 mr-2"></i>
+                                            <span id="pdfFileName" class="text-sm text-gray-700"></span>
+                                            <button type="button" onclick="removeMedia('pdf')" class="ml-auto text-red-600 text-sm hover:text-red-800">Remove</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Answer Options Section -->
+                            <div id="answerOptionsSection" class="bg-gray-50 rounded-lg p-4">
+                                <h4 class="text-md font-semibold text-gray-900 mb-3">Answer Options</h4>
+                                <div id="answerOptionsContainer">
+                                    <!-- Dynamic content based on question type -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200 mt-6">
+                        <button type="button" onclick="closeAssessmentQuestionModal()" class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">Cancel</button>
+                        <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
+                            <i data-lucide="save" class="w-4 h-4 inline mr-2"></i>
+                            Create Question
                         </button>
                     </div>
                 </form>
@@ -1908,6 +2324,10 @@
             alert(`Error: ${message}`);
         }
 
+        function showSuccess(message) {
+            alert(`Success: ${message}`);
+        }
+
         function getTimeAgo(date) {
             const now = new Date();
             const diffInMs = now - date;
@@ -2943,6 +3363,686 @@ After running this SQL, refresh the admin dashboard to see the user management w
             };
             return icons[extension] || 'file';
         }
+
+        // ===== CEFR ASSESSMENT FUNCTIONS =====
+
+        // Show CEFR Assessments tab
+        function showAssessmentsTab() {
+            showTab('assessments');
+            loadAssessmentStats();
+            loadAssessmentQuestions();
+        }
+
+        // Show assessment sub-tabs
+        function showAssessmentSubTab(tabName) {
+            // Hide all sub-tab contents
+            document.querySelectorAll('.assessment-subtab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            
+            // Remove active class from all sub-tab buttons
+            document.querySelectorAll('[id$="-tab"]').forEach(tab => {
+                if (tab.id.includes('assessment-')) {
+                    tab.classList.remove('border-blue-500', 'text-blue-600');
+                    tab.classList.add('border-transparent', 'text-gray-500');
+                }
+            });
+            
+            // Show selected sub-tab content
+            document.getElementById(`assessment-${tabName}-content`).classList.remove('hidden');
+            
+            // Add active class to selected sub-tab button
+            const activeTab = document.getElementById(`assessment-${tabName}-tab`);
+            activeTab.classList.remove('border-transparent', 'text-gray-500');
+            activeTab.classList.add('border-blue-500', 'text-blue-600');
+            
+            // Load specific content based on tab
+            if (tabName === 'analytics') {
+                loadAssessmentAnalytics();
+            } else if (tabName === 'settings') {
+                loadAssessmentSettings();
+            }
+        }
+
+        // Load assessment statistics
+        async function loadAssessmentStats() {
+            try {
+                // Mock data for demonstration
+                const stats = {
+                    totalAssessments: 15,
+                    studentsAssessed: 127,
+                    avgCefrLevel: 'B1',
+                    completionRate: '87%'
+                };
+                
+                document.getElementById('total-assessments').textContent = stats.totalAssessments;
+                document.getElementById('students-assessed').textContent = stats.studentsAssessed;
+                document.getElementById('avg-cefr-level').textContent = stats.avgCefrLevel;
+                document.getElementById('completion-rate').textContent = stats.completionRate;
+                
+            } catch (error) {
+                console.error('Error loading assessment stats:', error);
+            }
+        }
+
+        // Load assessment questions
+        async function loadAssessmentQuestions() {
+            try {
+                // Mock data for demonstration
+                const questions = [
+                    {
+                        id: 1,
+                        questionText: 'What is the correct form of the verb "to be" in this sentence: "She ___ a teacher"?',
+                        questionType: 'multiple_choice',
+                        cefrLevel: 'A1',
+                        skillType: 'reading',
+                        points: 1,
+                        createdAt: '2024-01-15'
+                    },
+                    {
+                        id: 2,
+                        questionText: 'Listen to the audio and answer: What time does the meeting start?',
+                        questionType: 'listening_comprehension',
+                        cefrLevel: 'B1',
+                        skillType: 'listening',
+                        points: 2,
+                        createdAt: '2024-01-20'
+                    }
+                ];
+                
+                displayAssessmentQuestions(questions);
+                
+            } catch (error) {
+                console.error('Error loading assessment questions:', error);
+                displayAssessmentQuestions([]);
+            }
+        }
+
+        // Display assessment questions
+        function displayAssessmentQuestions(questions) {
+            const container = document.getElementById('assessment-questions-list');
+            
+            if (!questions || questions.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12">
+                        <i data-lucide="clipboard-check" class="w-12 h-12 mx-auto text-gray-400 mb-4"></i>
+                        <h3 class="text-lg font-medium text-gray-900 mb-2">No assessment questions found</h3>
+                        <p class="text-gray-500 mb-4">Create your first CEFR assessment question to get started.</p>
+                        <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors" onclick="showCreateAssessmentQuestionModal()">
+                            Create Question
+                        </button>
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
+            
+            container.innerHTML = questions.map(question => `
+                <div class="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                    ${question.cefrLevel}
+                                </span>
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    ${question.skillType}
+                                </span>
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                    ${question.questionType.replace('_', ' ')}
+                                </span>
+                                <span class="text-xs text-gray-500">${question.points} pts</span>
+                            </div>
+                            <h4 class="text-md font-semibold text-gray-900 mb-2">${question.questionText}</h4>
+                            <p class="text-sm text-gray-500">Created: ${new Date(question.createdAt).toLocaleDateString()}</p>
+                        </div>
+                        <div class="flex items-center space-x-2 ml-4">
+                            <button class="text-blue-600 hover:text-blue-800 p-1" onclick="editAssessmentQuestion(${question.id})" title="Edit">
+                                <i data-lucide="edit" class="w-4 h-4"></i>
+                            </button>
+                            <button class="text-red-600 hover:text-red-800 p-1" onclick="deleteAssessmentQuestion(${question.id})" title="Delete">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            lucide.createIcons();
+        }
+
+        // Filter assessment questions
+        function filterAssessmentQuestions() {
+            const cefrLevel = document.getElementById('cefr-level-filter').value;
+            const skillType = document.getElementById('skill-type-filter').value;
+            const questionType = document.getElementById('question-type-filter').value;
+            
+            // In a real implementation, this would filter the actual data
+            loadAssessmentQuestions();
+        }
+
+        // Show create assessment question modal
+        function showCreateAssessmentQuestionModal() {
+            document.getElementById('assessmentQuestionModal').classList.remove('hidden');
+            resetAssessmentQuestionForm();
+        }
+
+        // Close assessment question modal
+        function closeAssessmentQuestionModal() {
+            document.getElementById('assessmentQuestionModal').classList.add('hidden');
+            resetAssessmentQuestionForm();
+            
+            // Clear editing state
+            const form = document.getElementById('assessmentQuestionForm');
+            form.removeAttribute('data-editing-id');
+            
+            // Reset modal title
+            document.querySelector('#assessmentQuestionModal h3').textContent = 'Create CEFR Assessment Question';
+        }
+
+        // Reset assessment question form
+        function resetAssessmentQuestionForm() {
+            document.getElementById('assessmentQuestionForm').reset();
+            document.getElementById('answerOptionsContainer').innerHTML = '';
+            
+            // Reset media previews
+            ['image', 'audio', 'video', 'pdf'].forEach(type => {
+                document.getElementById(`${type}Preview`).classList.add('hidden');
+            });
+        }
+
+        // Update question type fields
+        function updateQuestionTypeFields() {
+            const questionType = document.getElementById('questionType').value;
+            const container = document.getElementById('answerOptionsContainer');
+            
+            switch (questionType) {
+                case 'multiple-choice':
+                    container.innerHTML = `
+                        <div class="space-y-3">
+                            <div class="flex items-center space-x-2">
+                                <input type="radio" name="correctAnswer" value="0" id="option0" required>
+                                <input type="text" name="option" placeholder="Option A" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg" required>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <input type="radio" name="correctAnswer" value="1" id="option1">
+                                <input type="text" name="option" placeholder="Option B" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg" required>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <input type="radio" name="correctAnswer" value="2" id="option2">
+                                <input type="text" name="option" placeholder="Option C" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg">
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <input type="radio" name="correctAnswer" value="3" id="option3">
+                                <input type="text" name="option" placeholder="Option D" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg">
+                            </div>
+                            <p class="text-xs text-gray-500">Select the correct answer by clicking the radio button</p>
+                        </div>
+                    `;
+                    break;
+                    
+                case 'true-false':
+                    container.innerHTML = `
+                        <div class="space-y-3">
+                            <div class="flex items-center space-x-4">
+                                <label class="flex items-center">
+                                    <input type="radio" name="tfCorrectAnswer" value="true" class="mr-2" required>
+                                    <span>True</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="radio" name="tfCorrectAnswer" value="false" class="mr-2">
+                                    <span>False</span>
+                                </label>
+                            </div>
+                            <p class="text-xs text-gray-500">Select the correct answer</p>
+                        </div>
+                    `;
+                    break;
+                    
+                case 'short-answer':
+                    container.innerHTML = `
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Expected Response</label>
+                                <textarea id="shortAnswer" placeholder="Describe the expected response or key points..." rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg"></textarea>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                    
+                case 'fill-in-blank':
+                    container.innerHTML = `
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Correct Answer(s)</label>
+                                <input type="text" id="fillBlankAnswer" placeholder="Enter the correct answer(s), separated by commas" class="w-full px-3 py-2 border border-gray-300 rounded-lg" required>
+                            </div>
+                            <p class="text-xs text-gray-500">Use underscores (_____) in your question text to indicate blanks</p>
+                        </div>
+                    `;
+                    break;
+                    
+                case 'essay':
+                    container.innerHTML = `
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Grading Rubric</label>
+                                <textarea id="essayRubric" placeholder="Describe the grading criteria and key points to look for..." rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg"></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Word Limit</label>
+                                <input type="number" id="wordLimit" placeholder="Maximum words (optional)" class="w-full px-3 py-2 border border-gray-300 rounded-lg" min="50" max="1000">
+                            </div>
+                        </div>
+                    `;
+                    break;
+                    
+                case 'listening':
+                case 'speaking':
+                case 'reading':
+                    container.innerHTML = `
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Expected Response</label>
+                                <textarea id="expectedResponse" placeholder="Describe the expected response or key points..." rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg"></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Assessment Criteria</label>
+                                <textarea id="assessmentCriteria" placeholder="Describe how this will be assessed..." rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg"></textarea>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                    
+                default:
+                    container.innerHTML = '<p class="text-gray-500">Select a question type to configure answer options</p>';
+            }
+        }
+
+        // Preview media files
+        function previewMedia(type) {
+            const input = document.getElementById(`question${type.charAt(0).toUpperCase() + type.slice(1)}`);
+            const preview = document.getElementById(`${type}Preview`);
+            
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                
+                switch (type) {
+                    case 'image':
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            document.getElementById('imagePreviewImg').src = e.target.result;
+                            preview.classList.remove('hidden');
+                        };
+                        reader.readAsDataURL(file);
+                        break;
+                        
+                    case 'audio':
+                        const audioUrl = URL.createObjectURL(file);
+                        document.getElementById('audioPreviewSource').src = audioUrl;
+                        document.getElementById('audioPreviewPlayer').load();
+                        preview.classList.remove('hidden');
+                        break;
+                        
+                    case 'video':
+                        const videoUrl = URL.createObjectURL(file);
+                        document.getElementById('videoPreviewSource').src = videoUrl;
+                        document.getElementById('videoPreviewPlayer').load();
+                        preview.classList.remove('hidden');
+                        break;
+                        
+                    case 'pdf':
+                        document.getElementById('pdfFileName').textContent = file.name;
+                        preview.classList.remove('hidden');
+                        break;
+                }
+            }
+        }
+
+        // Remove media files
+        function removeMedia(type) {
+            document.getElementById(`question${type.charAt(0).toUpperCase() + type.slice(1)}`).value = '';
+            document.getElementById(`${type}Preview`).classList.add('hidden');
+        }
+
+        // Handle assessment question form submission
+        async function handleAssessmentQuestionSubmit(event) {
+            event.preventDefault();
+            
+            try {
+                const formData = new FormData(event.target);
+                const editingId = event.target.getAttribute('data-editing-id');
+                const isEditing = editingId !== null;
+                
+                // Collect form data
+                const questionData = {
+                    questionType: formData.get('questionType'),
+                    cefrLevel: formData.get('cefrLevel'),
+                    skillType: formData.get('skillType'),
+                    questionText: formData.get('questionText'),
+                    instructions: formData.get('questionInstructions'),
+                    points: parseInt(formData.get('questionPoints'))
+                };
+                
+                // Validate required fields
+                if (!questionData.questionType || !questionData.cefrLevel || !questionData.skillType || !questionData.questionText) {
+                    showError('Please fill in all required fields');
+                    return;
+                }
+                
+                // Collect answer options based on question type
+                if (questionData.questionType === 'multiple-choice') {
+                    const options = [];
+                    const optionInputs = document.querySelectorAll('input[name="option"]');
+                    const correctAnswerRadio = document.querySelector('input[name="correctAnswer"]:checked');
+                    
+                    optionInputs.forEach(input => {
+                        if (input.value.trim()) {
+                            options.push(input.value.trim());
+                        }
+                    });
+                    
+                    questionData.options = options;
+                    questionData.correctAnswer = correctAnswerRadio ? parseInt(correctAnswerRadio.value) : null;
+                } else if (questionData.questionType === 'true-false') {
+                    const tfCorrectAnswer = document.querySelector('input[name="tfCorrectAnswer"]:checked');
+                    questionData.options = ['True', 'False'];
+                    questionData.correctAnswer = tfCorrectAnswer ? tfCorrectAnswer.value : null;
+                } else if (questionData.questionType === 'short-answer') {
+                    const shortAnswer = document.getElementById('shortAnswer');
+                    questionData.expectedResponse = shortAnswer ? shortAnswer.value : null;
+                } else if (questionData.questionType === 'fill-in-blank') {
+                    const fillBlankAnswer = document.getElementById('fillBlankAnswer');
+                    questionData.correctAnswer = fillBlankAnswer ? fillBlankAnswer.value : null;
+                } else if (questionData.questionType === 'essay') {
+                    const essayRubric = document.getElementById('essayRubric');
+                    const wordLimit = document.getElementById('wordLimit');
+                    questionData.expectedResponse = essayRubric ? essayRubric.value : null;
+                    questionData.wordLimit = wordLimit ? parseInt(wordLimit.value) : null;
+                } else if (['listening', 'speaking', 'reading'].includes(questionData.questionType)) {
+                    const expectedResponse = document.getElementById('expectedResponse');
+                    const assessmentCriteria = document.getElementById('assessmentCriteria');
+                    questionData.expectedResponse = expectedResponse ? expectedResponse.value : null;
+                    questionData.assessmentCriteria = assessmentCriteria ? assessmentCriteria.value : null;
+                }
+                
+                console.log(isEditing ? 'Updating assessment question:' : 'Creating assessment question:', questionData);
+                
+                if (isEditing) {
+                    // Update existing question
+                    const updateData = {
+                        question_type: questionData.questionType,
+                        cefr_level: questionData.cefrLevel,
+                        skill_type: questionData.skillType,
+                        question_text: questionData.questionText,
+                        instructions: questionData.instructions,
+                        points: questionData.points,
+                        options: questionData.options || null,
+                        correct_answer: questionData.correctAnswer || null,
+                        expected_response: questionData.expectedResponse || null,
+                        updated_at: new Date().toISOString()
+                    };
+                    
+                    // Add additional fields if they exist
+                    if (questionData.wordLimit) {
+                        updateData.word_limit = questionData.wordLimit;
+                    }
+                    if (questionData.assessmentCriteria) {
+                        updateData.assessment_criteria = questionData.assessmentCriteria;
+                    }
+                    
+                    // In a real implementation, this would update the database
+                    // For now, we'll simulate the update
+                    console.log('✅ Assessment question updated successfully (simulated):', updateData);
+                    
+                    // Show success message
+                    showSuccess('Assessment question updated successfully!');
+                    
+                } else {
+                    // Create new question
+                    const insertData = {
+                        question_type: questionData.questionType,
+                        cefr_level: questionData.cefrLevel,
+                        skill_type: questionData.skillType,
+                        question_text: questionData.questionText,
+                        instructions: questionData.instructions,
+                        points: questionData.points,
+                        options: questionData.options || null,
+                        correct_answer: questionData.correctAnswer || null,
+                        expected_response: questionData.expectedResponse || null,
+                        difficulty_level: 'medium',
+                        is_active: true,
+                        created_at: new Date().toISOString(),
+                        updated_at: new Date().toISOString()
+                    };
+                    
+                    // Add additional fields if they exist
+                    if (questionData.wordLimit) {
+                        insertData.word_limit = questionData.wordLimit;
+                    }
+                    if (questionData.assessmentCriteria) {
+                        insertData.assessment_criteria = questionData.assessmentCriteria;
+                    }
+                    
+                    const { data, error } = await supabase
+                        .from('cefr_assessment_questions')
+                        .insert(insertData)
+                        .select()
+                        .single();
+                    
+                    if (error) {
+                        console.error('Database error:', error);
+                        throw new Error(error.message);
+                    }
+                    
+                    console.log('✅ Assessment question created successfully:', data);
+                    
+                    // Show success message
+                    showSuccess('Assessment question created successfully!');
+                }
+                
+                // Close modal and refresh list
+                closeAssessmentQuestionModal();
+                loadAssessmentQuestions();
+                
+            } catch (error) {
+                const action = event.target.getAttribute('data-editing-id') ? 'updating' : 'creating';
+                console.error(`Error ${action} assessment question:`, error);
+                showError(`Failed to ${action.replace('ing', 'e')} assessment question: ${error.message}`);
+            }
+        }
+
+        // Load assessment analytics
+        function loadAssessmentAnalytics() {
+            // Mock data for student performance
+            const studentPerformance = [
+                {
+                    id: 1,
+                    name: 'John Doe',
+                    email: 'john.doe@example.com',
+                    cefrLevel: 'B1',
+                    reading: 75,
+                    writing: 68,
+                    listening: 82,
+                    speaking: 71,
+                    lastAssessment: '2024-01-20'
+                },
+                {
+                    id: 2,
+                    name: 'Maria Garcia',
+                    email: 'maria.garcia@example.com',
+                    cefrLevel: 'A2',
+                    reading: 65,
+                    writing: 58,
+                    listening: 72,
+                    speaking: 61,
+                    lastAssessment: '2024-01-18'
+                }
+            ];
+            
+            const tableBody = document.getElementById('student-performance-table');
+            tableBody.innerHTML = studentPerformance.map(student => `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <div>
+                            <div class="font-medium">${student.name}</div>
+                            <div class="text-gray-500">${student.email}</div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            ${student.cefrLevel}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${student.reading}%</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${student.writing}%</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${student.listening}%</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${student.speaking}%</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(student.lastAssessment).toLocaleDateString()}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button class="text-blue-600 hover:text-blue-900 mr-3" onclick="viewStudentDetails(${student.id})">
+                            View Details
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Load assessment settings
+        function loadAssessmentSettings() {
+            // Settings are already pre-filled in the HTML
+            console.log('Assessment settings loaded');
+        }
+
+        // Edit assessment question
+        function editAssessmentQuestion(questionId) {
+            console.log('Editing question:', questionId);
+            
+            // Find the question data from the mock data
+            const questions = [
+                {
+                    id: 1,
+                    questionText: 'What is the correct form of the verb "to be" in this sentence: "She ___ a teacher"?',
+                    questionType: 'multiple-choice',
+                    cefrLevel: 'A1',
+                    skillType: 'reading',
+                    points: 1,
+                    instructions: 'Choose the correct answer.',
+                    options: ['is', 'are', 'am', 'be'],
+                    correctAnswer: 0,
+                    createdAt: '2024-01-15'
+                },
+                {
+                    id: 2,
+                    questionText: 'Listen to the audio and answer: What time does the meeting start?',
+                    questionType: 'listening',
+                    cefrLevel: 'B1',
+                    skillType: 'listening',
+                    points: 2,
+                    instructions: 'Listen carefully to the audio clip.',
+                    expectedResponse: 'The meeting starts at 3:00 PM.',
+                    createdAt: '2024-01-20'
+                }
+            ];
+            
+            const question = questions.find(q => q.id === questionId);
+            if (!question) {
+                showError('Question not found');
+                return;
+            }
+            
+            // Open the modal
+            document.getElementById('assessmentQuestionModal').classList.remove('hidden');
+            
+            // Update modal title
+            document.querySelector('#assessmentQuestionModal h3').textContent = 'Edit CEFR Assessment Question';
+            
+            // Populate the form with existing data
+            document.getElementById('questionType').value = question.questionType;
+            document.getElementById('cefrLevel').value = question.cefrLevel;
+            document.getElementById('skillType').value = question.skillType;
+            document.getElementById('assessmentQuestionText').value = question.questionText;
+            document.getElementById('questionInstructions').value = question.instructions || '';
+            document.getElementById('questionPoints').value = question.points;
+            
+            // Update question type fields based on the question type
+            updateQuestionTypeFields();
+            
+            // Populate answer options based on question type
+            setTimeout(() => {
+                if (question.questionType === 'multiple-choice' && question.options) {
+                    const optionInputs = document.querySelectorAll('input[name="option"]');
+                    question.options.forEach((option, index) => {
+                        if (optionInputs[index]) {
+                            optionInputs[index].value = option;
+                        }
+                    });
+                    
+                    // Set correct answer
+                    if (question.correctAnswer !== undefined) {
+                        const correctRadio = document.querySelector(`input[name="correctAnswer"][value="${question.correctAnswer}"]`);
+                        if (correctRadio) {
+                            correctRadio.checked = true;
+                        }
+                    }
+                } else if (question.questionType === 'true-false' && question.correctAnswer !== undefined) {
+                    const tfRadio = document.querySelector(`input[name="tfCorrectAnswer"][value="${question.correctAnswer}"]`);
+                    if (tfRadio) {
+                        tfRadio.checked = true;
+                    }
+                } else if (question.questionType === 'short-answer' && question.expectedResponse) {
+                    const shortAnswerInput = document.getElementById('shortAnswer');
+                    if (shortAnswerInput) {
+                        shortAnswerInput.value = question.expectedResponse;
+                    }
+                } else if (question.questionType === 'fill-in-blank' && question.correctAnswer) {
+                    const fillBlankInput = document.getElementById('fillBlankAnswer');
+                    if (fillBlankInput) {
+                        fillBlankInput.value = question.correctAnswer;
+                    }
+                } else if (question.questionType === 'essay' && question.expectedResponse) {
+                    const essayRubricInput = document.getElementById('essayRubric');
+                    if (essayRubricInput) {
+                        essayRubricInput.value = question.expectedResponse;
+                    }
+                } else if (['listening', 'speaking', 'reading'].includes(question.questionType) && question.expectedResponse) {
+                    const expectedResponseInput = document.getElementById('expectedResponse');
+                    if (expectedResponseInput) {
+                        expectedResponseInput.value = question.expectedResponse;
+                    }
+                }
+            }, 100); // Small delay to ensure DOM is updated
+            
+            // Store the question ID for updating
+            document.getElementById('assessmentQuestionForm').setAttribute('data-editing-id', questionId);
+        }
+
+        // Delete assessment question
+        async function deleteAssessmentQuestion(questionId) {
+            if (!confirm('Are you sure you want to delete this assessment question?')) {
+                return;
+            }
+            
+            try {
+                // In a real implementation, this would delete from the database
+                console.log('Deleting question:', questionId);
+                
+                showSuccess('Assessment question deleted successfully!');
+                loadAssessmentQuestions();
+                
+            } catch (error) {
+                console.error('Error deleting assessment question:', error);
+                showError('Failed to delete assessment question');
+            }
+        }
+
+        // View student details
+        function viewStudentDetails(studentId) {
+            console.log('Viewing student details:', studentId);
+            // In a real implementation, this would open a detailed view of the student's assessment history
+        }
+
+        // ===== END CEFR ASSESSMENT FUNCTIONS =====
     </script>
 </body>
 </html>

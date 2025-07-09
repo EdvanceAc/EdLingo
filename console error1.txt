@@ -1,0 +1,124 @@
+AssessmentPage.jsx:55 Error creating user profile: 
+{code: '42501', details: null, hint: null, message: 'new row violates row-level security policy for table "user_profiles"'}
+code
+: 
+"42501"
+details
+: 
+null
+hint
+: 
+null
+message
+: 
+"new row violates row-level security policy for table \"user_profiles\""
+[[Prototype]]
+: 
+Object
+constructor
+: 
+ƒ Object()
+hasOwnProperty
+: 
+ƒ hasOwnProperty()
+isPrototypeOf
+: 
+ƒ isPrototypeOf()
+propertyIsEnumerable
+: 
+ƒ propertyIsEnumerable()
+toLocaleString
+: 
+ƒ toLocaleString()
+toString
+: 
+ƒ toString()
+valueOf
+: 
+ƒ valueOf()
+__defineGetter__
+: 
+ƒ __defineGetter__()
+__defineSetter__
+: 
+ƒ __defineSetter__()
+__lookupGetter__
+: 
+ƒ __lookupGetter__()
+__lookupSetter__
+: 
+ƒ __lookupSetter__()
+__proto__
+: 
+(...)
+get __proto__
+: 
+ƒ __proto__()
+set __proto__
+: 
+ƒ __proto__()
+fetchUserProfile	@	AssessmentPage.jsx:55
+await in fetchUserProfile		
+(anonymous)	@	AssessmentPage.jsx:75
+AssessmentPage.jsx:55 Error creating user profile: 
+{code: '42501', details: null, hint: null, message: 'new row violates row-level security policy for table "user_profiles"'}
+code
+: 
+"42501"
+details
+: 
+null
+hint
+: 
+null
+message
+: 
+"new row violates row-level security policy for table \"user_profiles\""
+[[Prototype]]
+: 
+Object
+constructor
+: 
+ƒ Object()
+hasOwnProperty
+: 
+ƒ hasOwnProperty()
+isPrototypeOf
+: 
+ƒ isPrototypeOf()
+propertyIsEnumerable
+: 
+ƒ propertyIsEnumerable()
+toLocaleString
+: 
+ƒ toLocaleString()
+toString
+: 
+ƒ toString()
+valueOf
+: 
+ƒ valueOf()
+__defineGetter__
+: 
+ƒ __defineGetter__()
+__defineSetter__
+: 
+ƒ __defineSetter__()
+__lookupGetter__
+: 
+ƒ __lookupGetter__()
+__lookupSetter__
+: 
+ƒ __lookupSetter__()
+__proto__
+: 
+(...)
+get __proto__
+: 
+ƒ __proto__()
+set __proto__
+: 
+ƒ __proto__()
+fetchUserProfile	@	AssessmentPage.jsx:55
+await in fetchUserProfile		
+(anonymous)	@	AssessmentPage.jsx:75

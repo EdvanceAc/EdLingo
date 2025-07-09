@@ -21,7 +21,8 @@ async function runMigrations() {
     '005_add_sample_vocabulary.sql',
     '006_add_admin_policies.sql',
     '006_add_assessment_columns.sql',
-    '008_add_assessment_system.sql'
+    '008_add_assessment_system.sql',
+    '013_fix_user_profile_creation.sql'
 ];
   
   for (const migrationFile of migrationFiles) {

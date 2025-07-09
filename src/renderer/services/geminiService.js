@@ -260,6 +260,21 @@ Response Style:
     this.chat = null;
   }
 
+  async generateResponse(prompt, options = {}) {
+    if (!this.isInitialized) {
+      throw new Error('Gemini service not initialized');
+    }
+
+    try {
+      const result = await this.model.generateContent(prompt);
+      const response = result.response;
+      return response.text();
+    } catch (error) {
+      console.error('Error generating response with Gemini:', error);
+      throw new Error(`Failed to generate response: ${error.message}`);
+    }
+  }
+
   isReady() {
     return this.isInitialized;
   }
