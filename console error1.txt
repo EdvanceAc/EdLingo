@@ -1,7 +1,3 @@
-Loading failed for the module with source “http://localhost:3002/src/components/Course/index.jsx?t=1752228475782”. localhost:3002
-[vite] TypeError: error loading dynamically imported module: http://localhost:3002/src/components/Course/index.jsx?t=1752228475782 client:882:29
-[vite] Failed to reload /src/components/Course/index.jsx. This could be due to syntax errors or importing non-existent modules. (see errors above) client:882:29
-[vite] hot updated: /src/components/Course/index.jsx client:883:32
 [vite] connecting... client:789:9
 [vite] connected. client:912:15
 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools chunk-YQ5BCTVV.js:21609:25
@@ -11,55 +7,17 @@ Some features may not work properly. Please check your .env file. AppConfig.js:1
 Some features may not work properly. Please check your .env file. AppConfig.js:10:15
 ⚠️ Database services disabled - check environment variables 2 App.jsx:135:19
 ✅ Supabase connected successfully supabaseService.js:20:17
-[vite] hot updated: /src/components/ui/badge.jsx client:883:32
-[vite] hot updated: /src/components/ui/button.jsx client:883:32
-[vite] hot updated: /src/components/ui/card.jsx client:883:32
-[vite] hot updated: /src/components/ui/progress.jsx client:883:32
-[vite] hot updated: /src/components/ui/tabs.jsx client:883:32
-[vite] hot updated: /src/components/Course/index.jsx client:883:32
-[vite] hot updated: /src/components/Course/CourseProgress.jsx client:883:32
-[vite] hot updated: /src/components/ui/badge.jsx client:883:32
-[vite] hot updated: /src/components/Course/LessonPlayer.jsx client:883:32
-[vite] hot updated: /src/components/ui/progress.jsx client:883:32
-[vite] hot updated: /src/components/Course/ReviewQueue.jsx client:883:32
-Warning: React has detected a change in the order of Hooks called by Dashboard. This will lead to bugs and errors if not fixed. For more information, read the Rules of Hooks: https://reactjs.org/link/rules-of-hooks
-
-   Previous render            Next render
-   ------------------------------------------------------
-1. useContext                 useContext
-2. useState                   useState
-3. useState                   useState
-4. useEffect                  useEffect
-5. undefined                  useState
-   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Dashboard@http://localhost:3002/src/renderer/pages/Dashboard.jsx?t=1752228475855:43:46
-div
-MotionComponent@http://localhost:3002/node_modules/.vite/deps/framer-motion.js?v=4aecbcaa:277:40
-ProtectedRoute@http://localhost:3002/src/renderer/components/auth/ProtectedRoute.jsx:22:24
-RenderedRoute@http://localhost:3002/node_modules/.vite/deps/react-router-dom.js?v=4aecbcaa:4091:7
-Routes@http://localhost:3002/node_modules/.vite/deps/react-router-dom.js?v=4aecbcaa:4560:7
-PresenceChild@http://localhost:3002/node_modules/.vite/deps/framer-motion.js?v=4aecbcaa:7102:21
-AnimatePresence@http://localhost:3002/node_modules/.vite/deps/framer-motion.js?v=4aecbcaa:7168:23
-main
-div
-div
-AppLayout@http://localhost:3002/src/renderer/App.jsx?t=1752228475855:48:19
-Router@http://localhost:3002/node_modules/.vite/deps/react-router-dom.js?v=4aecbcaa:4508:7
-BrowserRouter@http://localhost:3002/node_modules/.vite/deps/react-router-dom.js?v=4aecbcaa:5251:7
-AIProvider@http://localhost:3002/src/renderer/providers/AIProvider.jsx:30:27
-ProgressProvider@http://localhost:3002/src/renderer/providers/ProgressProvider.jsx:88:33
-AudioProvider@http://localhost:3002/src/renderer/providers/AudioProvider.jsx:45:30
-AuthProvider@http://localhost:3002/src/renderer/contexts/AuthContext.jsx:30:29
-ThemeProvider@http://localhost:3002/src/renderer/providers/ThemeProvider.jsx:33:30
-App@http://localhost:3002/src/renderer/App.jsx?t=1752228475855:124:45 chunk-YQ5BCTVV.js:521:38
-    React 6
-    Dashboard Dashboard.jsx:49
+MCP call failed: mcp.config.usrlocalmcp.Supabase.execute_sql Error: Supabase configuration missing. Please set SUPABASE_URL and SUPABASE_ANON_KEY environment variables.
+    handleSupabaseMCPRequest mcpClient.js:168
+    run_mcp mcpClient.js:25
+    getOrCreateCourse CourseDataService.js:79
+    initializeCourseData CourseDataService.js:41
+    loadCourseData CourseSection.jsx:55
+    CourseSection CourseSection.jsx:39
     React 8
     workLoop scheduler.development.js:266
     flushWork scheduler.development.js:239
     performWorkUntilDeadline scheduler.development.js:533
-    (Async: EventHandlerNonNull)
     js scheduler.development.js:571
     js scheduler.development.js:633
     __require chunk-V4OQ3NZ2.js:11
@@ -72,10 +30,15 @@ App@http://localhost:3002/src/renderer/App.jsx?t=1752228475855:124:45 chunk-YQ5B
     js React
     __require chunk-V4OQ3NZ2.js:11
     <anonymous> react-dom_client.js:38
-Uncaught Error: Rendered more hooks than during the previous render.
-    React 5
-    Dashboard Dashboard.jsx:49
-    React 11
+mcpClient.js:32:13
+MCP call failed: mcp.config.usrlocalmcp.Supabase.execute_sql Error: Supabase configuration missing. Please set SUPABASE_URL and SUPABASE_ANON_KEY environment variables.
+    handleSupabaseMCPRequest mcpClient.js:168
+    run_mcp mcpClient.js:25
+    getOrCreateCourse CourseDataService.js:79
+    initializeCourseData CourseDataService.js:41
+    loadCourseData CourseSection.jsx:55
+    CourseSection CourseSection.jsx:39
+    React 7
     workLoop scheduler.development.js:266
     flushWork scheduler.development.js:239
     performWorkUntilDeadline scheduler.development.js:533
@@ -91,11 +54,15 @@ Uncaught Error: Rendered more hooks than during the previous render.
     js React
     __require chunk-V4OQ3NZ2.js:11
     <anonymous> react-dom_client.js:38
-chunk-YQ5BCTVV.js:11726:21
-Uncaught Error: Rendered more hooks than during the previous render.
-    React 5
-    Dashboard Dashboard.jsx:49
-    React 12
+mcpClient.js:32:13
+Failed to get or create course: Error: Supabase configuration missing. Please set SUPABASE_URL and SUPABASE_ANON_KEY environment variables.
+    handleSupabaseMCPRequest mcpClient.js:168
+    run_mcp mcpClient.js:25
+    getOrCreateCourse CourseDataService.js:79
+    initializeCourseData CourseDataService.js:41
+    loadCourseData CourseSection.jsx:55
+    CourseSection CourseSection.jsx:39
+    React 8
     workLoop scheduler.development.js:266
     flushWork scheduler.development.js:239
     performWorkUntilDeadline scheduler.development.js:533
@@ -111,36 +78,15 @@ Uncaught Error: Rendered more hooks than during the previous render.
     js React
     __require chunk-V4OQ3NZ2.js:11
     <anonymous> react-dom_client.js:38
-chunk-YQ5BCTVV.js:11726:21
-The above error occurred in the <Dashboard> component:
-
-Dashboard@http://localhost:3002/src/renderer/pages/Dashboard.jsx?t=1752228475855:43:46
-div
-MotionComponent@http://localhost:3002/node_modules/.vite/deps/framer-motion.js?v=4aecbcaa:277:40
-ProtectedRoute@http://localhost:3002/src/renderer/components/auth/ProtectedRoute.jsx:22:24
-RenderedRoute@http://localhost:3002/node_modules/.vite/deps/react-router-dom.js?v=4aecbcaa:4091:7
-Routes@http://localhost:3002/node_modules/.vite/deps/react-router-dom.js?v=4aecbcaa:4560:7
-PresenceChild@http://localhost:3002/node_modules/.vite/deps/framer-motion.js?v=4aecbcaa:7102:21
-AnimatePresence@http://localhost:3002/node_modules/.vite/deps/framer-motion.js?v=4aecbcaa:7168:23
-main
-div
-div
-AppLayout@http://localhost:3002/src/renderer/App.jsx?t=1752228475855:48:19
-Router@http://localhost:3002/node_modules/.vite/deps/react-router-dom.js?v=4aecbcaa:4508:7
-BrowserRouter@http://localhost:3002/node_modules/.vite/deps/react-router-dom.js?v=4aecbcaa:5251:7
-AIProvider@http://localhost:3002/src/renderer/providers/AIProvider.jsx:30:27
-ProgressProvider@http://localhost:3002/src/renderer/providers/ProgressProvider.jsx:88:33
-AudioProvider@http://localhost:3002/src/renderer/providers/AudioProvider.jsx:45:30
-AuthProvider@http://localhost:3002/src/renderer/contexts/AuthContext.jsx:30:29
-ThemeProvider@http://localhost:3002/src/renderer/providers/ThemeProvider.jsx:33:30
-App@http://localhost:3002/src/renderer/App.jsx?t=1752228475855:124:45
-
-Consider adding an error boundary to your tree to customize error handling behavior.
-Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries. chunk-YQ5BCTVV.js:14080:23
-Uncaught Error: Rendered more hooks than during the previous render.
-    React 5
-    Dashboard Dashboard.jsx:49
-    React 9
+CourseDataService.js:107:15
+Failed to get or create course: Error: Supabase configuration missing. Please set SUPABASE_URL and SUPABASE_ANON_KEY environment variables.
+    handleSupabaseMCPRequest mcpClient.js:168
+    run_mcp mcpClient.js:25
+    getOrCreateCourse CourseDataService.js:79
+    initializeCourseData CourseDataService.js:41
+    loadCourseData CourseSection.jsx:55
+    CourseSection CourseSection.jsx:39
+    React 7
     workLoop scheduler.development.js:266
     flushWork scheduler.development.js:239
     performWorkUntilDeadline scheduler.development.js:533
@@ -156,41 +102,15 @@ Uncaught Error: Rendered more hooks than during the previous render.
     js React
     __require chunk-V4OQ3NZ2.js:11
     <anonymous> react-dom_client.js:38
-chunk-YQ5BCTVV.js:11726:21
-    React 5
-    Dashboard Dashboard.jsx:49
-    React 9
-    workLoop scheduler.development.js:266
-    flushWork scheduler.development.js:239
-    performWorkUntilDeadline scheduler.development.js:533
-    (Async: EventHandlerNonNull)
-    js scheduler.development.js:571
-    js scheduler.development.js:633
-    __require chunk-V4OQ3NZ2.js:11
-    js index.js:6
-    __require chunk-V4OQ3NZ2.js:11
-    React 2
-    __require chunk-V4OQ3NZ2.js:11
-    js React
-    __require chunk-V4OQ3NZ2.js:11
-    js React
-    __require chunk-V4OQ3NZ2.js:11
-    <anonymous> react-dom_client.js:38
-[vite] hot updated: /src/renderer/pages/Dashboard.jsx client:883:32
-[vite] hot updated: /src/renderer/styles/globals.css client:883:32
-[vite] hot updated: /src/components/ui/tabs.jsx client:883:32
-[vite] hot updated: /src/components/ui/card.jsx client:883:32
-[vite] hot updated: /src/components/ui/button.jsx client:883:32
-[vite] hot updated: /src/components/Course/SkillMap.jsx client:883:32
-⚠️ Missing environment variables: VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY AppConfig.js:9:15
-Some features may not work properly. Please check your .env file. AppConfig.js:10:15
-⚠️ Missing environment variables: VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY AppConfig.js:9:15
-Some features may not work properly. Please check your .env file. AppConfig.js:10:15
-⚠️ Database services disabled - check environment variables 2 App.jsx:135:19
-Uncaught Error: Rendered more hooks than during the previous render.
-    React 5
-    Dashboard Dashboard.jsx:49
-    React 11
+CourseDataService.js:107:15
+Failed to initialize course data: Error: Supabase configuration missing. Please set SUPABASE_URL and SUPABASE_ANON_KEY environment variables.
+    handleSupabaseMCPRequest mcpClient.js:168
+    run_mcp mcpClient.js:25
+    getOrCreateCourse CourseDataService.js:79
+    initializeCourseData CourseDataService.js:41
+    loadCourseData CourseSection.jsx:55
+    CourseSection CourseSection.jsx:39
+    React 8
     workLoop scheduler.development.js:266
     flushWork scheduler.development.js:239
     performWorkUntilDeadline scheduler.development.js:533
@@ -206,30 +126,15 @@ Uncaught Error: Rendered more hooks than during the previous render.
     js React
     __require chunk-V4OQ3NZ2.js:11
     <anonymous> react-dom_client.js:38
-chunk-YQ5BCTVV.js:11726:21
-    React 5
-    Dashboard Dashboard.jsx:49
-    React 11
-    workLoop scheduler.development.js:266
-    flushWork scheduler.development.js:239
-    performWorkUntilDeadline scheduler.development.js:533
-    (Async: EventHandlerNonNull)
-    js scheduler.development.js:571
-    js scheduler.development.js:633
-    __require chunk-V4OQ3NZ2.js:11
-    js index.js:6
-    __require chunk-V4OQ3NZ2.js:11
-    React 2
-    __require chunk-V4OQ3NZ2.js:11
-    js React
-    __require chunk-V4OQ3NZ2.js:11
-    js React
-    __require chunk-V4OQ3NZ2.js:11
-    <anonymous> react-dom_client.js:38
-Uncaught Error: Rendered more hooks than during the previous render.
-    React 5
-    Dashboard Dashboard.jsx:49
-    React 12
+CourseDataService.js:66:15
+Failed to initialize course data: Error: Supabase configuration missing. Please set SUPABASE_URL and SUPABASE_ANON_KEY environment variables.
+    handleSupabaseMCPRequest mcpClient.js:168
+    run_mcp mcpClient.js:25
+    getOrCreateCourse CourseDataService.js:79
+    initializeCourseData CourseDataService.js:41
+    loadCourseData CourseSection.jsx:55
+    CourseSection CourseSection.jsx:39
+    React 7
     workLoop scheduler.development.js:266
     flushWork scheduler.development.js:239
     performWorkUntilDeadline scheduler.development.js:533
@@ -245,36 +150,15 @@ Uncaught Error: Rendered more hooks than during the previous render.
     js React
     __require chunk-V4OQ3NZ2.js:11
     <anonymous> react-dom_client.js:38
-chunk-YQ5BCTVV.js:11726:21
-The above error occurred in the <Dashboard> component:
-
-Dashboard@http://localhost:3002/src/renderer/pages/Dashboard.jsx?t=1752228479435:43:46
-div
-MotionComponent@http://localhost:3002/node_modules/.vite/deps/framer-motion.js?v=4aecbcaa:277:40
-ProtectedRoute@http://localhost:3002/src/renderer/components/auth/ProtectedRoute.jsx:22:24
-RenderedRoute@http://localhost:3002/node_modules/.vite/deps/react-router-dom.js?v=4aecbcaa:4091:7
-Routes@http://localhost:3002/node_modules/.vite/deps/react-router-dom.js?v=4aecbcaa:4560:7
-PresenceChild@http://localhost:3002/node_modules/.vite/deps/framer-motion.js?v=4aecbcaa:7102:21
-AnimatePresence@http://localhost:3002/node_modules/.vite/deps/framer-motion.js?v=4aecbcaa:7168:23
-main
-div
-div
-AppLayout@http://localhost:3002/src/renderer/App.jsx?t=1752228475855:48:19
-Router@http://localhost:3002/node_modules/.vite/deps/react-router-dom.js?v=4aecbcaa:4508:7
-BrowserRouter@http://localhost:3002/node_modules/.vite/deps/react-router-dom.js?v=4aecbcaa:5251:7
-AIProvider@http://localhost:3002/src/renderer/providers/AIProvider.jsx:30:27
-ProgressProvider@http://localhost:3002/src/renderer/providers/ProgressProvider.jsx:88:33
-AudioProvider@http://localhost:3002/src/renderer/providers/AudioProvider.jsx:45:30
-AuthProvider@http://localhost:3002/src/renderer/contexts/AuthContext.jsx:30:29
-ThemeProvider@http://localhost:3002/src/renderer/providers/ThemeProvider.jsx:33:30
-App@http://localhost:3002/src/renderer/App.jsx?t=1752228475855:124:45
-
-Consider adding an error boundary to your tree to customize error handling behavior.
-Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries. chunk-YQ5BCTVV.js:14080:23
-Uncaught Error: Rendered more hooks than during the previous render.
-    React 5
-    Dashboard Dashboard.jsx:49
-    React 9
+CourseDataService.js:66:15
+Failed to load course data: Error: Supabase configuration missing. Please set SUPABASE_URL and SUPABASE_ANON_KEY environment variables.
+    handleSupabaseMCPRequest mcpClient.js:168
+    run_mcp mcpClient.js:25
+    getOrCreateCourse CourseDataService.js:79
+    initializeCourseData CourseDataService.js:41
+    loadCourseData CourseSection.jsx:55
+    CourseSection CourseSection.jsx:39
+    React 8
     workLoop scheduler.development.js:266
     flushWork scheduler.development.js:239
     performWorkUntilDeadline scheduler.development.js:533
@@ -290,4 +174,37 @@ Uncaught Error: Rendered more hooks than during the previous render.
     js React
     __require chunk-V4OQ3NZ2.js:11
     <anonymous> react-dom_client.js:38
-chunk-YQ5BCTVV.js:11726:21
+CourseSection.jsx:69:15
+Failed to load course data: Error: Supabase configuration missing. Please set SUPABASE_URL and SUPABASE_ANON_KEY environment variables.
+    handleSupabaseMCPRequest mcpClient.js:168
+    run_mcp mcpClient.js:25
+    getOrCreateCourse CourseDataService.js:79
+    initializeCourseData CourseDataService.js:41
+    loadCourseData CourseSection.jsx:55
+    CourseSection CourseSection.jsx:39
+    React 7
+    workLoop scheduler.development.js:266
+    flushWork scheduler.development.js:239
+    performWorkUntilDeadline scheduler.development.js:533
+    js scheduler.development.js:571
+    js scheduler.development.js:633
+    __require chunk-V4OQ3NZ2.js:11
+    js index.js:6
+    __require chunk-V4OQ3NZ2.js:11
+    React 2
+    __require chunk-V4OQ3NZ2.js:11
+    js React
+    __require chunk-V4OQ3NZ2.js:11
+    js React
+    __require chunk-V4OQ3NZ2.js:11
+    <anonymous> react-dom_client.js:38
+CourseSection.jsx:69:15
+Auto-initializing AI service at startup... AIProvider.jsx:48:17
+Initializing AI service... aiService.js:68:15
+Initializing Gemini service... aiService.js:75:19
+Gemini service initialized successfully geminiService.js:31:15
+Gemini service initialized successfully aiService.js:79:19
+window.electronAPI: undefined aiService.js:89:15
+window.electronAPI exists: false aiService.js:90:15
+Running in browser mode - AI features will use fallback responses aiService.js:97:17
+AI service initialized successfully aiService.js:103:15

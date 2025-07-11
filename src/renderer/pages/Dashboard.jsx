@@ -18,6 +18,7 @@ import {
   BarChart3
 } from 'lucide-react';
 import { useProgress } from '../providers/ProgressProvider';
+import CourseSection from '../../components/Course/CourseSection';
 
 const Dashboard = () => {
   const { getProgressStats, userProgress } = useProgress();
@@ -228,6 +229,15 @@ const Dashboard = () => {
           </p>
         </motion.div>
       </div>
+
+      {/* Course Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
+      >
+        <CourseSection />
+      </motion.div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Quick Actions */}

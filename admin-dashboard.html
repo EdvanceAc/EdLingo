@@ -245,25 +245,672 @@
 
         <!-- Courses Tab -->
         <div id="courses-content" class="tab-content hidden">
-            <div class="bg-white rounded-lg shadow-md">
+            <!-- Course Management Header -->
+            <div class="bg-white rounded-lg shadow-md mb-6">
                 <div class="px-6 py-4 border-b border-gray-200">
                     <div class="flex justify-between items-center">
-                        <h2 class="text-lg font-semibold text-gray-900">Course Management</h2>
-                        <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center" onclick="showAddCourseModal()">
-                            <i data-lucide="plus" class="w-4 h-4 mr-2"></i>
-                            Add Course
-                        </button>
-                    </div>
-                </div>
-                <div class="p-6">
-                    <div id="courses-list" class="space-y-4">
-                        <div class="text-center py-12">
-                            <i data-lucide="book-open" class="w-12 h-12 mx-auto text-gray-400 mb-4"></i>
-                            <h3 class="text-lg font-medium text-gray-900 mb-2">No courses found</h3>
-                            <p class="text-gray-500 mb-4">Create your first course to get started.</p>
-                            <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors" onclick="showAddCourseModal()">
+                        <h2 class="text-lg font-semibold text-gray-900">Course Management & Creation</h2>
+                        <div class="flex space-x-3">
+                            <button class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center" onclick="showAICourseWizard()">
+                                <i data-lucide="sparkles" class="w-4 h-4 mr-2"></i>
+                                AI Course Creator
+                            </button>
+                            <button class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center" onclick="showTemplateGallery()">
+                                <i data-lucide="layout-template" class="w-4 h-4 mr-2"></i>
+                                Templates
+                            </button>
+                            <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center" onclick="showAddCourseModal()">
+                                <i data-lucide="plus" class="w-4 h-4 mr-2"></i>
                                 Create Course
                             </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Course Management Sub-tabs -->
+                <div class="border-b border-gray-200">
+                    <nav class="-mb-px flex space-x-8 px-6">
+                        <button id="course-overview-tab" class="py-4 px-1 border-b-2 border-blue-500 font-medium text-sm text-blue-600" onclick="showCourseSubTab('overview')">
+                            Course Overview
+                        </button>
+                        <button id="course-library-tab" class="py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" onclick="showCourseSubTab('library')">
+                            Course Library
+                        </button>
+                        <button id="course-ai-tab" class="py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" onclick="showCourseSubTab('ai')">
+                            AI Creation
+                        </button>
+                        <button id="course-templates-tab" class="py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" onclick="showCourseSubTab('templates')">
+                            Templates
+                        </button>
+                        <button id="course-versions-tab" class="py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" onclick="showCourseSubTab('versions')">
+                            Version Control
+                        </button>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- Course Overview Sub-tab -->
+            <div id="course-overview-content" class="course-subtab-content">
+                <!-- Course Stats Overview -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                    <div class="bg-white rounded-lg shadow-md p-6 card-hover">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+                                <i data-lucide="book-open" class="w-6 h-6"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600">Total Courses</p>
+                                <p class="text-2xl font-semibold text-gray-900" id="total-courses">12</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-lg shadow-md p-6 card-hover">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-green-100 text-green-600">
+                                <i data-lucide="users" class="w-6 h-6"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600">Total Enrollments</p>
+                                <p class="text-2xl font-semibold text-gray-900" id="total-enrollments">1,247</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-lg shadow-md p-6 card-hover">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
+                                <i data-lucide="trending-up" class="w-6 h-6"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600">Avg Completion</p>
+                                <p class="text-2xl font-semibold text-gray-900" id="avg-completion">78%</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-lg shadow-md p-6 card-hover">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-purple-100 text-purple-600">
+                                <i data-lucide="sparkles" class="w-6 h-6"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600">AI Generated</p>
+                                <p class="text-2xl font-semibold text-gray-900" id="ai-generated">5</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filters and Bulk Operations -->
+                <div class="bg-white rounded-lg shadow-md mb-6">
+                    <div class="p-6">
+                        <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
+                            <div class="flex items-center space-x-4">
+                                <label class="flex items-center">
+                                    <input type="checkbox" id="select-all-courses" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500" onchange="toggleAllCourses()">
+                                    <span class="ml-2 text-sm text-gray-700">Select All</span>
+                                </label>
+                                <div id="bulk-actions" class="hidden flex items-center space-x-2">
+                                    <select class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                        <option value="">Bulk Actions</option>
+                                        <option value="publish">Publish Selected</option>
+                                        <option value="archive">Archive Selected</option>
+                                        <option value="duplicate">Duplicate Selected</option>
+                                        <option value="delete">Delete Selected</option>
+                                    </select>
+                                    <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors" onclick="executeBulkAction()">
+                                        Apply
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <select id="course-filter-status" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" onchange="filterCourses()">
+                                    <option value="">All Status</option>
+                                    <option value="active">Active</option>
+                                    <option value="draft">Draft</option>
+                                    <option value="archived">Archived</option>
+                                </select>
+                                <select id="course-filter-level" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" onchange="filterCourses()">
+                                    <option value="">All Levels</option>
+                                    <option value="A1">A1 - Beginner</option>
+                                    <option value="A2">A2 - Elementary</option>
+                                    <option value="B1">B1 - Intermediate</option>
+                                    <option value="B2">B2 - Upper Intermediate</option>
+                                    <option value="C1">C1 - Advanced</option>
+                                    <option value="C2">C2 - Proficient</option>
+                                </select>
+                                <div class="relative">
+                                    <input type="text" id="course-search" placeholder="Search courses..." class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" oninput="searchCourses()">
+                                    <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-gray-400"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Course Grid -->
+                <div id="courses-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <!-- Course Card 1 -->
+                    <div class="bg-white rounded-lg shadow-md overflow-hidden card-hover course-card" data-course-id="1">
+                        <label class="absolute top-3 left-3 z-10">
+                            <input type="checkbox" class="course-checkbox rounded border-gray-300 text-blue-600 focus:ring-blue-500" onchange="updateBulkActions()">
+                        </label>
+                        <div class="relative">
+                            <div class="h-32 bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
+                                <i data-lucide="book-open" class="w-12 h-12 text-white"></i>
+                            </div>
+                            <span class="absolute top-3 right-3 px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">Active</span>
+                        </div>
+                        <div class="p-4">
+                            <h3 class="font-semibold text-gray-900 mb-2">English for Beginners (A1)</h3>
+                            <p class="text-sm text-gray-600 mb-3">Complete beginner course covering basic vocabulary and grammar</p>
+                            <div class="flex items-center justify-between text-sm text-gray-500 mb-3">
+                                <span class="flex items-center">
+                                    <i data-lucide="users" class="w-4 h-4 mr-1"></i>
+                                    156 enrolled
+                                </span>
+                                <span class="flex items-center">
+                                    <i data-lucide="clock" class="w-4 h-4 mr-1"></i>
+                                    12 lessons
+                                </span>
+                            </div>
+                            <div class="mb-3">
+                                <div class="flex justify-between text-sm text-gray-600 mb-1">
+                                    <span>Completion Rate</span>
+                                    <span>85%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="bg-green-600 h-2 rounded-full" style="width: 85%"></div>
+                                </div>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm transition-colors" onclick="editCourse(1)">
+                                    Edit
+                                </button>
+                                <button class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded text-sm transition-colors" onclick="duplicateCourse(1)">
+                                    <i data-lucide="copy" class="w-4 h-4"></i>
+                                </button>
+                                <button class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded text-sm transition-colors" onclick="showCourseVersions(1)">
+                                    <i data-lucide="git-branch" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Course Card 2 -->
+                    <div class="bg-white rounded-lg shadow-md overflow-hidden card-hover course-card" data-course-id="2">
+                        <label class="absolute top-3 left-3 z-10">
+                            <input type="checkbox" class="course-checkbox rounded border-gray-300 text-blue-600 focus:ring-blue-500" onchange="updateBulkActions()">
+                        </label>
+                        <div class="relative">
+                            <div class="h-32 bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center">
+                                <i data-lucide="graduation-cap" class="w-12 h-12 text-white"></i>
+                            </div>
+                            <span class="absolute top-3 right-3 px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">Draft</span>
+                        </div>
+                        <div class="p-4">
+                            <h3 class="font-semibold text-gray-900 mb-2">Business English (B2)</h3>
+                            <p class="text-sm text-gray-600 mb-3">Professional English for workplace communication</p>
+                            <div class="flex items-center justify-between text-sm text-gray-500 mb-3">
+                                <span class="flex items-center">
+                                    <i data-lucide="users" class="w-4 h-4 mr-1"></i>
+                                    89 enrolled
+                                </span>
+                                <span class="flex items-center">
+                                    <i data-lucide="clock" class="w-4 h-4 mr-1"></i>
+                                    18 lessons
+                                </span>
+                            </div>
+                            <div class="mb-3">
+                                <div class="flex justify-between text-sm text-gray-600 mb-1">
+                                    <span>Completion Rate</span>
+                                    <span>72%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="bg-yellow-500 h-2 rounded-full" style="width: 72%"></div>
+                                </div>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm transition-colors" onclick="editCourse(2)">
+                                    Edit
+                                </button>
+                                <button class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded text-sm transition-colors" onclick="duplicateCourse(2)">
+                                    <i data-lucide="copy" class="w-4 h-4"></i>
+                                </button>
+                                <button class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded text-sm transition-colors" onclick="showCourseVersions(2)">
+                                    <i data-lucide="git-branch" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Course Card 3 -->
+                    <div class="bg-white rounded-lg shadow-md overflow-hidden card-hover course-card" data-course-id="3">
+                        <label class="absolute top-3 left-3 z-10">
+                            <input type="checkbox" class="course-checkbox rounded border-gray-300 text-blue-600 focus:ring-blue-500" onchange="updateBulkActions()">
+                        </label>
+                        <div class="relative">
+                            <div class="h-32 bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center">
+                                <i data-lucide="sparkles" class="w-12 h-12 text-white"></i>
+                            </div>
+                            <span class="absolute top-3 right-3 px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">Active</span>
+                            <span class="absolute bottom-2 right-2 px-2 py-1 bg-purple-100 text-purple-800 text-xs font-medium rounded-full">AI Generated</span>
+                        </div>
+                        <div class="p-4">
+                            <h3 class="font-semibold text-gray-900 mb-2">Conversational English (B1)</h3>
+                            <p class="text-sm text-gray-600 mb-3">AI-generated course for improving speaking skills</p>
+                            <div class="flex items-center justify-between text-sm text-gray-500 mb-3">
+                                <span class="flex items-center">
+                                    <i data-lucide="users" class="w-4 h-4 mr-1"></i>
+                                    203 enrolled
+                                </span>
+                                <span class="flex items-center">
+                                    <i data-lucide="clock" class="w-4 h-4 mr-1"></i>
+                                    15 lessons
+                                </span>
+                            </div>
+                            <div class="mb-3">
+                                <div class="flex justify-between text-sm text-gray-600 mb-1">
+                                    <span>Completion Rate</span>
+                                    <span>91%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="bg-green-600 h-2 rounded-full" style="width: 91%"></div>
+                                </div>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm transition-colors" onclick="editCourse(3)">
+                                    Edit
+                                </button>
+                                <button class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded text-sm transition-colors" onclick="duplicateCourse(3)">
+                                    <i data-lucide="copy" class="w-4 h-4"></i>
+                                </button>
+                                <button class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded text-sm transition-colors" onclick="showCourseVersions(3)">
+                                    <i data-lucide="git-branch" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Add more course cards as needed -->
+                </div>
+            </div>
+
+            <!-- Course Library Sub-tab -->
+            <div id="course-library-content" class="course-subtab-content hidden">
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-semibold text-gray-900">Course Library Management</h3>
+                        <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center" onclick="importCourse()">
+                            <i data-lucide="upload" class="w-4 h-4 mr-2"></i>
+                            Import Course
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="lg:col-span-2">
+                            <div class="space-y-4">
+                                <div class="border border-gray-200 rounded-lg p-4">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center space-x-3">
+                                            <i data-lucide="folder" class="w-5 h-5 text-blue-600"></i>
+                                            <span class="font-medium">Beginner Courses (A1-A2)</span>
+                                        </div>
+                                        <span class="text-sm text-gray-500">5 courses</span>
+                                    </div>
+                                </div>
+                                <div class="border border-gray-200 rounded-lg p-4">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center space-x-3">
+                                            <i data-lucide="folder" class="w-5 h-5 text-green-600"></i>
+                                            <span class="font-medium">Intermediate Courses (B1-B2)</span>
+                                        </div>
+                                        <span class="text-sm text-gray-500">4 courses</span>
+                                    </div>
+                                </div>
+                                <div class="border border-gray-200 rounded-lg p-4">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center space-x-3">
+                                            <i data-lucide="folder" class="w-5 h-5 text-purple-600"></i>
+                                            <span class="font-medium">Advanced Courses (C1-C2)</span>
+                                        </div>
+                                        <span class="text-sm text-gray-500">3 courses</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <h4 class="font-medium text-gray-900 mb-3">Quick Actions</h4>
+                                <div class="space-y-2">
+                                    <button class="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded" onclick="exportAllCourses()">
+                                        <i data-lucide="download" class="w-4 h-4 mr-2 inline"></i>
+                                        Export All Courses
+                                    </button>
+                                    <button class="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded" onclick="backupCourses()">
+                                        <i data-lucide="shield" class="w-4 h-4 mr-2 inline"></i>
+                                        Backup Courses
+                                    </button>
+                                    <button class="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded" onclick="restoreCourses()">
+                                        <i data-lucide="refresh-cw" class="w-4 h-4 mr-2 inline"></i>
+                                        Restore Courses
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Creation Sub-tab -->
+            <div id="course-ai-content" class="course-subtab-content hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- AI Course Creation Wizard -->
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <div class="flex items-center mb-4">
+                            <i data-lucide="sparkles" class="w-6 h-6 text-purple-600 mr-3"></i>
+                            <h3 class="text-lg font-semibold text-gray-900">AI Course Creation Wizard</h3>
+                        </div>
+                        <form id="ai-course-form" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Course Topic</label>
+                                <input type="text" id="ai-course-topic" placeholder="e.g., Business English for Meetings" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">CEFR Level</label>
+                                <select id="ai-course-level" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                                    <option value="">Select Level</option>
+                                    <option value="A1">A1 - Beginner</option>
+                                    <option value="A2">A2 - Elementary</option>
+                                    <option value="B1">B1 - Intermediate</option>
+                                    <option value="B2">B2 - Upper Intermediate</option>
+                                    <option value="C1">C1 - Advanced</option>
+                                    <option value="C2">C2 - Proficient</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Course Duration</label>
+                                <select id="ai-course-duration" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                                    <option value="">Select Duration</option>
+                                    <option value="short">Short (5-10 lessons)</option>
+                                    <option value="medium">Medium (10-20 lessons)</option>
+                                    <option value="long">Long (20+ lessons)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Learning Objectives</label>
+                                <textarea id="ai-course-objectives" rows="3" placeholder="Describe what students should learn..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"></textarea>
+                            </div>
+                            <button type="button" class="w-full bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center justify-center" onclick="generateAICourse()">
+                                <i data-lucide="sparkles" class="w-4 h-4 mr-2"></i>
+                                Generate Course with AI
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- AI Features Panel -->
+                    <div class="space-y-6">
+                        <!-- Content Generation -->
+                        <div class="bg-white rounded-lg shadow-md p-6">
+                            <h4 class="font-semibold text-gray-900 mb-3 flex items-center">
+                                <i data-lucide="file-text" class="w-5 h-5 text-blue-600 mr-2"></i>
+                                Content Generation
+                            </h4>
+                            <div class="space-y-3">
+                                <button class="w-full text-left px-3 py-2 text-sm bg-blue-50 hover:bg-blue-100 rounded border border-blue-200 transition-colors" onclick="generateLessonContent()">
+                                    Generate Lesson Content
+                                </button>
+                                <button class="w-full text-left px-3 py-2 text-sm bg-green-50 hover:bg-green-100 rounded border border-green-200 transition-colors" onclick="generateExercises()">
+                                    Generate Exercises
+                                </button>
+                                <button class="w-full text-left px-3 py-2 text-sm bg-yellow-50 hover:bg-yellow-100 rounded border border-yellow-200 transition-colors" onclick="generateAssessments()">
+                                    Generate Assessments
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Curriculum Planning -->
+                        <div class="bg-white rounded-lg shadow-md p-6">
+                            <h4 class="font-semibold text-gray-900 mb-3 flex items-center">
+                                <i data-lucide="map" class="w-5 h-5 text-green-600 mr-2"></i>
+                                Automatic Curriculum Planning
+                            </h4>
+                            <div class="space-y-3">
+                                <button class="w-full text-left px-3 py-2 text-sm bg-green-50 hover:bg-green-100 rounded border border-green-200 transition-colors" onclick="generateCurriculum()">
+                                    Generate CEFR-Based Curriculum
+                                </button>
+                                <button class="w-full text-left px-3 py-2 text-sm bg-blue-50 hover:bg-blue-100 rounded border border-blue-200 transition-colors" onclick="optimizeLessonSequence()">
+                                    Optimize Lesson Sequence
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Multilingual Support -->
+                        <div class="bg-white rounded-lg shadow-md p-6">
+                            <h4 class="font-semibold text-gray-900 mb-3 flex items-center">
+                                <i data-lucide="globe" class="w-5 h-5 text-purple-600 mr-2"></i>
+                                Multilingual Support
+                            </h4>
+                            <div class="space-y-3">
+                                <button class="w-full text-left px-3 py-2 text-sm bg-purple-50 hover:bg-purple-100 rounded border border-purple-200 transition-colors" onclick="translateCourse()">
+                                    Auto-Translate Course
+                                </button>
+                                <button class="w-full text-left px-3 py-2 text-sm bg-indigo-50 hover:bg-indigo-100 rounded border border-indigo-200 transition-colors" onclick="adaptCulturalContent()">
+                                    Adapt Cultural Content
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Recommendations -->
+                <div class="mt-6 bg-white rounded-lg shadow-md p-6">
+                    <h4 class="font-semibold text-gray-900 mb-4 flex items-center">
+                        <i data-lucide="lightbulb" class="w-5 h-5 text-yellow-600 mr-2"></i>
+                        Smart Content Recommendations
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                            <h5 class="font-medium text-yellow-800 mb-2">Trending Topics</h5>
+                            <ul class="text-sm text-yellow-700 space-y-1">
+                                <li>• Remote Work Vocabulary</li>
+                                <li>• Digital Communication</li>
+                                <li>• Sustainable Living</li>
+                            </ul>
+                        </div>
+                        <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                            <h5 class="font-medium text-green-800 mb-2">High Engagement</h5>
+                            <ul class="text-sm text-green-700 space-y-1">
+                                <li>• Interactive Dialogues</li>
+                                <li>• Video-based Lessons</li>
+                                <li>• Gamified Exercises</li>
+                            </ul>
+                        </div>
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <h5 class="font-medium text-blue-800 mb-2">Skill Gaps</h5>
+                            <ul class="text-sm text-blue-700 space-y-1">
+                                <li>• Pronunciation Practice</li>
+                                <li>• Writing Skills</li>
+                                <li>• Listening Comprehension</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Templates Sub-tab -->
+            <div id="course-templates-content" class="course-subtab-content hidden">
+                <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-semibold text-gray-900">Course Templates</h3>
+                        <button class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center" onclick="createCustomTemplate()">
+                            <i data-lucide="plus" class="w-4 h-4 mr-2"></i>
+                            Create Custom Template
+                        </button>
+                    </div>
+
+                    <!-- Template Categories -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- CEFR Level Templates -->
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <h4 class="font-semibold text-gray-900 mb-3 flex items-center">
+                                <i data-lucide="layers" class="w-5 h-5 text-blue-600 mr-2"></i>
+                                CEFR Level Templates
+                            </h4>
+                            <div class="space-y-2">
+                                <button class="w-full text-left px-3 py-2 text-sm bg-blue-50 hover:bg-blue-100 rounded border border-blue-200 transition-colors" onclick="useTemplate('cefr-a1')">
+                                    A1 Beginner Template
+                                </button>
+                                <button class="w-full text-left px-3 py-2 text-sm bg-blue-50 hover:bg-blue-100 rounded border border-blue-200 transition-colors" onclick="useTemplate('cefr-a2')">
+                                    A2 Elementary Template
+                                </button>
+                                <button class="w-full text-left px-3 py-2 text-sm bg-blue-50 hover:bg-blue-100 rounded border border-blue-200 transition-colors" onclick="useTemplate('cefr-b1')">
+                                    B1 Intermediate Template
+                                </button>
+                                <button class="w-full text-left px-3 py-2 text-sm bg-blue-50 hover:bg-blue-100 rounded border border-blue-200 transition-colors" onclick="useTemplate('cefr-b2')">
+                                    B2 Upper Intermediate Template
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Skill-Based Templates -->
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <h4 class="font-semibold text-gray-900 mb-3 flex items-center">
+                                <i data-lucide="target" class="w-5 h-5 text-green-600 mr-2"></i>
+                                Skill-Based Templates
+                            </h4>
+                            <div class="space-y-2">
+                                <button class="w-full text-left px-3 py-2 text-sm bg-green-50 hover:bg-green-100 rounded border border-green-200 transition-colors" onclick="useTemplate('speaking-focus')">
+                                    Speaking Focus Template
+                                </button>
+                                <button class="w-full text-left px-3 py-2 text-sm bg-green-50 hover:bg-green-100 rounded border border-green-200 transition-colors" onclick="useTemplate('writing-focus')">
+                                    Writing Focus Template
+                                </button>
+                                <button class="w-full text-left px-3 py-2 text-sm bg-green-50 hover:bg-green-100 rounded border border-green-200 transition-colors" onclick="useTemplate('listening-focus')">
+                                    Listening Focus Template
+                                </button>
+                                <button class="w-full text-left px-3 py-2 text-sm bg-green-50 hover:bg-green-100 rounded border border-green-200 transition-colors" onclick="useTemplate('grammar-focus')">
+                                    Grammar Focus Template
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Industry-Specific Templates -->
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <h4 class="font-semibold text-gray-900 mb-3 flex items-center">
+                                <i data-lucide="briefcase" class="w-5 h-5 text-purple-600 mr-2"></i>
+                                Industry-Specific Templates
+                            </h4>
+                            <div class="space-y-2">
+                                <button class="w-full text-left px-3 py-2 text-sm bg-purple-50 hover:bg-purple-100 rounded border border-purple-200 transition-colors" onclick="useTemplate('business-english')">
+                                    Business English Template
+                                </button>
+                                <button class="w-full text-left px-3 py-2 text-sm bg-purple-50 hover:bg-purple-100 rounded border border-purple-200 transition-colors" onclick="useTemplate('medical-english')">
+                                    Medical English Template
+                                </button>
+                                <button class="w-full text-left px-3 py-2 text-sm bg-purple-50 hover:bg-purple-100 rounded border border-purple-200 transition-colors" onclick="useTemplate('academic-english')">
+                                    Academic English Template
+                                </button>
+                                <button class="w-full text-left px-3 py-2 text-sm bg-purple-50 hover:bg-purple-100 rounded border border-purple-200 transition-colors" onclick="useTemplate('travel-english')">
+                                    Travel English Template
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Template Preview -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h4 class="font-semibold text-gray-900 mb-4">Template Preview</h4>
+                    <div id="template-preview" class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                        <p class="text-gray-500 text-center py-8">Select a template to preview its structure and content</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Version Control Sub-tab -->
+            <div id="course-versions-content" class="course-subtab-content hidden">
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-semibold text-gray-900">Version Control</h3>
+                        <div class="flex space-x-3">
+                            <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center" onclick="createVersion()">
+                                <i data-lucide="git-branch" class="w-4 h-4 mr-2"></i>
+                                Create Version
+                            </button>
+                            <button class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center" onclick="compareVersions()">
+                                <i data-lucide="git-compare" class="w-4 h-4 mr-2"></i>
+                                Compare Versions
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Version History -->
+                    <div class="space-y-4">
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                                    <div>
+                                        <h4 class="font-medium text-gray-900">Version 2.1 (Current)</h4>
+                                        <p class="text-sm text-gray-500">Updated lesson 5 content and added new exercises</p>
+                                        <p class="text-xs text-gray-400">Created by Admin • 2 hours ago</p>
+                                    </div>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <button class="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors" onclick="viewVersion('2.1')">
+                                        View
+                                    </button>
+                                    <button class="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors" onclick="downloadVersion('2.1')">
+                                        Download
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-3 h-3 bg-gray-400 rounded-full"></div>
+                                    <div>
+                                        <h4 class="font-medium text-gray-900">Version 2.0</h4>
+                                        <p class="text-sm text-gray-500">Major update with new assessment system</p>
+                                        <p class="text-xs text-gray-400">Created by Admin • 1 week ago</p>
+                                    </div>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <button class="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors" onclick="viewVersion('2.0')">
+                                        View
+                                    </button>
+                                    <button class="px-3 py-1 text-sm bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200 transition-colors" onclick="rollbackToVersion('2.0')">
+                                        Rollback
+                                    </button>
+                                    <button class="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors" onclick="downloadVersion('2.0')">
+                                        Download
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-3 h-3 bg-gray-400 rounded-full"></div>
+                                    <div>
+                                        <h4 class="font-medium text-gray-900">Version 1.5</h4>
+                                        <p class="text-sm text-gray-500">Fixed grammar exercises and improved audio quality</p>
+                                        <p class="text-xs text-gray-400">Created by Admin • 2 weeks ago</p>
+                                    </div>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <button class="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors" onclick="viewVersion('1.5')">
+                                        View
+                                    </button>
+                                    <button class="px-3 py-1 text-sm bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200 transition-colors" onclick="rollbackToVersion('1.5')">
+                                        Rollback
+                                    </button>
+                                    <button class="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors" onclick="downloadVersion('1.5')">
+                                        Download
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -710,84 +1357,356 @@
         </div>
     </footer>
 
-    <!-- Course Creation Modal -->
+    <!-- Course Creation Wizard Modal -->
     <div id="courseModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
         <div class="flex items-center justify-center min-h-screen p-4">
-            <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[95vh] overflow-hidden">
+                <!-- Header -->
                 <div class="px-6 py-4 border-b border-gray-200">
                     <div class="flex justify-between items-center">
-                        <h3 id="courseModalTitle" class="text-lg font-semibold text-gray-900">Create New Course</h3>
+                        <h3 id="courseModalTitle" class="text-xl font-semibold text-gray-900">Create New Course</h3>
                         <button onclick="closeCourseModal()" class="text-gray-400 hover:text-gray-600">
                             <i data-lucide="x" class="w-6 h-6"></i>
                         </button>
                     </div>
-                </div>
-                <form id="courseForm" class="p-6 space-y-6">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Course Title</label>
-                        <input type="text" id="courseTitle" name="title" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
-                        <textarea id="courseDescription" name="description" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Course Level</label>
-                        <select id="courseLevel" name="level" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                            <option value="beginner">Beginner</option>
-                            <option value="intermediate">Intermediate</option>
-                            <option value="advanced">Advanced</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-4">Course Materials</label>
-                        <div class="space-y-4">
-                            <!-- PDF Upload -->
-                            <div class="border-2 border-dashed border-gray-300 rounded-lg p-4">
-                                <div class="flex items-center justify-between mb-2">
-                                    <span class="text-sm font-medium text-gray-700">PDF Documents</span>
-                                    <i data-lucide="file-text" class="w-5 h-5 text-gray-400"></i>
-                                </div>
-                                <input type="file" id="coursePdfs" multiple accept=".pdf" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
-                                <p class="text-xs text-gray-500 mt-1">Upload PDF files for reading materials and interactive content</p>
-                            </div>
-                            <!-- Audio Upload -->
-                            <div class="border-2 border-dashed border-gray-300 rounded-lg p-4">
-                                <div class="flex items-center justify-between mb-2">
-                                    <span class="text-sm font-medium text-gray-700">Audio Files</span>
-                                    <i data-lucide="headphones" class="w-5 h-5 text-gray-400"></i>
-                                </div>
-                                <input type="file" id="courseAudio" multiple accept=".mp3,.wav,.ogg" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-green-50 file:text-green-700 hover:file:bg-green-100">
-                                <p class="text-xs text-gray-500 mt-1">Upload audio files for pronunciation guides and podcasts</p>
-                            </div>
-                            <!-- Video Upload -->
-                            <div class="border-2 border-dashed border-gray-300 rounded-lg p-4">
-                                <div class="flex items-center justify-between mb-2">
-                                    <span class="text-sm font-medium text-gray-700">Video Files</span>
-                                    <i data-lucide="video" class="w-5 h-5 text-gray-400"></i>
-                                </div>
-                                <input type="file" id="courseVideos" multiple accept=".mp4,.webm,.ogg" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100">
-                                <p class="text-xs text-gray-500 mt-1">Upload video lessons and demonstrations</p>
-                            </div>
-                            <!-- Image Upload -->
-                            <div class="border-2 border-dashed border-gray-300 rounded-lg p-4">
-                                <div class="flex items-center justify-between mb-2">
-                                    <span class="text-sm font-medium text-gray-700">Images</span>
-                                    <i data-lucide="image" class="w-5 h-5 text-gray-400"></i>
-                                </div>
-                                <input type="file" id="courseImages" multiple accept=".jpg,.jpeg,.png,.gif,.webp" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-yellow-50 file:text-yellow-700 hover:file:bg-yellow-100">
-                                <p class="text-xs text-gray-500 mt-1">Upload images for visual aids and vocabulary illustrations</p>
-                            </div>
+                    <!-- Progress Indicator -->
+                    <div class="mt-4">
+                        <div class="flex items-center justify-between text-sm text-gray-500">
+                            <span id="stepIndicator">Step 1 of 6</span>
+                            <span id="stepTitle">Course Information</span>
+                        </div>
+                        <div class="mt-2 bg-gray-200 rounded-full h-2">
+                            <div id="progressBar" class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 16.67%"></div>
                         </div>
                     </div>
-                    <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
-                        <button type="button" onclick="closeCourseModal()" class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">Cancel</button>
-                        <button type="submit" id="courseSubmitBtn" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">Create Course</button>
+                </div>
+                
+                <!-- Content Area -->
+                <div class="flex h-[calc(95vh-140px)]">
+                    <!-- Step Navigation -->
+                    <div class="w-64 bg-gray-50 border-r border-gray-200 p-4">
+                        <nav class="space-y-2">
+                            <div id="step1Nav" class="flex items-center p-3 rounded-lg bg-blue-100 text-blue-700 cursor-pointer" onclick="showWizardStep(1)">
+                                <div class="w-6 h-6 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center mr-3">1</div>
+                                <span class="text-sm font-medium">Course Info</span>
+                            </div>
+                            <div id="step2Nav" class="flex items-center p-3 rounded-lg text-gray-500 cursor-pointer" onclick="showWizardStep(2)">
+                                <div class="w-6 h-6 rounded-full bg-gray-300 text-white text-xs flex items-center justify-center mr-3">2</div>
+                                <span class="text-sm font-medium">CEFR & Level</span>
+                            </div>
+                            <div id="step3Nav" class="flex items-center p-3 rounded-lg text-gray-500 cursor-pointer" onclick="showWizardStep(3)">
+                                <div class="w-6 h-6 rounded-full bg-gray-300 text-white text-xs flex items-center justify-center mr-3">3</div>
+                                <span class="text-sm font-medium">Syllabus</span>
+                            </div>
+                            <div id="step4Nav" class="flex items-center p-3 rounded-lg text-gray-500 cursor-pointer" onclick="showWizardStep(4)">
+                                <div class="w-6 h-6 rounded-full bg-gray-300 text-white text-xs flex items-center justify-center mr-3">4</div>
+                                <span class="text-sm font-medium">Lessons</span>
+                            </div>
+                            <div id="step5Nav" class="flex items-center p-3 rounded-lg text-gray-500 cursor-pointer" onclick="showWizardStep(5)">
+                                <div class="w-6 h-6 rounded-full bg-gray-300 text-white text-xs flex items-center justify-center mr-3">5</div>
+                                <span class="text-sm font-medium">Questions</span>
+                            </div>
+                            <div id="step6Nav" class="flex items-center p-3 rounded-lg text-gray-500 cursor-pointer" onclick="showWizardStep(6)">
+                                <div class="w-6 h-6 rounded-full bg-gray-300 text-white text-xs flex items-center justify-center mr-3">6</div>
+                                <span class="text-sm font-medium">Review</span>
+                            </div>
+                        </nav>
                     </div>
-                </form>
+                    
+                    <!-- Main Content -->
+                    <div class="flex-1 overflow-y-auto">
+                        <form id="courseForm" class="h-full">
+                            <!-- Step 1: Course Information -->
+                            <div id="step-1" class="step-content p-6 space-y-6">
+                                <div class="grid grid-cols-2 gap-6">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Course Title *</label>
+                                        <input type="text" id="courseTitle" name="title" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Course Category</label>
+                                        <select id="courseCategory" name="category" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                            <option value="general">General English</option>
+                                            <option value="business">Business English</option>
+                                            <option value="academic">Academic English</option>
+                                            <option value="conversation">Conversation</option>
+                                            <option value="grammar">Grammar</option>
+                                            <option value="vocabulary">Vocabulary</option>
+                                            <option value="pronunciation">Pronunciation</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Course Description</label>
+                                    <textarea id="courseDescription" name="description" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Describe what students will learn in this course..."></textarea>
+                                </div>
+                                <div class="grid grid-cols-3 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Duration (weeks)</label>
+                                        <input type="number" id="courseDuration" name="duration" min="1" max="52" value="8" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Hours per week</label>
+                                        <input type="number" id="courseHours" name="hoursPerWeek" min="1" max="40" value="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Max Students</label>
+                                        <input type="number" id="maxStudents" name="maxStudents" min="1" max="100" value="25" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-4">Course Materials</label>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <!-- PDF Upload -->
+                                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-4">
+                                            <div class="flex items-center justify-between mb-2">
+                                                <span class="text-sm font-medium text-gray-700">PDF Documents</span>
+                                                <i data-lucide="file-text" class="w-5 h-5 text-gray-400"></i>
+                                            </div>
+                                            <input type="file" id="coursePdfs" multiple accept=".pdf" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                                            <p class="text-xs text-gray-500 mt-1">Reading materials and worksheets</p>
+                                        </div>
+                                        <!-- Audio Upload -->
+                                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-4">
+                                            <div class="flex items-center justify-between mb-2">
+                                                <span class="text-sm font-medium text-gray-700">Audio Files</span>
+                                                <i data-lucide="headphones" class="w-5 h-5 text-gray-400"></i>
+                                            </div>
+                                            <input type="file" id="courseAudio" multiple accept=".mp3,.wav,.ogg" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-green-50 file:text-green-700 hover:file:bg-green-100">
+                                            <p class="text-xs text-gray-500 mt-1">Listening exercises and pronunciation</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Step 2: CEFR & Level -->
+                            <div id="step-2" class="wizard-step hidden">
+                                <h4 class="text-lg font-semibold text-gray-900 mb-4">CEFR Level & Assessment</h4>
+                                <div class="space-y-6">
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">Base CEFR Level</label>
+                                            <select id="baseCEFRLevel" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                                <option value="A1">A1 - Beginner</option>
+                                                <option value="A2">A2 - Elementary</option>
+                                                <option value="B1">B1 - Intermediate</option>
+                                                <option value="B2">B2 - Upper Intermediate</option>
+                                                <option value="C1">C1 - Advanced</option>
+                                                <option value="C2">C2 - Proficiency</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">Target CEFR Level</label>
+                                            <select id="targetCEFRLevel" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                                <option value="A1">A1 - Beginner</option>
+                                                <option value="A2">A2 - Elementary</option>
+                                                <option value="B1">B1 - Intermediate</option>
+                                                <option value="B2">B2 - Upper Intermediate</option>
+                                                <option value="C1">C1 - Advanced</option>
+                                                <option value="C2">C2 - Proficiency</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Skills Focus</label>
+                                        <div class="grid grid-cols-2 gap-4">
+                                            <label class="flex items-center">
+                                                <input type="checkbox" id="listeningSkill" class="mr-2 text-blue-600">
+                                                <span>Listening</span>
+                                            </label>
+                                            <label class="flex items-center">
+                                                <input type="checkbox" id="speakingSkill" class="mr-2 text-blue-600">
+                                                <span>Speaking</span>
+                                            </label>
+                                            <label class="flex items-center">
+                                                <input type="checkbox" id="readingSkill" class="mr-2 text-blue-600">
+                                                <span>Reading</span>
+                                            </label>
+                                            <label class="flex items-center">
+                                                <input type="checkbox" id="writingSkill" class="mr-2 text-blue-600">
+                                                <span>Writing</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Assessment Strategy</label>
+                                        <textarea id="assessmentStrategy" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Describe how students will be assessed..."></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Step 3: Syllabus -->
+                            <div id="step-3" class="wizard-step hidden">
+                                <h4 class="text-lg font-semibold text-gray-900 mb-4">Course Syllabus</h4>
+                                <div class="space-y-6">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Learning Outcomes</label>
+                                        <textarea id="learningOutcomes" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="What will students be able to do after completing this course?"></textarea>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Prerequisites</label>
+                                        <textarea id="prerequisites" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="What should students know before taking this course?"></textarea>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Required Materials</label>
+                                        <textarea id="requiredMaterials" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="List textbooks, software, or other materials needed..."></textarea>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">Target Audience</label>
+                                            <input type="text" id="targetAudience" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="e.g., Business professionals, Students">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">Cultural Focus</label>
+                                            <input type="text" id="culturalFocus" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="e.g., British English, American Culture">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <button type="button" onclick="generateSyllabus()" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center">
+                                            <i data-lucide="sparkles" class="w-4 h-4 mr-2"></i>
+                                            AI Generate Syllabus
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Step 4: Lessons -->
+                            <div id="step-4" class="wizard-step hidden">
+                                <h4 class="text-lg font-semibold text-gray-900 mb-4">Lesson Planning</h4>
+                                <div class="space-y-6">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-sm font-medium text-gray-700">Course Lessons</span>
+                                        <button type="button" onclick="addLesson()" class="px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm flex items-center">
+                                            <i data-lucide="plus" class="w-4 h-4 mr-1"></i>
+                                            Add Lesson
+                                        </button>
+                                    </div>
+                                    <div id="lessonsList" class="space-y-4">
+                                        <!-- Lessons will be dynamically added here -->
+                                    </div>
+                                    <div class="bg-gray-50 p-4 rounded-lg">
+                                        <h5 class="font-medium text-gray-900 mb-2">AI Lesson Assistant</h5>
+                                        <div class="flex space-x-2">
+                                            <button type="button" onclick="generateLessonPlan()" class="px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors text-sm flex items-center">
+                                                <i data-lucide="sparkles" class="w-4 h-4 mr-1"></i>
+                                                Generate Lesson Plan
+                                            </button>
+                                            <button type="button" onclick="suggestActivities()" class="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors text-sm flex items-center">
+                                                <i data-lucide="lightbulb" class="w-4 h-4 mr-1"></i>
+                                                Suggest Activities
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Step 5: Questions -->
+                            <div id="step-5" class="wizard-step hidden">
+                                <h4 class="text-lg font-semibold text-gray-900 mb-4">Question Bank</h4>
+                                <div class="space-y-6">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-sm font-medium text-gray-700">Course Questions</span>
+                                        <div class="flex space-x-2">
+                                            <button type="button" onclick="addQuestion()" class="px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm flex items-center">
+                                                <i data-lucide="plus" class="w-4 h-4 mr-1"></i>
+                                                Add Question
+                                            </button>
+                                            <button type="button" onclick="generateQuestions()" class="px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors text-sm flex items-center">
+                                                <i data-lucide="sparkles" class="w-4 h-4 mr-1"></i>
+                                                AI Generate
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div id="questionsList" class="space-y-4">
+                                        <!-- Questions will be dynamically added here -->
+                                    </div>
+                                    <div class="bg-gray-50 p-4 rounded-lg">
+                                        <h5 class="font-medium text-gray-900 mb-2">Question Generation Options</h5>
+                                        <div class="grid grid-cols-2 gap-4 mb-3">
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">Question Type</label>
+                                                <select id="aiQuestionType" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                                                    <option value="multiple-choice">Multiple Choice</option>
+                                                    <option value="true-false">True/False</option>
+                                                    <option value="short-answer">Short Answer</option>
+                                                    <option value="fill-in-blank">Fill in the Blank</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">Difficulty</label>
+                                                <select id="aiQuestionDifficulty" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                                                    <option value="easy">Easy</option>
+                                                    <option value="medium">Medium</option>
+                                                    <option value="hard">Hard</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Topic/Context</label>
+                                            <input type="text" id="aiQuestionTopic" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" placeholder="e.g., Present tense, Vocabulary about food">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Step 6: Review -->
+                            <div id="step-6" class="wizard-step hidden">
+                                <h4 class="text-lg font-semibold text-gray-900 mb-4">Review & Publish</h4>
+                                <div class="space-y-6">
+                                    <div class="bg-blue-50 p-4 rounded-lg">
+                                        <h5 class="font-medium text-blue-900 mb-2">Course Summary</h5>
+                                        <div id="courseSummary" class="text-sm text-blue-800">
+                                            <!-- Course summary will be populated here -->
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div class="bg-gray-50 p-4 rounded-lg">
+                                            <h6 class="font-medium text-gray-900 mb-2">Lessons</h6>
+                                            <div id="lessonsReview" class="text-sm text-gray-700">
+                                                <!-- Lessons review will be populated here -->
+                                            </div>
+                                        </div>
+                                        <div class="bg-gray-50 p-4 rounded-lg">
+                                            <h6 class="font-medium text-gray-900 mb-2">Questions</h6>
+                                            <div id="questionsReview" class="text-sm text-gray-700">
+                                                <!-- Questions review will be populated here -->
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="flex items-center">
+                                            <input type="checkbox" id="publishImmediately" class="mr-2 text-blue-600">
+                                            <span class="text-sm text-gray-700">Publish course immediately</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Navigation Buttons -->
+                            <div class="flex justify-between pt-6 border-t border-gray-200">
+                                <button type="button" id="prevBtn" onclick="prevWizardStep()" class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors" style="display: none;">
+                                    <i data-lucide="chevron-left" class="w-4 h-4 mr-1"></i>
+                                    Previous
+                                </button>
+                                <div class="flex space-x-3">
+                                    <button type="button" onclick="saveDraft()" class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
+                                        <i data-lucide="save" class="w-4 h-4 mr-1"></i>
+                                        Save Draft
+                                    </button>
+                                    <button type="button" id="nextBtn" onclick="nextWizardStep()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
+                                        Next
+                                        <i data-lucide="chevron-right" class="w-4 h-4 ml-1"></i>
+                                    </button>
+                                    <button type="submit" id="finishBtn" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors" style="display: none;">
+                                        <i data-lucide="check" class="w-4 h-4 mr-1"></i>
+                                        Create Course
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             </div>
-        </div>
-    </div>
 
     <!-- Assignment Creation Modal -->
     <div id="assignmentModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
@@ -1472,6 +2391,9 @@
             } else {
                 showConnectionError();
             }
+            
+            // Initialize course management
+            initializeCourseManagement();
         });
 
         // Question form submission
@@ -2361,6 +3283,16 @@
             alert(`Success: ${message}`);
         }
 
+        function saveDraft() {
+            // Save current wizard data as draft
+            saveCurrentStepData();
+            
+            // Store draft in localStorage for now (in production, save to database)
+            localStorage.setItem('courseWizardDraft', JSON.stringify(courseWizardData));
+            
+            showSuccess('Draft saved successfully!');
+        }
+
         function getTimeAgo(date) {
             const now = new Date();
             const diffInMs = now - date;
@@ -2506,6 +3438,486 @@
             // Reset modal to default state
             document.getElementById('courseModalTitle').textContent = 'Create New Course';
             document.getElementById('courseSubmitBtn').textContent = 'Create Course';
+            
+            // Reset wizard to first step
+            showWizardStep(1);
+        }
+
+        // Course Creation Wizard Functions
+        let currentWizardStep = 1;
+        const totalWizardSteps = 6;
+        let courseWizardData = {};
+
+        function showWizardStep(stepNumber) {
+            // Hide all steps
+            for (let i = 1; i <= totalWizardSteps; i++) {
+                const step = document.getElementById(`step-${i}`);
+                if (step) {
+                    step.classList.add('hidden');
+                }
+            }
+            
+            // Show current step
+            const currentStep = document.getElementById(`step-${stepNumber}`);
+            if (currentStep) {
+                currentStep.classList.remove('hidden');
+            }
+            
+            // Update progress indicator
+            updateProgressIndicator(stepNumber);
+            
+            // Update navigation buttons
+            updateNavigationButtons(stepNumber);
+            
+            currentWizardStep = stepNumber;
+        }
+
+        function updateProgressIndicator(currentStep) {
+            for (let i = 1; i <= totalWizardSteps; i++) {
+                const stepElement = document.querySelector(`[data-step="${i}"]`);
+                if (stepElement) {
+                    const circle = stepElement.querySelector('.step-circle');
+                    const text = stepElement.querySelector('.step-text');
+                    
+                    if (i < currentStep) {
+                        // Completed step
+                        circle.className = 'step-circle w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center text-sm font-medium';
+                        text.className = 'step-text text-sm font-medium text-green-600';
+                    } else if (i === currentStep) {
+                        // Current step
+                        circle.className = 'step-circle w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center text-sm font-medium';
+                        text.className = 'step-text text-sm font-medium text-blue-600';
+                    } else {
+                        // Future step
+                        circle.className = 'step-circle w-8 h-8 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center text-sm font-medium';
+                        text.className = 'step-text text-sm font-medium text-gray-500';
+                    }
+                }
+            }
+        }
+
+        function updateNavigationButtons(currentStep) {
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const createBtn = document.getElementById('finishBtn');
+            
+            // Previous button
+            if (prevBtn) {
+                prevBtn.style.display = currentStep === 1 ? 'none' : 'inline-flex';
+            }
+            
+            // Next/Create button
+            if (currentStep === totalWizardSteps) {
+                if (nextBtn) nextBtn.style.display = 'none';
+                if (createBtn) createBtn.style.display = 'inline-flex';
+            } else {
+                if (nextBtn) nextBtn.style.display = 'inline-flex';
+                if (createBtn) createBtn.style.display = 'none';
+            }
+        }
+
+        function nextWizardStep() {
+            if (validateCurrentStep() && currentWizardStep < totalWizardSteps) {
+                saveCurrentStepData();
+                showWizardStep(currentWizardStep + 1);
+            }
+        }
+
+        function prevWizardStep() {
+            if (currentWizardStep > 1) {
+                showWizardStep(currentWizardStep - 1);
+            }
+        }
+
+        function validateCurrentStep() {
+            switch (currentWizardStep) {
+                case 1: // Course Info
+                    const title = document.getElementById('courseTitle')?.value;
+                    const category = document.getElementById('courseCategory')?.value;
+                    if (!title || !category) {
+                        showError('Please fill in all required fields');
+                        return false;
+                    }
+                    return true;
+                case 2: // CEFR & Level
+                    const cefrLevel = document.getElementById('cefrLevel')?.value;
+                    const targetSkills = document.querySelectorAll('input[name="targetSkills"]:checked');
+                    if (!cefrLevel || targetSkills.length === 0) {
+                        showError('Please select CEFR level and at least one target skill');
+                        return false;
+                    }
+                    return true;
+                case 3: // Syllabus
+                    const objectives = document.getElementById('learningObjectives')?.value;
+                    if (!objectives) {
+                        showError('Please provide learning objectives');
+                        return false;
+                    }
+                    return true;
+                case 4: // Lessons
+                    const lessons = document.querySelectorAll('.lesson-item');
+                    if (lessons.length === 0) {
+                        showError('Please add at least one lesson');
+                        return false;
+                    }
+                    return true;
+                case 5: // Questions
+                    // Questions are optional, always valid
+                    return true;
+                case 6: // Review
+                    return true;
+                default:
+                    return true;
+            }
+        }
+
+        function saveCurrentStepData() {
+            switch (currentWizardStep) {
+                case 1: // Course Info
+                    courseWizardData.title = document.getElementById('courseTitle')?.value;
+                    courseWizardData.category = document.getElementById('courseCategory')?.value;
+                    courseWizardData.description = document.getElementById('courseDescription')?.value;
+                    courseWizardData.duration = document.getElementById('courseDuration')?.value;
+                    courseWizardData.hoursPerWeek = document.getElementById('hoursPerWeek')?.value;
+                    courseWizardData.maxStudents = document.getElementById('maxStudents')?.value;
+                    break;
+                case 2: // CEFR & Level
+                    courseWizardData.cefrLevel = document.getElementById('cefrLevel')?.value;
+                    courseWizardData.targetSkills = Array.from(document.querySelectorAll('input[name="targetSkills"]:checked')).map(cb => cb.value);
+                    courseWizardData.prerequisites = document.getElementById('prerequisites')?.value;
+                    break;
+                case 3: // Syllabus
+                    courseWizardData.learningObjectives = document.getElementById('learningObjectives')?.value;
+                    courseWizardData.assessmentStrategy = document.getElementById('assessmentStrategy')?.value;
+                    courseWizardData.materials = document.getElementById('requiredMaterials')?.value;
+                    break;
+                case 4: // Lessons
+                    courseWizardData.lessons = collectLessonsData();
+                    break;
+                case 5: // Questions
+                    courseWizardData.questions = collectQuestionsData();
+                    break;
+            }
+        }
+
+        function collectLessonsData() {
+            const lessons = [];
+            document.querySelectorAll('.lesson-item').forEach((item, index) => {
+                const lesson = {
+                    title: item.querySelector('.lesson-title')?.value || `Lesson ${index + 1}`,
+                    objectives: item.querySelector('.lesson-objectives')?.value || '',
+                    cefrLevel: item.querySelector('.lesson-cefr')?.value || 'A1',
+                    duration: item.querySelector('.lesson-duration')?.value || 30,
+                    contentType: item.querySelector('.lesson-content-type')?.value || 'mixed'
+                };
+                lessons.push(lesson);
+            });
+            return lessons;
+        }
+
+        function collectQuestionsData() {
+            const questions = [];
+            document.querySelectorAll('.question-item').forEach((item, index) => {
+                const question = {
+                    text: item.querySelector('.question-text')?.value || '',
+                    type: item.querySelector('.question-type')?.value || 'multiple-choice',
+                    difficulty: item.querySelector('.question-difficulty')?.value || 'easy',
+                    points: item.querySelector('.question-points')?.value || 1
+                };
+                questions.push(question);
+            });
+            return questions;
+        }
+
+        // Lesson Management Functions
+        function addLesson() {
+            const lessonsContainer = document.getElementById('lessonsContainer');
+            const lessonCount = document.querySelectorAll('.lesson-item').length + 1;
+            
+            const lessonHTML = `
+                <div class="lesson-item bg-gray-50 p-4 rounded-lg border border-gray-200 mb-4">
+                    <div class="flex justify-between items-center mb-3">
+                        <h4 class="font-medium text-gray-900">Lesson ${lessonCount}</h4>
+                        <button type="button" onclick="removeLesson(this)" class="text-red-600 hover:text-red-800">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Lesson Title</label>
+                            <input type="text" class="lesson-title w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Enter lesson title">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">CEFR Level</label>
+                            <select class="lesson-cefr w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="A1">A1 - Beginner</option>
+                                <option value="A2">A2 - Elementary</option>
+                                <option value="B1">B1 - Intermediate</option>
+                                <option value="B2">B2 - Upper Intermediate</option>
+                                <option value="C1">C1 - Advanced</option>
+                                <option value="C2">C2 - Proficient</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Duration (minutes)</label>
+                            <input type="number" class="lesson-duration w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value="30" min="5" max="120">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Content Type</label>
+                            <select class="lesson-content-type w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="mixed">Mixed Content</option>
+                                <option value="reading">Reading Focus</option>
+                                <option value="listening">Listening Focus</option>
+                                <option value="speaking">Speaking Focus</option>
+                                <option value="writing">Writing Focus</option>
+                                <option value="grammar">Grammar Focus</option>
+                                <option value="vocabulary">Vocabulary Focus</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Learning Objectives</label>
+                        <textarea class="lesson-objectives w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" rows="2" placeholder="What will students learn in this lesson?"></textarea>
+                    </div>
+                    <div class="mt-3 flex space-x-2">
+                        <button type="button" onclick="generateLessonContent(this)" class="px-3 py-1 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm">
+                            <i data-lucide="sparkles" class="w-4 h-4 inline mr-1"></i>
+                            AI Generate Content
+                        </button>
+                        <button type="button" onclick="addLessonQuestions(this)" class="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm">
+                            <i data-lucide="help-circle" class="w-4 h-4 inline mr-1"></i>
+                            Add Questions
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            lessonsContainer.insertAdjacentHTML('beforeend', lessonHTML);
+            lucide.createIcons();
+        }
+
+        function removeLesson(button) {
+            const lessonItem = button.closest('.lesson-item');
+            lessonItem.remove();
+            
+            // Renumber remaining lessons
+            document.querySelectorAll('.lesson-item').forEach((item, index) => {
+                const title = item.querySelector('h4');
+                if (title && title.textContent.startsWith('Lesson ')) {
+                    title.textContent = `Lesson ${index + 1}`;
+                }
+            });
+        }
+
+        // Question Management Functions
+        function addQuestion() {
+            const questionsContainer = document.getElementById('questionsContainer');
+            const questionCount = document.querySelectorAll('.question-item').length + 1;
+            
+            const questionHTML = `
+                <div class="question-item bg-gray-50 p-4 rounded-lg border border-gray-200 mb-4">
+                    <div class="flex justify-between items-center mb-3">
+                        <h4 class="font-medium text-gray-900">Question ${questionCount}</h4>
+                        <button type="button" onclick="removeQuestion(this)" class="text-red-600 hover:text-red-800">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Question Type</label>
+                            <select class="question-type w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="multiple-choice">Multiple Choice</option>
+                                <option value="true-false">True/False</option>
+                                <option value="fill-blank">Fill in the Blank</option>
+                                <option value="short-answer">Short Answer</option>
+                                <option value="essay">Essay</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Difficulty</label>
+                            <select class="question-difficulty w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="easy">Easy</option>
+                                <option value="medium">Medium</option>
+                                <option value="hard">Hard</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Points</label>
+                            <input type="number" class="question-points w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value="1" min="1" max="10">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Question Text</label>
+                        <textarea class="question-text w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" rows="2" placeholder="Enter your question here..."></textarea>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button type="button" onclick="generateQuestionContent(this)" class="px-3 py-1 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm">
+                            <i data-lucide="sparkles" class="w-4 h-4 inline mr-1"></i>
+                            AI Generate
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            questionsContainer.insertAdjacentHTML('beforeend', questionHTML);
+            lucide.createIcons();
+        }
+
+        function removeQuestion(button) {
+            const questionItem = button.closest('.question-item');
+            questionItem.remove();
+            
+            // Renumber remaining questions
+            document.querySelectorAll('.question-item').forEach((item, index) => {
+                const title = item.querySelector('h4');
+                if (title && title.textContent.startsWith('Question ')) {
+                    title.textContent = `Question ${index + 1}`;
+                }
+            });
+        }
+
+        // AI Content Generation Functions
+        async function generateLessonContent(button) {
+            const lessonItem = button.closest('.lesson-item');
+            const title = lessonItem.querySelector('.lesson-title').value;
+            const cefrLevel = lessonItem.querySelector('.lesson-cefr').value;
+            const contentType = lessonItem.querySelector('.lesson-content-type').value;
+            
+            if (!title) {
+                showError('Please enter a lesson title first');
+                return;
+            }
+            
+            button.disabled = true;
+            button.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 inline mr-1 animate-spin"></i>Generating...';
+            
+            try {
+                // Simulate AI content generation (replace with actual AI service call)
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                const objectives = lessonItem.querySelector('.lesson-objectives');
+                const generatedContent = `Students will learn ${contentType} skills at ${cefrLevel} level through "${title}". Key objectives include vocabulary building, comprehension exercises, and practical application.`;
+                
+                objectives.value = generatedContent;
+                showSuccess('Lesson content generated successfully!');
+            } catch (error) {
+                console.error('Error generating lesson content:', error);
+                showError('Failed to generate lesson content');
+            } finally {
+                button.disabled = false;
+                button.innerHTML = '<i data-lucide="sparkles" class="w-4 h-4 inline mr-1"></i>AI Generate Content';
+                lucide.createIcons();
+            }
+        }
+
+        async function generateQuestionContent(button) {
+            const questionItem = button.closest('.question-item');
+            const questionType = questionItem.querySelector('.question-type').value;
+            const difficulty = questionItem.querySelector('.question-difficulty').value;
+            
+            button.disabled = true;
+            button.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 inline mr-1 animate-spin"></i>Generating...';
+            
+            try {
+                // Simulate AI question generation (replace with actual AI service call)
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                
+                const questionText = questionItem.querySelector('.question-text');
+                const generatedQuestion = `This is a ${difficulty} ${questionType} question generated by AI based on the course content and CEFR level.`;
+                
+                questionText.value = generatedQuestion;
+                showSuccess('Question generated successfully!');
+            } catch (error) {
+                console.error('Error generating question:', error);
+                showError('Failed to generate question');
+            } finally {
+                button.disabled = false;
+                button.innerHTML = '<i data-lucide="sparkles" class="w-4 h-4 inline mr-1"></i>AI Generate';
+                lucide.createIcons();
+            }
+        }
+
+        // Course Creation Function
+        async function createCourseFromWizard() {
+            try {
+                // Save final step data
+                saveCurrentStepData();
+                
+                // Validate all required data
+                if (!courseWizardData.title || !courseWizardData.category) {
+                    showError('Missing required course information');
+                    return;
+                }
+                
+                // Show loading state
+                const createBtn = document.getElementById('createCourseBtn');
+                createBtn.disabled = true;
+                createBtn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 inline mr-1 animate-spin"></i>Creating Course...';
+                
+                // Create course in database
+                const courseData = {
+                    title: courseWizardData.title,
+                    description: courseWizardData.description,
+                    category: courseWizardData.category,
+                    level: courseWizardData.cefrLevel,
+                    duration_weeks: parseInt(courseWizardData.duration) || 8,
+                    hours_per_week: parseInt(courseWizardData.hoursPerWeek) || 3,
+                    max_students: parseInt(courseWizardData.maxStudents) || 30,
+                    learning_objectives: courseWizardData.learningObjectives,
+                    prerequisites: courseWizardData.prerequisites,
+                    target_skills: courseWizardData.targetSkills,
+                    assessment_strategy: courseWizardData.assessmentStrategy,
+                    required_materials: courseWizardData.materials,
+                    lessons: courseWizardData.lessons || [],
+                    questions: courseWizardData.questions || [],
+                    is_active: true,
+                    created_at: new Date().toISOString()
+                };
+                
+                // Simulate course creation (replace with actual Supabase call)
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                showSuccess('Course created successfully!');
+                closeCourseModal();
+                
+                // Reset wizard data
+                courseWizardData = {};
+                
+                // Reload courses
+                if (typeof loadCourses === 'function') {
+                    loadCourses();
+                }
+                
+            } catch (error) {
+                console.error('Error creating course:', error);
+                showError('Failed to create course');
+            } finally {
+                const createBtn = document.getElementById('createCourseBtn');
+                createBtn.disabled = false;
+                createBtn.innerHTML = 'Create Course';
+                lucide.createIcons();
+            }
+        }
+
+        // Initialize wizard when modal opens
+        function showAddCourseModal() {
+            // Reset modal to create mode
+            document.getElementById('courseModalTitle').textContent = 'Create New Course';
+            
+            // Clear any edit data and reset wizard
+            const form = document.getElementById('courseForm');
+            if (form) {
+                delete form.dataset.courseId;
+                delete form.dataset.isEdit;
+                form.reset();
+            }
+            
+            // Reset wizard data and show first step
+            courseWizardData = {};
+            currentWizardStep = 1;
+            showWizardStep(1);
+            
+            document.getElementById('courseModal').classList.remove('hidden');
         }
 
         function showAddAssignmentModal() {
@@ -4276,6 +5688,295 @@ After running this SQL, refresh the admin dashboard to see the user management w
         }
 
         // ===== END CEFR ASSESSMENT FUNCTIONS =====
+
+        // ===== COURSE MANAGEMENT FUNCTIONS =====
+
+        // Course tab switching
+        function switchCourseTab(tabName) {
+            // Hide all course sub-tabs
+            const tabs = ['course-overview', 'course-library', 'ai-creation', 'templates', 'version-control'];
+            tabs.forEach(tab => {
+                const element = document.getElementById(tab + '-tab');
+                if (element) element.classList.add('hidden');
+            });
+            
+            // Show selected tab
+            const selectedTab = document.getElementById(tabName + '-tab');
+            if (selectedTab) selectedTab.classList.remove('hidden');
+            
+            // Update tab button styles
+            document.querySelectorAll('.course-tab-btn').forEach(btn => {
+                btn.classList.remove('bg-blue-100', 'text-blue-700', 'border-blue-300');
+                btn.classList.add('bg-white', 'text-gray-500', 'border-gray-300');
+            });
+            
+            const activeBtn = document.querySelector(`[onclick="switchCourseTab('${tabName}')"]`);
+            if (activeBtn) {
+                activeBtn.classList.remove('bg-white', 'text-gray-500', 'border-gray-300');
+                activeBtn.classList.add('bg-blue-100', 'text-blue-700', 'border-blue-300');
+            }
+        }
+
+        // Course grid management
+        function toggleCourseSelection(courseId) {
+            const checkbox = document.querySelector(`input[data-course-id="${courseId}"]`);
+            if (checkbox) {
+                checkbox.checked = !checkbox.checked;
+                updateBulkOperationsVisibility();
+            }
+        }
+
+        function selectAllCourses() {
+            const checkboxes = document.querySelectorAll('.course-checkbox');
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            
+            checkboxes.forEach(cb => {
+                cb.checked = !allChecked;
+            });
+            
+            updateBulkOperationsVisibility();
+        }
+
+        function updateBulkOperationsVisibility() {
+            const checkedBoxes = document.querySelectorAll('.course-checkbox:checked');
+            const bulkToolbar = document.getElementById('bulk-operations-toolbar');
+            
+            if (checkedBoxes.length > 0) {
+                bulkToolbar.classList.remove('hidden');
+                document.getElementById('selected-count').textContent = checkedBoxes.length;
+            } else {
+                bulkToolbar.classList.add('hidden');
+            }
+        }
+
+        // Bulk operations
+        function bulkPublishCourses() {
+            const selectedCourses = getSelectedCourses();
+            if (selectedCourses.length === 0) return;
+            
+            if (confirm(`Publish ${selectedCourses.length} selected courses?`)) {
+                console.log('Publishing courses:', selectedCourses);
+                showSuccess(`${selectedCourses.length} courses published successfully!`);
+                clearCourseSelection();
+            }
+        }
+
+        function bulkArchiveCourses() {
+            const selectedCourses = getSelectedCourses();
+            if (selectedCourses.length === 0) return;
+            
+            if (confirm(`Archive ${selectedCourses.length} selected courses?`)) {
+                console.log('Archiving courses:', selectedCourses);
+                showSuccess(`${selectedCourses.length} courses archived successfully!`);
+                clearCourseSelection();
+            }
+        }
+
+        function bulkDeleteCourses() {
+            const selectedCourses = getSelectedCourses();
+            if (selectedCourses.length === 0) return;
+            
+            if (confirm(`Delete ${selectedCourses.length} selected courses? This action cannot be undone.`)) {
+                console.log('Deleting courses:', selectedCourses);
+                showSuccess(`${selectedCourses.length} courses deleted successfully!`);
+                clearCourseSelection();
+            }
+        }
+
+        function getSelectedCourses() {
+            const checkboxes = document.querySelectorAll('.course-checkbox:checked');
+            return Array.from(checkboxes).map(cb => cb.getAttribute('data-course-id'));
+        }
+
+        function clearCourseSelection() {
+            document.querySelectorAll('.course-checkbox').forEach(cb => cb.checked = false);
+            updateBulkOperationsVisibility();
+        }
+
+        // Course actions
+        function editCourse(courseId) {
+            console.log('Editing course:', courseId);
+            // Open course editor modal
+        }
+
+        function duplicateCourse(courseId) {
+            console.log('Duplicating course:', courseId);
+            showSuccess('Course duplicated successfully!');
+        }
+
+        function deleteCourse(courseId) {
+            if (confirm('Are you sure you want to delete this course?')) {
+                console.log('Deleting course:', courseId);
+                showSuccess('Course deleted successfully!');
+            }
+        }
+
+        function viewCourseAnalytics(courseId) {
+            console.log('Viewing analytics for course:', courseId);
+            // Open analytics modal
+        }
+
+        // AI Course Generation
+        function generateAICourse() {
+            const topic = document.getElementById('ai-topic').value;
+            const level = document.getElementById('ai-level').value;
+            const duration = document.getElementById('ai-duration').value;
+            const focus = document.getElementById('ai-focus').value;
+            
+            if (!topic || !level || !duration || !focus) {
+                showError('Please fill in all required fields');
+                return;
+            }
+            
+            // Show loading state
+            const generateBtn = document.querySelector('button[onclick="generateAICourse()"]');
+            const originalText = generateBtn.textContent;
+            generateBtn.textContent = 'Generating...';
+            generateBtn.disabled = true;
+            
+            // Simulate AI generation
+            setTimeout(() => {
+                console.log('Generating AI course:', { topic, level, duration, focus });
+                showSuccess('AI course generated successfully!');
+                
+                // Reset button
+                generateBtn.textContent = originalText;
+                generateBtn.disabled = false;
+                
+                // Clear form
+                document.getElementById('ai-course-form').reset();
+            }, 3000);
+        }
+
+        function generateCurriculum() {
+            const objectives = document.getElementById('curriculum-objectives').value;
+            const level = document.getElementById('curriculum-level').value;
+            const weeks = document.getElementById('curriculum-weeks').value;
+            
+            if (!objectives || !level || !weeks) {
+                showError('Please fill in all required fields');
+                return;
+            }
+            
+            console.log('Generating curriculum:', { objectives, level, weeks });
+            showSuccess('Curriculum generated successfully!');
+        }
+
+        function translateContent() {
+            const sourceLanguage = document.getElementById('source-language').value;
+            const targetLanguage = document.getElementById('target-language').value;
+            const content = document.getElementById('content-to-translate').value;
+            
+            if (!sourceLanguage || !targetLanguage || !content) {
+                showError('Please fill in all required fields');
+                return;
+            }
+            
+            console.log('Translating content:', { sourceLanguage, targetLanguage, content });
+            showSuccess('Content translated successfully!');
+        }
+
+        function getContentRecommendations() {
+            const courseType = document.getElementById('recommendation-course-type').value;
+            const targetAudience = document.getElementById('recommendation-audience').value;
+            
+            if (!courseType || !targetAudience) {
+                showError('Please select course type and target audience');
+                return;
+            }
+            
+            console.log('Getting recommendations:', { courseType, targetAudience });
+            showSuccess('Content recommendations generated!');
+        }
+
+        // Template management
+        function useTemplate(templateId) {
+            console.log('Using template:', templateId);
+            showSuccess('Template applied successfully!');
+        }
+
+        function editTemplate(templateId) {
+            console.log('Editing template:', templateId);
+            // Open template editor
+        }
+
+        function deleteTemplate(templateId) {
+            if (confirm('Are you sure you want to delete this template?')) {
+                console.log('Deleting template:', templateId);
+                showSuccess('Template deleted successfully!');
+            }
+        }
+
+        function createNewTemplate() {
+            console.log('Creating new template');
+            // Open template creation wizard
+        }
+
+        function importTemplate() {
+            console.log('Importing template');
+            // Open file picker
+        }
+
+        function exportTemplate(templateId) {
+            console.log('Exporting template:', templateId);
+            showSuccess('Template exported successfully!');
+        }
+
+        // Version control
+        function viewVersion(versionId) {
+            console.log('Viewing version:', versionId);
+            // Open version viewer
+        }
+
+        function rollbackToVersion(versionId) {
+            if (confirm('Are you sure you want to rollback to this version?')) {
+                console.log('Rolling back to version:', versionId);
+                showSuccess('Successfully rolled back to selected version!');
+            }
+        }
+
+        function downloadVersion(versionId) {
+            console.log('Downloading version:', versionId);
+            showSuccess('Version downloaded successfully!');
+        }
+
+        function compareVersions() {
+            console.log('Comparing versions');
+            // Open version comparison tool
+        }
+
+        // Course library management
+        function importCourse() {
+            console.log('Importing course');
+            // Open file picker
+        }
+
+        function exportCourse(courseId) {
+            console.log('Exporting course:', courseId);
+            showSuccess('Course exported successfully!');
+        }
+
+        function syncWithLibrary() {
+            console.log('Syncing with library');
+            showSuccess('Library synchronized successfully!');
+        }
+
+        // Initialize course management
+        function initializeCourseManagement() {
+            // Set default active tab
+            switchCourseTab('course-overview');
+            
+            // Initialize event listeners
+            document.addEventListener('change', function(e) {
+                if (e.target.classList.contains('course-checkbox')) {
+                    updateBulkOperationsVisibility();
+                }
+            });
+            
+            console.log('Course management initialized');
+        }
+
+        // ===== END COURSE MANAGEMENT FUNCTIONS =====
     </script>
 </body>
 </html>

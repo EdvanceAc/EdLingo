@@ -1,4 +1,5 @@
 // UI Components Export
+export { Badge } from './Badge';
 export { default as Button } from './Button';
 export { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './Card';
 export { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from './Dialog';
