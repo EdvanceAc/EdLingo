@@ -68,6 +68,10 @@ class ModernGeminiLiveService extends EventEmitter {
     
     // TTS audio context
     this.audioElement = null;
+    
+    // Cleanup flags
+    this._stoppingAudio = false;
+    this._endingSession = false;
   }
 
   async initialize(apiKey, options = {}) {
@@ -344,6 +348,46 @@ class ModernGeminiLiveService extends EventEmitter {
     }
   }
 
+  async stopAudioRecording() {
+    try {
+      // Prevent multiple simultaneous calls
+      if (this._stoppingAudio) {
+        return { success: true };
+      }
+      this._stoppingAudio = true;
+
+      // Stop recording if active
+      if (this.isRecording && this.mediaRecorder) {
+        if (this.mediaRecorder.state === 'recording') {
+          this.mediaRecorder.stop();
+        }
+        this.isRecording = false;
+      }
+
+      // Stop audio stream
+      if (this.audioStream) {
+        this.audioStream.getTracks().forEach(track => track.stop());
+        this.audioStream = null;
+      }
+
+      // Close audio context
+      if (this.audioContext && this.audioContext.state !== 'closed') {
+        await this.audioContext.close();
+        this.audioContext = null;
+      }
+
+      // Clear media recorder
+      this.mediaRecorder = null;
+      
+      this._stoppingAudio = false;
+      return { success: true };
+    } catch (error) {
+      this._stoppingAudio = false;
+      console.error('Failed to stop audio recording:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
   async handleAudioResponse(audioData) {
     try {
       // Create audio blob from the converted WAV data
@@ -531,22 +575,19 @@ class ModernGeminiLiveService extends EventEmitter {
 
   async endSession() {
     try {
+      // Prevent multiple simultaneous calls
+      if (this._endingSession) {
+        return { success: true };
+      }
+      this._endingSession = true;
+
       // Stop recording if active
       if (this.isRecording) {
         await this.stopRecording();
       }
 
-      // Stop audio stream
-      if (this.audioStream) {
-        this.audioStream.getTracks().forEach(track => track.stop());
-        this.audioStream = null;
-      }
-
-      // Close audio context
-      if (this.audioContext) {
-        await this.audioContext.close();
-        this.audioContext = null;
-      }
+      // Clean up audio recording
+      await this.stopAudioRecording();
 
       // Close session
       if (this.session && this.sessionActive) {
@@ -555,11 +596,16 @@ class ModernGeminiLiveService extends EventEmitter {
       }
 
       this.sessionActive = false;
-      this.mediaRecorder = null;
       this.audioElement = null;
       
+      // Clear audio parts and response queue
+      this.audioParts = [];
+      this.responseQueue = [];
+      
+      this._endingSession = false;
       return { success: true };
     } catch (error) {
+      this._endingSession = false;
       console.error('Failed to end session:', error);
       return { success: false, error: error.message };
     }

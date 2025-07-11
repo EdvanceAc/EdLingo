@@ -313,8 +313,10 @@ async function runAssessmentSyncTest() {
   }
 }
 
-// Helper function to map score to CEFR level
-function mapScoreToCEFR(score) {
+// Helper function to map score to CEFR level using unified level service
+function mapScoreToCEFR(score, textContent = null, isConversational = false) {
+  // For test purposes, we'll use the traditional mapping since we don't have access to the unified service here
+  // In production, this would use the unified level service
   if (score >= 90) return 'C2';
   if (score >= 80) return 'C1';
   if (score >= 70) return 'B2';

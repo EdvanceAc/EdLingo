@@ -5,6 +5,31 @@ All notable changes to the EdLingo project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.3] - 2024-12-25
+
+### ✨ Added
+- **Course Editing Feature**: Comprehensive course editing functionality in admin dashboard
+  - Enhanced course modal to support both create and edit operations
+  - Dynamic modal title and button text based on operation mode
+  - Implemented `editCourse` function to fetch and populate existing course data
+  - Updated form submission handler to support both course creation and updates
+  - Added proper state management for switching between create/edit modes
+  - Integrated with Supabase for seamless course data updates
+  - Maintains all existing file upload capabilities for course materials
+
+### 🛠️ Technical Improvements
+- **Modal State Management**: Enhanced modal functions for proper state reset
+- **Form Data Handling**: Improved form submission logic with edit/create detection
+- **Database Integration**: Optimized Supabase update operations for course modifications
+- **User Experience**: Smooth transitions between create and edit workflows
+- **Error Handling**: Comprehensive error management for course operations
+
+### 🔧 Enhanced
+- Course management workflow in admin dashboard
+- Modal reusability for multiple operations
+- Form validation and data persistence
+- User feedback and success messaging
+
 ## [1.0.2] - 2024-12-20
 
 ### Fixed

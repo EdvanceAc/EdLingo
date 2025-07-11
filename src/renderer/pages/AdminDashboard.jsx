@@ -486,7 +486,7 @@ const AdminDashboard = () => {
             </div>
           </div>
         </motion.div>
-      )})}}
+      )}
 
       {/* Questions Tab */}
       {activeTab === 'questions' && (
@@ -616,7 +616,7 @@ const AdminDashboard = () => {
             </div>
           )}
         </motion.div>
-      )}}
+      )}
 
       {/* Placeholder for other tabs */}
       {(activeTab === 'courses' || activeTab === 'settings') && (

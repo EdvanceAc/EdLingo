@@ -39,6 +39,7 @@ import { useProgression } from '../../hooks/useProgression';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../hooks/use-toast';
 import textSimplificationService from '../../services/textSimplification';
+import unifiedLevelService from '../../services/unifiedLevelService';
 import { analyzeTextComplexity } from '../../utils/readability';
 
 const TestSystem = () => {
@@ -582,8 +583,20 @@ const TestSystem = () => {
     return Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
   };
   
-  // Helper function to map score to CEFR level
-  const mapScoreToCefr = (score) => {
+  // Helper function to map score to CEFR level using unified level service
+  const mapScoreToCefr = (score, textContent = null, isConversational = false) => {
+    // If we have text content, use FK-based analysis for structured content
+    if (textContent && !isConversational) {
+      const levelAnalysis = unifiedLevelService.assignUnifiedLevel(textContent, false);
+      return levelAnalysis.cefr;
+    }
+    
+    // For conversational content, always return A1 (Basic level)
+    if (isConversational) {
+      return 'A1';
+    }
+    
+    // Fallback to traditional score-based mapping for structured content
     if (score >= 90) return 'C2';
     if (score >= 80) return 'C1';
     if (score >= 70) return 'B2';

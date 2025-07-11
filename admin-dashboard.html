@@ -716,7 +716,7 @@
             <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                 <div class="px-6 py-4 border-b border-gray-200">
                     <div class="flex justify-between items-center">
-                        <h3 class="text-lg font-semibold text-gray-900">Create New Course</h3>
+                        <h3 id="courseModalTitle" class="text-lg font-semibold text-gray-900">Create New Course</h3>
                         <button onclick="closeCourseModal()" class="text-gray-400 hover:text-gray-600">
                             <i data-lucide="x" class="w-6 h-6"></i>
                         </button>
@@ -782,7 +782,7 @@
                     </div>
                     <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
                         <button type="button" onclick="closeCourseModal()" class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">Cancel</button>
-                        <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">Create Course</button>
+                        <button type="submit" id="courseSubmitBtn" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">Create Course</button>
                     </div>
                 </form>
             </div>
@@ -1743,64 +1743,97 @@
 
                 if (error) throw error;
 
-                const coursesTableBody = document.getElementById('courses-table-body');
+                const coursesList = document.getElementById('courses-list');
                 
                 if (!courses || courses.length === 0) {
-                    if (coursesTableBody) {
-                        coursesTableBody.innerHTML = `
-                            <tr>
-                                <td colspan="5" class="px-6 py-4 text-center text-gray-500">
-                                    No courses found
-                                </td>
-                            </tr>
+                    if (coursesList) {
+                        coursesList.innerHTML = `
+                            <div class="text-center py-12">
+                                <i data-lucide="book-open" class="w-12 h-12 mx-auto text-gray-400 mb-4"></i>
+                                <h3 class="text-lg font-medium text-gray-900 mb-2">No courses found</h3>
+                                <p class="text-gray-500 mb-4">Create your first course to get started.</p>
+                                <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors" onclick="showAddCourseModal()">
+                                    Create Course
+                                </button>
+                            </div>
                         `;
                     }
                     return;
                 }
 
-                if (coursesTableBody) {
-                    coursesTableBody.innerHTML = courses.map(course => {
+                if (coursesList) {
+                    coursesList.innerHTML = courses.map(course => {
                         const createdAt = new Date(course.created_at).toLocaleDateString();
+                        const durationText = course.duration_hours ? `${course.duration_hours} hours` : 'Duration not set';
                         
                         return `
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                    ${course.title || 'Untitled Course'}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    ${course.description || 'No description'}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                                        ${course.level || 'beginner'}
+                            <div class="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+                                <div class="flex justify-between items-start mb-4">
+                                    <div class="flex-1">
+                                        <h3 class="text-lg font-semibold text-gray-900 mb-2">${course.title || 'Untitled Course'}</h3>
+                                        <p class="text-gray-600 mb-3">${course.description || 'No description'}</p>
+                                        <div class="flex flex-wrap gap-2 mb-3">
+                                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                                                ${course.level || 'beginner'}
+                                            </span>
+                                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                                                ${course.language || 'Language not set'}
+                                            </span>
+                                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">
+                                                ${durationText}
+                                            </span>
+                                        </div>
+                                        <p class="text-sm text-gray-500">Created: ${createdAt}</p>
+                                    </div>
+                                    <div class="flex space-x-2 ml-4">
+                                        <button class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition-colors" onclick="editCourse('${course.id}')">
+                                            <i data-lucide="edit" class="w-4 h-4 inline mr-1"></i>
+                                            Edit
+                                        </button>
+                                        <button class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition-colors" onclick="deleteCourse('${course.id}')">
+                                            <i data-lucide="trash-2" class="w-4 h-4 inline mr-1"></i>
+                                            Delete
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="flex justify-between items-center pt-3 border-t border-gray-100">
+                                    <span class="text-sm text-gray-500">
+                                        Status: <span class="font-medium ${course.is_active ? 'text-green-600' : 'text-red-600'}">
+                                            ${course.is_active ? 'Active' : 'Inactive'}
+                                        </span>
                                     </span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    ${createdAt}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                    <button class="text-blue-600 hover:text-blue-900 mr-3" onclick="editCourse('${course.id}')">
-                                        Edit
+                                    <button class="text-blue-600 hover:text-blue-800 text-sm font-medium" onclick="viewCourseDetails('${course.id}')">
+                                        View Details →
                                     </button>
-                                    <button class="text-red-600 hover:text-red-900" onclick="deleteCourse('${course.id}')">
-                                        Delete
-                                    </button>
-                                </td>
-                            </tr>
+                                </div>
+                            </div>
                         `;
                     }).join('');
+                    
+                    // Re-initialize Lucide icons for the new content
+                    if (typeof lucide !== 'undefined') {
+                        lucide.createIcons();
+                    }
                 }
             } catch (error) {
                 console.error('Error loading courses:', error);
-                const coursesTableBody = document.getElementById('courses-table-body');
-                if (coursesTableBody) {
-                    coursesTableBody.innerHTML = `
-                        <tr>
-                            <td colspan="5" class="px-6 py-4 text-center text-red-500">
-                                Error loading courses: ${error.message}
-                            </td>
-                        </tr>
+                const coursesList = document.getElementById('courses-list');
+                if (coursesList) {
+                    coursesList.innerHTML = `
+                        <div class="text-center py-12">
+                            <i data-lucide="alert-circle" class="w-12 h-12 mx-auto text-red-400 mb-4"></i>
+                            <h3 class="text-lg font-medium text-gray-900 mb-2">Error loading courses</h3>
+                            <p class="text-red-500 mb-4">${error.message}</p>
+                            <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors" onclick="loadCourses()">
+                                Try Again
+                            </button>
+                        </div>
                     `;
+                    
+                    // Re-initialize Lucide icons
+                    if (typeof lucide !== 'undefined') {
+                        lucide.createIcons();
+                    }
                 }
             }
         }
@@ -2448,12 +2481,31 @@
 
         // Modal functions
         function showAddCourseModal() {
+            // Reset modal to create mode
+            document.getElementById('courseModalTitle').textContent = 'Create New Course';
+            document.getElementById('courseSubmitBtn').textContent = 'Create Course';
+            
+            // Clear any edit data
+            const form = document.getElementById('courseForm');
+            delete form.dataset.courseId;
+            delete form.dataset.isEdit;
+            form.reset();
+            
             document.getElementById('courseModal').classList.remove('hidden');
         }
 
         function closeCourseModal() {
             document.getElementById('courseModal').classList.add('hidden');
-            document.getElementById('courseForm').reset();
+            
+            // Reset form and clear edit data
+            const form = document.getElementById('courseForm');
+            form.reset();
+            delete form.dataset.courseId;
+            delete form.dataset.isEdit;
+            
+            // Reset modal to default state
+            document.getElementById('courseModalTitle').textContent = 'Create New Course';
+            document.getElementById('courseSubmitBtn').textContent = 'Create Course';
         }
 
         function showAddAssignmentModal() {
@@ -2709,6 +2761,10 @@ After running this SQL, refresh the admin dashboard to see the user management w
             const videoFiles = document.getElementById('courseVideos').files;
             const imageFiles = document.getElementById('courseImages').files;
             
+            // Check if this is an edit operation
+            const isEdit = e.target.dataset.isEdit === 'true';
+            const courseId = e.target.dataset.courseId;
+            
             if (!title || !description) {
                 showError('Please fill in all required fields');
                 return;
@@ -2719,7 +2775,7 @@ After running this SQL, refresh the admin dashboard to see the user management w
             const originalText = submitBtn.textContent;
             
             try {
-                submitBtn.textContent = 'Creating...';
+                submitBtn.textContent = isEdit ? 'Updating...' : 'Creating...';
                 submitBtn.disabled = true;
                 
                 // Upload files if any
@@ -2729,24 +2785,38 @@ After running this SQL, refresh the admin dashboard to see the user management w
                     uploadedFiles = await uploadFiles(allFiles, 'courses');
                 }
                 
-                // Create course in database
-                 const { data, error } = await supabase
-                     .from('courses')
-                     .insert({
-                         title: title,
-                         description: description,
-                         language: 'Spanish', // Default language
-                         level: level || 'beginner', // Default to beginner if not specified
-                         duration_hours: 10, // Default duration
-                         instructor_id: null, // Will be set by admin later
-                         is_active: true
-                     })
-                     .select();
+                const courseData = {
+                    title: title,
+                    description: description,
+                    language: 'Spanish', // Default language
+                    level: level || 'beginner',
+                    duration_hours: 10, // Default duration
+                    instructor_id: null,
+                    is_active: true
+                };
                 
-                if (error) throw error;
+                let result;
+                if (isEdit) {
+                    // Update existing course
+                    result = await supabase
+                        .from('courses')
+                        .update(courseData)
+                        .eq('id', courseId)
+                        .select();
+                } else {
+                    // Create new course
+                    result = await supabase
+                        .from('courses')
+                        .insert(courseData)
+                        .select();
+                }
+                
+                if (result.error) throw result.error;
                 
                 // Reset form and close modal
                 e.target.reset();
+                delete e.target.dataset.isEdit;
+                delete e.target.dataset.courseId;
                 closeCourseModal();
                 
                 // Refresh courses list
@@ -2754,11 +2824,11 @@ After running this SQL, refresh the admin dashboard to see the user management w
                 updateLastUpdated();
                 
                 // Show success message
-                alert('Course created successfully!');
+                alert(isEdit ? 'Course updated successfully!' : 'Course created successfully!');
                 
             } catch (error) {
-                console.error('Error creating course:', error);
-                showError('Failed to create course: ' + error.message);
+                console.error(isEdit ? 'Error updating course:' : 'Error creating course:', error);
+                showError((isEdit ? 'Failed to update course: ' : 'Failed to create course: ') + error.message);
             } finally {
                 // Reset button state
                 const submitBtn = e.target.querySelector('button[type="submit"]');
@@ -2937,10 +3007,40 @@ After running this SQL, refresh the admin dashboard to see the user management w
         }
 
         // Course management functions
-        function editCourse(courseId) {
-            console.log('Editing course:', courseId);
-            // TODO: Implement course editing functionality
-            alert('Course editing functionality will be implemented soon.');
+        async function editCourse(courseId) {
+            try {
+                // Fetch course data
+                const { data: course, error } = await supabase
+                    .from('courses')
+                    .select('*')
+                    .eq('id', courseId)
+                    .single();
+
+                if (error) {
+                    console.error('Error fetching course:', error);
+                    alert('Error loading course data');
+                    return;
+                }
+
+                // Populate form with course data
+                document.getElementById('courseTitle').value = course.title || '';
+                document.getElementById('courseDescription').value = course.description || '';
+                document.getElementById('courseLevel').value = course.level || 'beginner';
+
+                // Update modal title and button
+                document.getElementById('courseModalTitle').textContent = 'Edit Course';
+                document.getElementById('courseSubmitBtn').textContent = 'Update Course';
+
+                // Store course ID for update
+                document.getElementById('courseForm').dataset.courseId = courseId;
+                document.getElementById('courseForm').dataset.isEdit = 'true';
+
+                // Show modal
+                document.getElementById('courseModal').classList.remove('hidden');
+            } catch (error) {
+                console.error('Error in editCourse:', error);
+                alert('Error loading course for editing');
+            }
         }
 
         async function deleteCourse(courseId) {
@@ -3428,32 +3528,53 @@ After running this SQL, refresh the admin dashboard to see the user management w
         // Load assessment questions
         async function loadAssessmentQuestions() {
             try {
-                // Mock data for demonstration
-                const questions = [
-                    {
-                        id: 1,
-                        questionText: 'What is the correct form of the verb "to be" in this sentence: "She ___ a teacher"?',
-                        questionType: 'multiple_choice',
-                        cefrLevel: 'A1',
-                        skillType: 'reading',
-                        points: 1,
-                        createdAt: '2024-01-15'
-                    },
-                    {
-                        id: 2,
-                        questionText: 'Listen to the audio and answer: What time does the meeting start?',
-                        questionType: 'listening_comprehension',
-                        cefrLevel: 'B1',
-                        skillType: 'listening',
-                        points: 2,
-                        createdAt: '2024-01-20'
-                    }
-                ];
+                console.log('Loading CEFR assessment questions from database...');
                 
-                displayAssessmentQuestions(questions);
+                const { data: questions, error } = await supabaseAdmin
+                    .from('cefr_assessment_questions')
+                    .select(`
+                        id,
+                        question_type,
+                        cefr_level,
+                        skill_type,
+                        question_text,
+                        instructions,
+                        options,
+                        correct_answer,
+                        points,
+                        difficulty_level,
+                        is_active,
+                        created_at,
+                        updated_at
+                    `)
+                    .eq('is_active', true)
+                    .order('created_at', { ascending: false });
+                
+                if (error) {
+                    throw new Error(`Database error: ${error.message}`);
+                }
+                
+                // Transform data to match expected format
+                const transformedQuestions = (questions || []).map(q => ({
+                    id: q.id,
+                    questionText: q.question_text,
+                    questionType: q.question_type,
+                    cefrLevel: q.cefr_level,
+                    skillType: q.skill_type,
+                    instructions: q.instructions,
+                    options: q.options,
+                    correctAnswer: q.correct_answer,
+                    points: q.points,
+                    difficultyLevel: q.difficulty_level,
+                    createdAt: q.created_at,
+                    updatedAt: q.updated_at
+                }));
+                
+                displayAssessmentQuestions(transformedQuestions);
                 
             } catch (error) {
                 console.error('Error loading assessment questions:', error);
+                showError('Failed to load assessment questions: ' + error.message);
                 displayAssessmentQuestions([]);
             }
         }
@@ -3497,10 +3618,10 @@ After running this SQL, refresh the admin dashboard to see the user management w
                             <p class="text-sm text-gray-500">Created: ${new Date(question.createdAt).toLocaleDateString()}</p>
                         </div>
                         <div class="flex items-center space-x-2 ml-4">
-                            <button class="text-blue-600 hover:text-blue-800 p-1" onclick="editAssessmentQuestion(${question.id})" title="Edit">
+                            <button class="text-blue-600 hover:text-blue-800 p-1" onclick="editAssessmentQuestion('${question.id}')" title="Edit">
                                 <i data-lucide="edit" class="w-4 h-4"></i>
                             </button>
-                            <button class="text-red-600 hover:text-red-800 p-1" onclick="deleteAssessmentQuestion(${question.id})" title="Delete">
+                            <button class="text-red-600 hover:text-red-800 p-1" onclick="deleteAssessmentQuestion('${question.id}')" title="Delete">
                                 <i data-lucide="trash-2" class="w-4 h-4"></i>
                             </button>
                         </div>
@@ -3791,9 +3912,44 @@ After running this SQL, refresh the admin dashboard to see the user management w
                         updateData.assessment_criteria = questionData.assessmentCriteria;
                     }
                     
-                    // In a real implementation, this would update the database
-                    // For now, we'll simulate the update
-                    console.log('✅ Assessment question updated successfully (simulated):', updateData);
+                    // Update the question in the database
+                    const { data, error } = await supabaseAdmin.from('cefr_assessment_questions').update({
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            query: `
+                                UPDATE cefr_assessment_questions 
+                                SET 
+                                    question_type = '${updateData.question_type}',
+                                    cefr_level = '${updateData.cefr_level}',
+                                    skill_type = '${updateData.skill_type}',
+                                    question_text = '${updateData.question_text.replace(/'/g, "''")}',
+                                    instructions = '${updateData.instructions ? updateData.instructions.replace(/'/g, "''") : ''}',
+                                    points = ${updateData.points},
+                                    options = ${updateData.options ? `'${JSON.stringify(updateData.options).replace(/'/g, "''")}'` : 'NULL'},
+                                    correct_answer = ${updateData.correct_answer !== null ? `'${updateData.correct_answer}'` : 'NULL'},
+                                    expected_response = ${updateData.expected_response ? `'${updateData.expected_response.replace(/'/g, "''")}'` : 'NULL'},
+                                    ${updateData.word_limit ? `word_limit = ${updateData.word_limit},` : ''}
+                                    ${updateData.assessment_criteria ? `assessment_criteria = '${updateData.assessment_criteria.replace(/'/g, "''")}',` : ''}
+                                    updated_at = NOW()
+                                WHERE id = '${editingId}'
+                            `
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const result = await response.json();
+                    
+                    if (result.error) {
+                        throw new Error(result.error);
+                    }
+                    
+                    console.log('✅ Assessment question updated successfully:', updateData);
                     
                     // Show success message
                     showSuccess('Assessment question updated successfully!');
@@ -3824,21 +3980,67 @@ After running this SQL, refresh the admin dashboard to see the user management w
                         insertData.assessment_criteria = questionData.assessmentCriteria;
                     }
                     
-                    const { data, error } = await supabase
-                        .from('cefr_assessment_questions')
-                        .insert(insertData)
-                        .select()
-                        .single();
+                    // Create the question in the database
+                    const { data, error } = await supabaseAdmin.from('cefr_assessment_questions').insert([insertData]).select();
                     
                     if (error) {
-                        console.error('Database error:', error);
                         throw new Error(error.message);
                     }
                     
-                    console.log('✅ Assessment question created successfully:', data);
+                    // Legacy compatibility - create response-like object
+                    const response = { ok: true };
+                    const result = { data };
+                    
+                    /*const response = await fetch('/api/supabase', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            query: `
+                                INSERT INTO cefr_assessment_questions (
+                                    question_type, cefr_level, skill_type, question_text, instructions, 
+                                    points, options, correct_answer, expected_response, difficulty_level, 
+                                    is_active, created_at, updated_at
+                                    ${insertData.word_limit ? ', word_limit' : ''}
+                                    ${insertData.assessment_criteria ? ', assessment_criteria' : ''}
+                                ) VALUES (
+                                    '${insertData.question_type}',
+                                    '${insertData.cefr_level}',
+                                    '${insertData.skill_type}',
+                                    '${insertData.question_text.replace(/'/g, "''")}',
+                                    '${insertData.instructions ? insertData.instructions.replace(/'/g, "''") : ''}',
+                                    ${insertData.points},
+                                    ${insertData.options ? `'${JSON.stringify(insertData.options).replace(/'/g, "''")}'` : 'NULL'},
+                                    ${insertData.correct_answer !== null ? `'${insertData.correct_answer}'` : 'NULL'},
+                                    ${insertData.expected_response ? `'${insertData.expected_response.replace(/'/g, "''")}'` : 'NULL'},
+                                    '${insertData.difficulty_level}',
+                                    ${insertData.is_active},
+                                    NOW(),
+                                    NOW()
+                                    ${insertData.word_limit ? `, ${insertData.word_limit}` : ''}
+                                    ${insertData.assessment_criteria ? `, '${insertData.assessment_criteria.replace(/'/g, "''")}'` : ''}
+                                )
+                                RETURNING *
+                            `
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const result = await response.json();
+                    
+                    if (result.error) {
+                        throw new Error(result.error);
+                    }
+                    
+                    console.log('✅ Assessment question created successfully:', result.data);
                     
                     // Show success message
                     showSuccess('Assessment question created successfully!');
+                */
                 }
                 
                 // Close modal and refresh list
@@ -3915,106 +4117,126 @@ After running this SQL, refresh the admin dashboard to see the user management w
         }
 
         // Edit assessment question
-        function editAssessmentQuestion(questionId) {
+        async function editAssessmentQuestion(questionId) {
             console.log('Editing question:', questionId);
             
-            // Find the question data from the mock data
-            const questions = [
-                {
-                    id: 1,
-                    questionText: 'What is the correct form of the verb "to be" in this sentence: "She ___ a teacher"?',
-                    questionType: 'multiple-choice',
-                    cefrLevel: 'A1',
-                    skillType: 'reading',
-                    points: 1,
-                    instructions: 'Choose the correct answer.',
-                    options: ['is', 'are', 'am', 'be'],
-                    correctAnswer: 0,
-                    createdAt: '2024-01-15'
-                },
-                {
-                    id: 2,
-                    questionText: 'Listen to the audio and answer: What time does the meeting start?',
-                    questionType: 'listening',
-                    cefrLevel: 'B1',
-                    skillType: 'listening',
-                    points: 2,
-                    instructions: 'Listen carefully to the audio clip.',
-                    expectedResponse: 'The meeting starts at 3:00 PM.',
-                    createdAt: '2024-01-20'
+            try {
+                // Fetch question data from database
+                const { data: questions, error } = await supabaseAdmin
+                    .from('cefr_assessment_questions')
+                    .select(`
+                        id,
+                        question_type,
+                        cefr_level,
+                        skill_type,
+                        question_text,
+                        instructions,
+                        options,
+                        correct_answer,
+                        points,
+                        difficulty_level,
+                        expected_response
+                    `)
+                    .eq('id', questionId)
+                    .eq('is_active', true);
+                
+                if (error) {
+                    throw new Error(error.message);
                 }
-            ];
+                
+                if (questions.length === 0) {
+                    showError('Question not found');
+                    return;
+                }
+                
+                const question = questions[0];
+                
+                // Transform database data to match expected format
+                const transformedQuestion = {
+                    id: question.id,
+                    questionText: question.question_text,
+                    questionType: question.question_type,
+                    cefrLevel: question.cefr_level,
+                    skillType: question.skill_type,
+                    instructions: question.instructions,
+                    options: question.options ? JSON.parse(question.options) : [],
+                    correctAnswer: question.correct_answer,
+                    points: question.points,
+                    expectedResponse: question.expected_response
+                };
             
-            const question = questions.find(q => q.id === questionId);
-            if (!question) {
-                showError('Question not found');
-                return;
+                // Open the modal
+                document.getElementById('assessmentQuestionModal').classList.remove('hidden');
+                
+                // Update modal title
+                document.querySelector('#assessmentQuestionModal h3').textContent = 'Edit CEFR Assessment Question';
+                
+                // Populate the form with existing data
+                document.getElementById('questionType').value = transformedQuestion.questionType;
+                document.getElementById('cefrLevel').value = transformedQuestion.cefrLevel;
+                document.getElementById('skillType').value = transformedQuestion.skillType;
+                document.getElementById('assessmentQuestionText').value = transformedQuestion.questionText;
+                document.getElementById('questionInstructions').value = transformedQuestion.instructions || '';
+                document.getElementById('questionPoints').value = transformedQuestion.points;
+                
+                // Update question type fields based on the question type
+                updateQuestionTypeFields();
+                
+                // Populate answer options based on question type
+                setTimeout(() => {
+                    if (transformedQuestion.questionType === 'multiple-choice' && transformedQuestion.options) {
+                        const optionInputs = document.querySelectorAll('input[name="option"]');
+                        transformedQuestion.options.forEach((option, index) => {
+                            if (optionInputs[index]) {
+                                optionInputs[index].value = option;
+                            }
+                        });
+                        
+                        // Set correct answer - find the index of the correct answer
+                        if (transformedQuestion.correctAnswer !== undefined) {
+                            const correctIndex = transformedQuestion.options.indexOf(transformedQuestion.correctAnswer);
+                            if (correctIndex !== -1) {
+                                const correctRadio = document.querySelector(`input[name="correctAnswer"][value="${correctIndex}"]`);
+                                if (correctRadio) {
+                                    correctRadio.checked = true;
+                                }
+                            }
+                        }
+                    } else if (transformedQuestion.questionType === 'true-false' && transformedQuestion.correctAnswer !== undefined) {
+                        const tfRadio = document.querySelector(`input[name="tfCorrectAnswer"][value="${transformedQuestion.correctAnswer}"]`);
+                        if (tfRadio) {
+                            tfRadio.checked = true;
+                        }
+                    } else if (transformedQuestion.questionType === 'short-answer' && transformedQuestion.expectedResponse) {
+                        const shortAnswerInput = document.getElementById('shortAnswer');
+                        if (shortAnswerInput) {
+                            shortAnswerInput.value = transformedQuestion.expectedResponse;
+                        }
+                    } else if (transformedQuestion.questionType === 'fill-in-blank' && transformedQuestion.correctAnswer) {
+                        const fillBlankInput = document.getElementById('fillBlankAnswer');
+                        if (fillBlankInput) {
+                            fillBlankInput.value = transformedQuestion.correctAnswer;
+                        }
+                    } else if (transformedQuestion.questionType === 'essay' && transformedQuestion.expectedResponse) {
+                        const essayRubricInput = document.getElementById('essayRubric');
+                        if (essayRubricInput) {
+                            essayRubricInput.value = transformedQuestion.expectedResponse;
+                        }
+                    } else if (['listening', 'speaking', 'reading'].includes(transformedQuestion.questionType) && transformedQuestion.expectedResponse) {
+                        const expectedResponseInput = document.getElementById('expectedResponse');
+                        if (expectedResponseInput) {
+                            expectedResponseInput.value = transformedQuestion.expectedResponse;
+                        }
+                    }
+                }, 100); // Small delay to ensure DOM is updated
+                
+                // Store the question ID for updating
+                document.getElementById('assessmentQuestionForm').setAttribute('data-editing-id', questionId);
+                
+            } catch (error) {
+                console.error('Error loading question for editing:', error);
+                showError('Failed to load question data: ' + error.message);
             }
-            
-            // Open the modal
-            document.getElementById('assessmentQuestionModal').classList.remove('hidden');
-            
-            // Update modal title
-            document.querySelector('#assessmentQuestionModal h3').textContent = 'Edit CEFR Assessment Question';
-            
-            // Populate the form with existing data
-            document.getElementById('questionType').value = question.questionType;
-            document.getElementById('cefrLevel').value = question.cefrLevel;
-            document.getElementById('skillType').value = question.skillType;
-            document.getElementById('assessmentQuestionText').value = question.questionText;
-            document.getElementById('questionInstructions').value = question.instructions || '';
-            document.getElementById('questionPoints').value = question.points;
-            
-            // Update question type fields based on the question type
-            updateQuestionTypeFields();
-            
-            // Populate answer options based on question type
-            setTimeout(() => {
-                if (question.questionType === 'multiple-choice' && question.options) {
-                    const optionInputs = document.querySelectorAll('input[name="option"]');
-                    question.options.forEach((option, index) => {
-                        if (optionInputs[index]) {
-                            optionInputs[index].value = option;
-                        }
-                    });
-                    
-                    // Set correct answer
-                    if (question.correctAnswer !== undefined) {
-                        const correctRadio = document.querySelector(`input[name="correctAnswer"][value="${question.correctAnswer}"]`);
-                        if (correctRadio) {
-                            correctRadio.checked = true;
-                        }
-                    }
-                } else if (question.questionType === 'true-false' && question.correctAnswer !== undefined) {
-                    const tfRadio = document.querySelector(`input[name="tfCorrectAnswer"][value="${question.correctAnswer}"]`);
-                    if (tfRadio) {
-                        tfRadio.checked = true;
-                    }
-                } else if (question.questionType === 'short-answer' && question.expectedResponse) {
-                    const shortAnswerInput = document.getElementById('shortAnswer');
-                    if (shortAnswerInput) {
-                        shortAnswerInput.value = question.expectedResponse;
-                    }
-                } else if (question.questionType === 'fill-in-blank' && question.correctAnswer) {
-                    const fillBlankInput = document.getElementById('fillBlankAnswer');
-                    if (fillBlankInput) {
-                        fillBlankInput.value = question.correctAnswer;
-                    }
-                } else if (question.questionType === 'essay' && question.expectedResponse) {
-                    const essayRubricInput = document.getElementById('essayRubric');
-                    if (essayRubricInput) {
-                        essayRubricInput.value = question.expectedResponse;
-                    }
-                } else if (['listening', 'speaking', 'reading'].includes(question.questionType) && question.expectedResponse) {
-                    const expectedResponseInput = document.getElementById('expectedResponse');
-                    if (expectedResponseInput) {
-                        expectedResponseInput.value = question.expectedResponse;
-                    }
-                }
-            }, 100); // Small delay to ensure DOM is updated
-            
-            // Store the question ID for updating
-            document.getElementById('assessmentQuestionForm').setAttribute('data-editing-id', questionId);
         }
 
         // Delete assessment question
@@ -4024,15 +4246,26 @@ After running this SQL, refresh the admin dashboard to see the user management w
             }
             
             try {
-                // In a real implementation, this would delete from the database
                 console.log('Deleting question:', questionId);
+                
+                const { data, error } = await supabaseAdmin
+                    .from('cefr_assessment_questions')
+                    .update({ 
+                        is_active: false, 
+                        updated_at: new Date().toISOString() 
+                    })
+                    .eq('id', questionId);
+                
+                if (error) {
+                    throw new Error(error.message);
+                }
                 
                 showSuccess('Assessment question deleted successfully!');
                 loadAssessmentQuestions();
                 
             } catch (error) {
                 console.error('Error deleting assessment question:', error);
-                showError('Failed to delete assessment question');
+                showError('Failed to delete assessment question: ' + error.message);
             }
         }
 

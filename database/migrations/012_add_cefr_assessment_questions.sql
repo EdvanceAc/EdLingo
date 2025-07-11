@@ -1,7 +1,7 @@
 -- Create CEFR assessment questions table
 CREATE TABLE IF NOT EXISTS public.cefr_assessment_questions (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    question_type TEXT NOT NULL CHECK (question_type IN ('multiple-choice', 'true-false', 'short-answer', 'essay', 'fill-in-blank', 'listening', 'speaking', 'reading')),
+    question_type TEXT NOT NULL CHECK (question_type IN ('multiple-choice', 'true-false', 'short-answer', 'essay', 'fill-in-blank', 'listening', 'speaking', 'reading', 'conversation')),
     cefr_level TEXT NOT NULL CHECK (cefr_level IN ('A1', 'A2', 'B1', 'B2', 'C1', 'C2')),
     skill_type TEXT NOT NULL CHECK (skill_type IN ('reading', 'writing', 'listening', 'speaking', 'grammar', 'vocabulary')),
     question_text TEXT NOT NULL,
@@ -12,6 +12,8 @@ CREATE TABLE IF NOT EXISTS public.cefr_assessment_questions (
     media_files JSONB, -- Store image, audio, video, PDF file URLs
     assessment_criteria JSONB, -- Specific criteria for this question
     expected_response TEXT, -- For open-ended questions
+    assessment_type TEXT, -- Type of assessment (e.g., 'conversation', 'written', 'listening')
+    time_limit INTEGER, -- Time limit in seconds for timed assessments
     difficulty_level TEXT DEFAULT 'medium' CHECK (difficulty_level IN ('easy', 'medium', 'hard')),
     is_active BOOLEAN DEFAULT true,
     created_by UUID REFERENCES auth.users(id),

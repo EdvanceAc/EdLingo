@@ -176,10 +176,10 @@ const AssessmentPage = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading your profile...</p>
+          <p className="text-gray-600 dark:text-gray-300">Loading your profile...</p>
         </div>
       </div>
     );
@@ -187,14 +187,14 @@ const AssessmentPage = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <Card className="p-8 max-w-md mx-auto">
           <div className="text-center">
-            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-red-600 text-xl">⚠️</span>
+            <div className="w-12 h-12 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-red-600 dark:text-red-400 text-xl">⚠️</span>
             </div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Error</h2>
-            <p className="text-gray-600 mb-4">{error}</p>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Error</h2>
+            <p className="text-gray-600 dark:text-gray-300 mb-4">{error}</p>
             <div className="space-y-2">
               <Button onClick={() => window.location.reload()} className="w-full">
                 Try Again
@@ -216,7 +216,7 @@ const AssessmentPage = () => {
   // If user has already completed assessment, show completion status
   if (userProfile?.assessment_completed) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8 px-4">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8 px-4">
         <div className="max-w-2xl mx-auto">
           <Button
             variant="outline"
@@ -233,27 +233,27 @@ const AssessmentPage = () => {
             className="text-center"
           >
             <Card className="p-8">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <CheckCircle className="w-8 h-8 text-green-600" />
+              <div className="w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto mb-6">
+                <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
               </div>
               
-              <h1 className="text-2xl font-bold text-gray-900 mb-4">
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
                 Assessment Already Completed
               </h1>
               
               <div className="space-y-4 mb-6">
-                <p className="text-gray-600">
+                <p className="text-gray-600 dark:text-gray-300">
                   You completed your initial language proficiency assessment on{' '}
                   {new Date(userProfile.initial_assessment_date).toLocaleDateString()}.
                 </p>
                 
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
                   <div className="flex items-center justify-center space-x-4">
                     <div className="text-center">
-                      <div className="text-lg font-semibold text-blue-900">
+                      <div className="text-lg font-semibold text-blue-900 dark:text-blue-100">
                         Current Level
                       </div>
-                      <div className="text-2xl font-bold text-blue-600">
+                      <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                         {userProfile.placement_level || userProfile.learning_level}
                       </div>
                     </div>
@@ -278,7 +278,7 @@ const AssessmentPage = () => {
                 </Button>
               </div>
               
-              <p className="text-xs text-gray-500 mt-4">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-4">
                 Note: Retaking the assessment will update your current proficiency level
                 and may affect your learning path.
               </p>

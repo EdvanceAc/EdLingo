@@ -1,6 +1,7 @@
 import geminiService from './geminiService.js';
 import aiService from './aiService.js';
 import supabaseService from './supabaseService.js';
+import unifiedLevelService from './unifiedLevelService.js';
 
 /**
  * Assessment Service
@@ -74,62 +75,169 @@ class AssessmentService {
   }
 
   /**
-   * Generate assessment tasks based on CEFR standards
+   * Generate assessment tasks based on CEFR standards from database
    */
   async generateAssessmentTasks(sessionId, targetLanguage) {
-    const tasks = [
-      {
-        task_type: 'conversation',
-        task_order: 1,
-        prompt: 'Let\'s start with a simple conversation. Please introduce yourself and tell me about your hobbies or interests. Speak naturally for about 2-3 minutes.',
-        expected_duration_minutes: 3,
-        max_score: 100
-      },
-      {
-        task_type: 'writing',
-        task_order: 2,
-        prompt: 'Write a paragraph (100-150 words) describing your typical day. Include what you do in the morning, afternoon, and evening.',
-        expected_duration_minutes: 5,
-        max_score: 100
-      },
-      {
-        task_type: 'grammar',
-        task_order: 3,
-        prompt: 'Complete this conversation naturally: "I was wondering if you could help me with something. Yesterday, I _____ to the store, but it _____ closed. If I _____ earlier, I _____ been able to buy what I needed."',
-        expected_duration_minutes: 2,
-        max_score: 100
-      },
-      {
-        task_type: 'vocabulary',
-        task_order: 4,
-        prompt: 'Explain the difference between these word pairs and use each in a sentence: 1) "affect" vs "effect", 2) "advice" vs "advise", 3) "complement" vs "compliment"',
-        expected_duration_minutes: 4,
-        max_score: 100
-      },
-      {
-        task_type: 'pronunciation',
-        task_order: 5,
-        prompt: 'Please read this passage aloud, focusing on clear pronunciation: "The quick brown fox jumps over the lazy dog. She sells seashells by the seashore. How much wood would a woodchuck chuck if a woodchuck could chuck wood?"',
-        expected_duration_minutes: 2,
-        max_score: 100
+    try {
+      // Fetch CEFR questions from database
+      const { data: cefrQuestions, error: fetchError } = await supabaseService.client
+        .from('cefr_assessment_questions')
+        .select('*')
+        .eq('is_active', true)
+        .order('cefr_level')
+        .order('skill_type');
+
+      if (fetchError) throw fetchError;
+
+      if (!cefrQuestions || cefrQuestions.length === 0) {
+        throw new Error('No CEFR questions found in database');
       }
-    ];
 
-    // Insert tasks into database
-    const tasksWithSessionId = tasks.map(task => ({
-      ...task,
-      session_id: sessionId
-    }));
+      // Group questions by skill type and level for balanced assessment
+      const questionsBySkill = this.groupQuestionsBySkill(cefrQuestions);
+      
+      // Select a balanced set of questions for assessment
+      const selectedQuestions = this.selectBalancedQuestions(questionsBySkill);
+      
+      // Convert CEFR questions to assessment tasks format
+      const tasks = selectedQuestions.map((question, index) => ({
+        session_id: sessionId,
+        task_type: this.mapQuestionTypeToTaskType(question.question_type),
+        task_order: index + 1,
+        prompt: this.buildTaskPrompt(question),
+        expected_duration_minutes: this.getExpectedDuration(question.question_type),
+        max_score: question.points || 100,
+        cefr_question_id: question.id,
+        cefr_level: question.cefr_level,
+        skill_type: question.skill_type,
+        question_data: {
+          question_text: question.question_text,
+          instructions: question.instructions,
+          options: question.options,
+          correct_answer: question.correct_answer,
+          question_type: question.question_type
+        }
+      }));
 
-    const { data, error } = await supabaseService.client
-      .from('assessment_tasks')
-      .insert(tasksWithSessionId)
-      .select();
+      // Insert tasks into database
+      const { data, error } = await supabaseService.client
+        .from('assessment_tasks')
+        .insert(tasks)
+        .select();
 
-    if (error) throw error;
+      if (error) throw error;
 
-    this.assessmentTasks = data;
-    return data;
+      this.assessmentTasks = data;
+      return data;
+    } catch (error) {
+      console.error('Error generating assessment tasks:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Group questions by skill type for balanced selection
+   */
+  groupQuestionsBySkill(questions) {
+    const grouped = {};
+    questions.forEach(question => {
+      const key = `${question.skill_type}_${question.cefr_level}`;
+      if (!grouped[key]) {
+        grouped[key] = [];
+      }
+      grouped[key].push(question);
+    });
+    return grouped;
+  }
+
+  /**
+   * Select a balanced set of questions for assessment
+   */
+  selectBalancedQuestions(questionsBySkill) {
+    const selected = [];
+    const skillTypes = ['vocabulary', 'grammar', 'reading', 'writing', 'speaking'];
+    const levels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+    
+    // Try to get at least one question from each skill type
+    skillTypes.forEach(skill => {
+      for (const level of levels) {
+        const key = `${skill}_${level}`;
+        if (questionsBySkill[key] && questionsBySkill[key].length > 0) {
+          // Select first question from this skill/level combination
+          selected.push(questionsBySkill[key][0]);
+          break; // Move to next skill type
+        }
+      }
+    });
+
+    // If we don't have enough questions, add more from available pool
+    const allQuestions = Object.values(questionsBySkill).flat();
+    while (selected.length < 8 && selected.length < allQuestions.length) {
+      const remaining = allQuestions.filter(q => !selected.find(s => s.id === q.id));
+      if (remaining.length > 0) {
+        selected.push(remaining[0]);
+      } else {
+        break;
+      }
+    }
+
+    return selected.slice(0, 8); // Limit to 8 questions for reasonable assessment time
+  }
+
+  /**
+   * Map CEFR question types to assessment task types
+   */
+  mapQuestionTypeToTaskType(questionType) {
+    const mapping = {
+      'multiple-choice': 'multiple-choice',
+      'true-false': 'true-false',
+      'short-answer': 'writing',
+      'essay': 'writing',
+      'fill-in-blank': 'grammar',
+      'listening': 'listening',
+      'speaking': 'conversation',
+      'reading': 'reading',
+      'conversation': 'conversation'
+    };
+    return mapping[questionType] || 'general';
+  }
+
+  /**
+   * Build task prompt from CEFR question
+   */
+  buildTaskPrompt(question) {
+    let prompt = question.question_text;
+    
+    if (question.instructions) {
+      prompt = `${question.instructions}\n\n${prompt}`;
+    }
+    
+    if (question.options && Array.isArray(question.options)) {
+      prompt += '\n\nOptions:';
+      question.options.forEach((option, index) => {
+        prompt += `\n${index + 1}. ${option}`;
+      });
+    }
+    
+    return prompt;
+  }
+
+  /**
+   * Get expected duration based on question type
+   */
+  getExpectedDuration(questionType) {
+    const durations = {
+      'multiple-choice': 1,
+      'true-false': 1,
+      'short-answer': 3,
+      'essay': 8,
+      'fill-in-blank': 2,
+      'listening': 3,
+      'speaking': 4,
+      'reading': 3,
+      'conversation': 5
+    };
+    return durations[questionType] || 3;
   }
 
   /**
@@ -142,8 +250,40 @@ class AssessmentService {
         throw new Error('Task not found');
       }
 
-      // Analyze the response using AI
-      const analysis = await this.analyzeResponse(task, response, audioUrl);
+      let score = null;
+      let isCorrect = null;
+      let analysis = null;
+
+      // Check for automatic scoring for multiple-choice and true-false questions
+      if (task.question_data && task.question_data.correct_answer) {
+        const correctAnswer = task.question_data.correct_answer.toLowerCase().trim();
+        const userAnswer = response.toLowerCase().trim();
+        
+        isCorrect = correctAnswer === userAnswer;
+        score = isCorrect ? (task.max_score || 100) : 0;
+        
+        // Create basic analysis for auto-scored questions
+        analysis = {
+          score: score,
+          feedback: {
+            overall: isCorrect ? 'Correct answer!' : `Incorrect. The correct answer is: ${task.question_data.correct_answer}`,
+            strengths: isCorrect ? ['Accurate response'] : [],
+            weaknesses: isCorrect ? [] : ['Review this topic area'],
+            errorExamples: []
+          },
+          skillScores: {
+            grammar: score,
+            vocabulary: score,
+            fluency: score,
+            accuracy: score,
+            complexity: score
+          }
+        };
+      } else {
+        // Use AI analysis for open-ended questions
+        analysis = await this.analyzeResponse(task, response, audioUrl);
+        score = analysis.score;
+      }
 
       // Update task in database
       const { data, error } = await supabaseService.client
@@ -151,7 +291,8 @@ class AssessmentService {
         .update({
           user_response: response,
           audio_response_url: audioUrl,
-          score: analysis.score,
+          score: score,
+          is_correct: isCorrect,
           ai_feedback: analysis.feedback,
           skill_scores: analysis.skillScores,
           completed_at: new Date().toISOString()
@@ -170,7 +311,8 @@ class AssessmentService {
 
       return {
         success: true,
-        score: analysis.score,
+        score: score,
+        isCorrect: isCorrect,
         feedback: analysis.feedback,
         skillScores: analysis.skillScores
       };
@@ -485,51 +627,116 @@ Ensure all strings are properly quoted and no trailing commas exist.
   }
 
   /**
-   * Calculate overall assessment results
+   * Calculate overall assessment results using unified level system
    */
   calculateOverallResults(tasks) {
     if (!tasks || tasks.length === 0) {
       throw new Error('No completed tasks found');
     }
 
-    // Calculate weighted average score
-    const totalScore = tasks.reduce((sum, task) => sum + (task.score || 0), 0);
-    const overallScore = totalScore / tasks.length;
+    // Separate conversational and structured tasks
+    const conversationalTasks = tasks.filter(task => 
+      task.task_type === 'conversation' || task.task_type === 'pronunciation'
+    );
+    const structuredTasks = tasks.filter(task => 
+      !conversationalTasks.includes(task)
+    );
 
-    // Determine CEFR level based on score
-    const cefrLevel = this.scoreToCEFR(overallScore);
+    // Calculate scores for different task types
+    let overallScore = 0;
+    let cefrLevel = 'A1';
+    let unifiedLevel = 'Basic';
+    let fkAnalysis = null;
+
+    if (structuredTasks.length > 0) {
+      // For structured tasks, use FK-based analysis
+      const structuredScore = structuredTasks.reduce((sum, task) => sum + (task.score || 0), 0) / structuredTasks.length;
+      
+      // Analyze text responses for FK scoring
+      const textResponses = structuredTasks
+        .filter(task => task.user_response && typeof task.user_response === 'string')
+        .map(task => task.user_response)
+        .join(' ');
+      
+      if (textResponses.length > 0) {
+        fkAnalysis = unifiedLevelService.assignUnifiedLevel(textResponses, false);
+        cefrLevel = fkAnalysis.cefr;
+        unifiedLevel = fkAnalysis.level;
+      } else {
+        // Fallback to score-based CEFR for structured content without text
+        cefrLevel = this.scoreToCEFR(structuredScore, null, false);
+        unifiedLevel = unifiedLevelService.cefrToUnifiedLevel(cefrLevel);
+      }
+      
+      overallScore = structuredScore;
+    }
+
+    if (conversationalTasks.length > 0) {
+      const conversationalScore = conversationalTasks.reduce((sum, task) => sum + (task.score || 0), 0) / conversationalTasks.length;
+      
+      if (structuredTasks.length === 0) {
+        // Only conversational tasks - use Basic level
+        overallScore = conversationalScore;
+        cefrLevel = 'A1';
+        unifiedLevel = 'Basic';
+      } else {
+        // Combine scores with weighted average (70% structured, 30% conversational)
+        overallScore = (overallScore * 0.7) + (conversationalScore * 0.3);
+      }
+    }
     
-    // Convert to IELTS equivalent
-    const ieltsEquivalent = this.cefrToIELTS(cefrLevel);
+    // Convert to IELTS equivalent with unified level context
+    const ieltsEquivalent = this.cefrToIELTS(cefrLevel, unifiedLevel);
 
     // Calculate skill breakdown
     const skillBreakdown = this.calculateSkillBreakdown(tasks);
 
-    // Generate recommendations
-    const recommendations = this.generateRecommendations(cefrLevel, skillBreakdown);
+    // Generate recommendations using unified level system
+    const recommendations = this.generateUnifiedRecommendations(
+      unifiedLevel, 
+      cefrLevel, 
+      skillBreakdown, 
+      fkAnalysis
+    );
 
     return {
       totalDuration: tasks.reduce((sum, task) => sum + (task.expected_duration_minutes || 0), 0),
       overallScore: Math.round(overallScore * 100) / 100,
       cefrLevel,
+      unifiedLevel,
       ieltsEquivalent,
       skillBreakdown,
+      fleschKincaidAnalysis: fkAnalysis,
       analysis: {
         taskResults: tasks.map(task => ({
           type: task.task_type,
           score: task.score,
-          feedback: task.ai_feedback
+          feedback: task.ai_feedback,
+          isConversational: conversationalTasks.includes(task)
         })),
-        overallAssessment: `Based on the assessment, the user demonstrates ${cefrLevel} level proficiency.`
+        overallAssessment: `Based on the assessment, the user demonstrates ${unifiedLevel} level (${cefrLevel}) proficiency.`,
+        levelingApproach: fkAnalysis ? 'Flesch-Kincaid based analysis for structured content' : 'Score-based analysis'
       },
       recommendations
     };
   }
 
   /**
-   * Convert score to CEFR level
+   * Convert score to CEFR level using unified level system
    */
-  scoreToCEFR(score) {
+  scoreToCEFR(score, textContent = null, isConversational = false) {
+    // If we have text content, use FK-based analysis for structured content
+    if (textContent && !isConversational) {
+      const levelAnalysis = unifiedLevelService.assignUnifiedLevel(textContent, false);
+      return levelAnalysis.cefr;
+    }
+    
+    // For conversational content, always return A1 (Basic level)
+    if (isConversational) {
+      return 'A1';
+    }
+    
+    // Fallback to traditional score-based mapping for structured content
     if (score >= 90) return 'C2';
     if (score >= 80) return 'C1';
     if (score >= 70) return 'B2';
@@ -539,18 +746,27 @@ Ensure all strings are properly quoted and no trailing commas exist.
   }
 
   /**
-   * Convert CEFR to IELTS equivalent
+   * Convert CEFR to IELTS equivalent with unified level consideration
    */
-  cefrToIELTS(cefrLevel) {
+  cefrToIELTS(cefrLevel, unifiedLevel = null) {
     const mapping = {
-      'A1': 2.5,
-      'A2': 3.5,
-      'B1': 5.0,
-      'B2': 6.5,
-      'C1': 7.5,
-      'C2': 8.5
+      'A1': 2.5,  // Basic level for conversation
+      'A2': 3.5,  // Elementary level for structured learning
+      'B1': 5.0,  // Pre-Intermediate
+      'B2': 6.5,  // Intermediate
+      'C1': 7.5,  // Upper-Intermediate
+      'C2': 8.5   // Advanced
     };
-    return mapping[cefrLevel] || 5.0;
+    
+    // Adjust IELTS score based on unified level context
+    let baseScore = mapping[cefrLevel] || 5.0;
+    
+    // For Basic level (conversation), cap at lower IELTS score
+    if (unifiedLevel === 'Basic') {
+      baseScore = Math.min(baseScore, 3.0);
+    }
+    
+    return baseScore;
   }
 
   /**
@@ -576,14 +792,17 @@ Ensure all strings are properly quoted and no trailing commas exist.
   }
 
   /**
-   * Generate learning recommendations
+   * Generate learning recommendations based on unified level system
    */
-  generateRecommendations(cefrLevel, skillBreakdown) {
+  generateUnifiedRecommendations(unifiedLevel, cefrLevel, skillBreakdown, fkAnalysis) {
     const recommendations = {
-      level: cefrLevel,
+      unifiedLevel,
+      cefrLevel,
       focusAreas: [],
       suggestedActivities: [],
-      nextSteps: []
+      nextSteps: [],
+      contentTypes: [],
+      fleschKincaidGuidance: null
     };
 
     // Identify weak areas
@@ -593,45 +812,128 @@ Ensure all strings are properly quoted and no trailing commas exist.
       }
     });
 
-    // Generate activity suggestions based on level
-    switch (cefrLevel) {
-      case 'A1':
-      case 'A2':
+    // Generate activity suggestions based on unified level
+    switch (unifiedLevel) {
+      case 'Basic':
         recommendations.suggestedActivities = [
-          'Basic vocabulary building',
           'Simple conversation practice',
-          'Grammar fundamentals',
-          'Listening to beginner content'
+          'Basic vocabulary building (500 most common words)',
+          'Present tense practice',
+          'Everyday situation dialogues',
+          'Pronunciation fundamentals'
         ];
+        recommendations.contentTypes = ['conversation', 'basic_dialogue', 'pronunciation'];
         break;
-      case 'B1':
-      case 'B2':
+        
+      case 'Elementary':
         recommendations.suggestedActivities = [
-          'Intermediate reading comprehension',
-          'Complex conversation topics',
-          'Writing practice',
-          'Advanced grammar structures'
+          'Structured grammar exercises',
+          'Simple reading comprehension',
+          'Basic writing tasks',
+          'Past and present tense practice',
+          'Vocabulary expansion (1000 common words)'
         ];
+        recommendations.contentTypes = ['structured_exercises', 'simple_reading', 'basic_writing'];
         break;
-      case 'C1':
-      case 'C2':
+        
+      case 'Pre-Intermediate':
         recommendations.suggestedActivities = [
-          'Advanced literature reading',
+          'Future tense and conditionals',
+          'Intermediate conversation topics',
+          'Reading short articles',
+          'Paragraph writing',
+          'Listening comprehension'
+        ];
+        recommendations.contentTypes = ['intermediate_reading', 'structured_writing', 'conversation'];
+        break;
+        
+      case 'Intermediate':
+        recommendations.suggestedActivities = [
+          'Complex grammar structures',
+          'Advanced reading comprehension',
+          'Essay writing practice',
           'Debate and discussion',
-          'Academic writing',
-          'Nuanced language use'
+          'Idioms and phrasal verbs'
         ];
+        recommendations.contentTypes = ['advanced_reading', 'essay_writing', 'discussion'];
+        break;
+        
+      case 'Upper-Intermediate':
+        recommendations.suggestedActivities = [
+          'Academic writing',
+          'Complex literature reading',
+          'Professional communication',
+          'Advanced grammar nuances',
+          'Specialized vocabulary'
+        ];
+        recommendations.contentTypes = ['academic_content', 'literature', 'professional_communication'];
+        break;
+        
+      case 'Advanced':
+        recommendations.suggestedActivities = [
+          'Native-level literature',
+          'Academic research writing',
+          'Professional presentations',
+          'Subtle language distinctions',
+          'Cultural nuances'
+        ];
+        recommendations.contentTypes = ['native_content', 'academic_research', 'professional_advanced'];
         break;
     }
 
+    // Add FK-specific guidance for structured content
+    if (fkAnalysis && fkAnalysis.fleschKincaid !== null) {
+      const targetRange = unifiedLevelService.getStructuredContent(unifiedLevel).fkRange;
+      recommendations.fleschKincaidGuidance = {
+        currentScore: fkAnalysis.fleschKincaid,
+        targetRange,
+        suggestions: unifiedLevelService.generateLevelAdjustmentSuggestions(
+          fkAnalysis.level, 
+          unifiedLevel
+        )
+      };
+    }
+
+    // Generate next steps based on dual-track approach
     recommendations.nextSteps = [
-      `Continue learning at ${cefrLevel} level`,
-      'Focus on identified weak areas',
-      'Regular practice and assessment',
-      'Engage with native speakers'
+      `Continue ${unifiedLevel} level structured learning (${cefrLevel} CEFR)`,
+      unifiedLevel === 'Basic' 
+        ? 'Practice conversation skills without complexity pressure'
+        : 'Balance structured learning with conversation practice',
+      'Focus on identified weak areas: ' + (recommendations.focusAreas.length > 0 
+        ? recommendations.focusAreas.join(', ') 
+        : 'Continue current progress'),
+      'Regular assessment to track improvement',
+      unifiedLevel !== 'Advanced' 
+        ? `Prepare for progression to ${this.getNextLevel(unifiedLevel)} level`
+        : 'Maintain and refine native-level proficiency'
     ];
 
     return recommendations;
+  }
+
+  /**
+   * Get the next level in the unified system
+   */
+  getNextLevel(currentLevel) {
+    const levelProgression = {
+      'Basic': 'Elementary',
+      'Elementary': 'Pre-Intermediate',
+      'Pre-Intermediate': 'Intermediate',
+      'Intermediate': 'Upper-Intermediate',
+      'Upper-Intermediate': 'Advanced',
+      'Advanced': 'Advanced' // Already at highest level
+    };
+    
+    return levelProgression[currentLevel] || 'Elementary';
+  }
+
+  /**
+   * Legacy function for backward compatibility
+   */
+  generateRecommendations(cefrLevel, skillBreakdown) {
+    const unifiedLevel = unifiedLevelService.cefrToUnifiedLevel(cefrLevel);
+    return this.generateUnifiedRecommendations(unifiedLevel, cefrLevel, skillBreakdown, null);
   }
 
   /**

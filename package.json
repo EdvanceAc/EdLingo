@@ -17,7 +17,21 @@
     "test:coverage": "vitest --coverage",
     "check-health": "node check-service-health.js",
     "analyze-bundle": "npm run build && npx webpack-bundle-analyzer dist/static/js/*.js",
-    "setup:admin-db": "node scripts/setup-admin-database.js"
+    "setup:admin-db": "node scripts/setup-admin-database.js",
+    "cefr:sync": "node manage-cefr-questions.js sync",
+    "cefr:fetch": "node manage-cefr-questions.js fetch",
+    "cefr:generate": "node manage-cefr-questions.js generate",
+    "chrome:debug": "node scripts/setup-browser-mcp.js --chrome-only",
+    "browser-mcp:start": "node scripts/setup-browser-mcp.js --mcp-only",
+    "browser-mcp:setup": "node scripts/setup-browser-mcp.js --full-setup",
+    "browser-mcp:stop": "node scripts/setup-browser-mcp.js --stop",
+    "browser-mcp:test": "node scripts/test-browser-mcp.js",
+    "supabase-mcp:test": "node scripts/test-supabase-mcp.js",
+    "supabase-mcp:health": "echo 'Supabase MCP Server is configured. Use your MCP client (like Cursor) to interact with it.'",
+    "supabase-mcp:validate-config": "node -e \"console.log('Checking .mcp.json...'); const fs = require('fs'); const config = JSON.parse(fs.readFileSync('.mcp.json', 'utf8')); console.log('✓ MCP config found:', Object.keys(config.mcpServers)); console.log('✓ Supabase server configured');\"",
+    "sequentialthinking-mcp": "npx -y @modelcontextprotocol/server-sequential-thinking",
+    "sequentialthinking-mcp:test": "node scripts/test-sequentialthinking-mcp.js",
+    "sequentialthinking-mcp:health": "echo 'Sequential Thinking MCP Server is configured. Use your MCP client (like Cursor) to interact with it.'"
   },
   "keywords": [
     "electron",
@@ -28,6 +42,7 @@
   "author": "EdLingo Team",
   "license": "MIT",
   "devDependencies": {
+    "@agentdeskai/browser-tools-mcp": "^1.0.0",
     "@testing-library/jest-dom": "^6.4.0",
     "@testing-library/react": "^14.2.0",
     "@testing-library/user-event": "^14.5.0",
@@ -59,6 +74,7 @@
     "@radix-ui/react-toast": "^1.1.5",
     "@supabase/supabase-js": "^2.50.3",
     "autoprefixer": "^10.4.21",
+    "browser-mcp": "^0.0.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
     "cross-env": "^7.0.3",

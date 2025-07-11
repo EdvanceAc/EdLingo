@@ -911,68 +911,13 @@ function setupIPC() {
     try {
       console.log(`🔧 MCP Request: ${serverName}.${toolName}`, args);
       
-      // For now, simulate MCP functionality since actual MCP integration would require
-      // additional setup and configuration. This provides a foundation for future MCP integration.
+      // Import the MCP client for handling requests
+      const { run_mcp } = require('../utils/mcpClient');
       
-      // Simulate PostgREST requests for Supabase
-      if (serverName === 'mcp.config.usrlocalmcp.Postgrest' && toolName === 'postgrestRequest') {
-        const { method, path, body } = args;
-        
-        // Extract Supabase configuration
-        const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://ecglfwqylqchdyuhmtuv.supabase.co';
-        const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
-        
-        if (!supabaseKey) {
-          return {
-            error: 'Supabase configuration missing',
-            data: null
-          };
-        }
-        
-        // Construct the full URL
-        const fullUrl = `${supabaseUrl}/rest/v1${path}`;
-        
-        try {
-          const fetch = require('node-fetch');
-          const response = await fetch(fullUrl, {
-            method,
-            headers: {
-              'apikey': supabaseKey,
-              'Authorization': `Bearer ${supabaseKey}`,
-              'Content-Type': 'application/json',
-              'Prefer': 'return=representation'
-            },
-            body: body ? JSON.stringify(body) : undefined
-          });
-          
-          if (!response.ok) {
-            const errorText = await response.text();
-            return {
-              error: `HTTP ${response.status}: ${errorText}`,
-              data: null
-            };
-          }
-          
-          const data = await response.json();
-          return {
-            error: null,
-            data: data
-          };
-          
-        } catch (fetchError) {
-          console.error('Fetch error:', fetchError);
-          return {
-            error: `Network error: ${fetchError.message}`,
-            data: null
-          };
-        }
-      }
+      // Use the centralized MCP client to handle all requests
+      const result = await run_mcp(serverName, toolName, args);
       
-      // For other MCP servers, return a not implemented error
-      return {
-        error: `MCP server '${serverName}' not implemented`,
-        data: null
-      };
+      return result;
       
     } catch (error) {
       console.error('Error in MCP handler:', error);

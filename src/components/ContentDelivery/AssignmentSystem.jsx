@@ -34,6 +34,7 @@ import { useProgression } from '../../hooks/useProgression';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../hooks/use-toast';
 import textSimplificationService from '../../services/textSimplification';
+import unifiedLevelService from '../../services/unifiedLevelService';
 
 const AssignmentSystem = () => {
   const { assignmentId } = useParams();
@@ -233,6 +234,9 @@ const AssignmentSystem = () => {
         score: score.percentage,
         time_spent_seconds: timeSpent,
         ai_assessments: score.aiAssessments || [],
+        flesch_kincaid_analyses: score.fleschKincaidAnalyses || [],
+        overall_fk_analysis: score.overallFKAnalysis,
+        unified_level: score.unifiedLevel,
         submitted_at: new Date().toISOString(),
         auto_submitted: autoSubmit
       };
@@ -281,18 +285,20 @@ const AssignmentSystem = () => {
     }
   };
 
-  // Calculate assignment score
+  // Calculate assignment score with unified level system
   const calculateScore = async () => {
     let correct = 0;
     let total = assignment.questions.length;
     const questionResults = [];
     const aiAssessments = [];
+    const fleschKincaidAnalyses = [];
     
     for (let index = 0; index < assignment.questions.length; index++) {
       const question = assignment.questions[index];
       const userAnswer = answers[index];
       let isCorrect = false;
       let aiAssessment = null;
+      let fkAnalysis = null;
       
       switch (question.type) {
         case 'multiple_choice':
@@ -312,17 +318,39 @@ const AssignmentSystem = () => {
           break;
         case 'essay':
         case 'short_answer':
-          // Use AI evaluation for text-based questions
-          aiAssessment = await evaluateTextResponseWithAI(question, userAnswer);
-          if (aiAssessment) {
-            isCorrect = aiAssessment.overall_score >= 70; // Consider 70+ as correct
-            aiAssessments.push({
-              questionIndex: index,
-              ...aiAssessment
-            });
+          // Use AI evaluation with Flesch-Kincaid analysis for text-based questions
+          if (userAnswer && userAnswer.trim().length > 0) {
+            // Perform Flesch-Kincaid analysis
+            fkAnalysis = unifiedLevelService.analyzeTextComplexity(userAnswer, 'structured');
+            
+            // Get AI assessment with FK context
+            aiAssessment = await evaluateTextResponseWithAI(question, userAnswer, fkAnalysis);
+            
+            if (aiAssessment) {
+              // Enhanced scoring considering both AI assessment and FK level
+              const baseScore = aiAssessment.overall_score;
+              const fkBonus = fkAnalysis.appropriateForLevel ? 5 : 0; // Small bonus for appropriate complexity
+              const finalScore = Math.min(100, baseScore + fkBonus);
+              
+              isCorrect = finalScore >= 70;
+              aiAssessments.push({
+                questionIndex: index,
+                ...aiAssessment,
+                finalScore,
+                fleschKincaidAnalysis: fkAnalysis
+              });
+              
+              fleschKincaidAnalyses.push({
+                questionIndex: index,
+                ...fkAnalysis
+              });
+            } else {
+              // Fallback: use FK analysis for basic scoring
+              const expectedLevel = unifiedLevelService.cefrToUnifiedLevel(userLevel);
+              isCorrect = fkAnalysis.level === expectedLevel && userAnswer.trim().length > 20;
+            }
           } else {
-            // Fallback: mark as correct if answered with sufficient length
-            isCorrect = userAnswer && userAnswer.trim().length > 10;
+            isCorrect = false;
           }
           break;
         default:
@@ -337,23 +365,37 @@ const AssignmentSystem = () => {
         correctAnswer: question.correct_answer,
         isCorrect,
         explanation: question.explanation,
-        aiAssessment
+        aiAssessment,
+        fleschKincaidAnalysis: fkAnalysis
       });
     }
+    
+    // Calculate overall Flesch-Kincaid metrics for the assignment
+    const overallFKAnalysis = fleschKincaidAnalyses.length > 0 ? {
+      averageScore: fleschKincaidAnalyses.reduce((sum, fk) => sum + (fk.fleschKincaid || 0), 0) / fleschKincaidAnalyses.length,
+      levelDistribution: fleschKincaidAnalyses.reduce((dist, fk) => {
+        dist[fk.level] = (dist[fk.level] || 0) + 1;
+        return dist;
+      }, {}),
+      appropriatenessRate: fleschKincaidAnalyses.filter(fk => fk.appropriateForLevel).length / fleschKincaidAnalyses.length
+    } : null;
     
     return {
       correct,
       total,
       percentage: Math.round((correct / total) * 100),
       questionResults,
-      aiAssessments
+      aiAssessments,
+      fleschKincaidAnalyses,
+      overallFKAnalysis,
+      unifiedLevel: unifiedLevelService.cefrToUnifiedLevel(userLevel)
     };
   };
 
-  // AI evaluation function for text-based questions
-  const evaluateTextResponseWithAI = async (question, answer) => {
+  // AI evaluation function for text-based questions with FK analysis
+  const evaluateTextResponseWithAI = async (question, answer, fkAnalysis = null) => {
     if (!answer || answer.trim().length === 0) {
-      return { overall_score: 0, feedback: 'No answer provided', cefr_level: 'A1' };
+      return { overall_score: 0, feedback: 'No answer provided', cefr_level: 'A1', unified_level: 'Basic' };
     }
     
     try {
@@ -361,35 +403,56 @@ const AssignmentSystem = () => {
       const { default: geminiService } = await import('../../../renderer/services/geminiService.js');
       const { default: aiService } = await import('../../../renderer/services/aiService.js');
       
-      // Build assessment prompt for Gemini AI
+      // Build enhanced assessment prompt with FK analysis
+      const fkContext = fkAnalysis ? `
+
+Flesch-Kincaid Analysis:
+- FK Score: ${fkAnalysis.fleschKincaid}
+- Unified Level: ${fkAnalysis.level}
+- Appropriate for student level: ${fkAnalysis.appropriateForLevel ? 'Yes' : 'No'}
+- Readability: ${fkAnalysis.readability}
+- Sentence complexity: Average ${fkAnalysis.averageSentenceLength} words per sentence
+- Word complexity: Average ${fkAnalysis.averageSyllablesPerWord} syllables per word` : '';
+      
       const assessmentPrompt = `
-You are an expert language assessment specialist. Evaluate the following response according to CEFR standards.
+You are an expert language assessment specialist using the EdLingo unified level system. Evaluate the following response according to both CEFR standards and Flesch-Kincaid complexity analysis.
 
 Question: ${question.question}
 Expected Answer/Context: ${question.correct_answer || 'Open-ended question'}
 User Response: ${answer}
+Student's Current Level: ${userLevel} (CEFR) / ${unifiedLevelService.cefrToUnifiedLevel(userLevel)} (Unified)${fkContext}
 
 Please provide a detailed assessment in JSON format:
 {
   "overall_score": (0-100),
   "cefr_level": "A1|A2|B1|B2|C1|C2",
+  "unified_level": "Basic|Elementary|Pre-Intermediate|Intermediate|Upper-Intermediate|Advanced",
+  "flesch_kincaid_score": (FK score from your analysis),
+  "complexity_appropriateness": "appropriate|too_simple|too_complex",
   "skill_breakdown": {
     "grammar": (0-100),
     "vocabulary": (0-100),
     "coherence": (0-100),
-    "relevance": (0-100)
+    "relevance": (0-100),
+    "complexity": (0-100)
   },
-  "feedback": "Detailed constructive feedback",
+  "feedback": "Detailed constructive feedback including complexity guidance",
   "error_examples": [
     {
       "error": "specific error found",
       "correction": "suggested correction",
       "explanation": "why this is better"
     }
-  ]
+  ],
+  "complexity_suggestions": "Suggestions for improving text complexity to match student level"
 }
 
-Focus on accuracy, relevance to the question, language complexity, and overall communication effectiveness.`;
+Focus on:
+1. Accuracy and relevance to the question
+2. Language complexity appropriate for the student's level
+3. Grammar, vocabulary, and coherence
+4. Whether the response demonstrates progression in the unified level system
+5. Flesch-Kincaid score alignment with expected level ranges`;
       
       let aiResponse;
       
@@ -412,13 +475,18 @@ Focus on accuracy, relevance to the question, language complexity, and overall c
     }
   };
   
-  // Parse AI assessment response
+  // Parse AI assessment response with unified level support
   const parseAIAssessment = (aiResponse) => {
     try {
       // Try to extract JSON from AI response
       const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
-        return JSON.parse(jsonMatch[0]);
+        const parsed = JSON.parse(jsonMatch[0]);
+        // Ensure unified_level is present
+        if (!parsed.unified_level && parsed.cefr_level) {
+          parsed.unified_level = unifiedLevelService.cefrToUnifiedLevel(parsed.cefr_level);
+        }
+        return parsed;
       }
     } catch (error) {
       console.error('Failed to parse AI assessment:', error);
@@ -427,18 +495,28 @@ Focus on accuracy, relevance to the question, language complexity, and overall c
     // Fallback parsing from text
     const scoreMatch = aiResponse.match(/score[:\s]*(\d+)/i);
     const cefrMatch = aiResponse.match(/([ABC][12])/i);
+    const unifiedMatch = aiResponse.match(/(Basic|Elementary|Pre-Intermediate|Intermediate|Upper-Intermediate|Advanced)/i);
+    const fkMatch = aiResponse.match(/flesch[\s-]*kincaid[:\s]*(\d+\.?\d*)/i);
+    
+    const cefrLevel = cefrMatch ? cefrMatch[1].toUpperCase() : 'B1';
+    const unifiedLevel = unifiedMatch ? unifiedMatch[1] : unifiedLevelService.cefrToUnifiedLevel(cefrLevel);
     
     return {
       overall_score: scoreMatch ? parseInt(scoreMatch[1]) : 60,
-      cefr_level: cefrMatch ? cefrMatch[1].toUpperCase() : 'B1',
+      cefr_level: cefrLevel,
+      unified_level: unifiedLevel,
+      flesch_kincaid_score: fkMatch ? parseFloat(fkMatch[1]) : null,
+      complexity_appropriateness: 'appropriate',
       skill_breakdown: {
         grammar: 60,
         vocabulary: 60,
         coherence: 60,
-        relevance: 60
+        relevance: 60,
+        complexity: 60
       },
       feedback: aiResponse.substring(0, 200) + '...',
-      error_examples: []
+      error_examples: [],
+      complexity_suggestions: 'Continue practicing at your current level.'
     };
   };
 
@@ -627,21 +705,55 @@ Focus on accuracy, relevance to the question, language complexity, and overall c
                         <div className="flex items-center mb-2">
                           <Brain className="h-4 w-4 text-purple-600 mr-2" />
                           <span className="font-medium text-purple-800">AI Assessment</span>
-                          <Badge variant="outline" className="ml-2">
-                            {result.aiAssessment.cefr_level}
-                          </Badge>
+                          <div className="ml-2 flex space-x-2">
+                            <Badge variant="outline">
+                              {result.aiAssessment.cefr_level}
+                            </Badge>
+                            {result.aiAssessment.unified_level && (
+                              <Badge variant="secondary">
+                                {result.aiAssessment.unified_level}
+                              </Badge>
+                            )}
+                          </div>
                         </div>
                         
                         <div className="text-sm space-y-2">
-                          <div>
-                            <span className="font-medium text-purple-700">Score:</span>
-                            <span className="ml-2 text-purple-600">{result.aiAssessment.overall_score}/100</span>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <span className="font-medium text-purple-700">Score:</span>
+                              <span className="ml-2 text-purple-600">{result.aiAssessment.finalScore || result.aiAssessment.overall_score}/100</span>
+                            </div>
+                            {result.aiAssessment.flesch_kincaid_score && (
+                              <div>
+                                <span className="font-medium text-purple-700">FK Score:</span>
+                                <span className="ml-2 text-purple-600">{result.aiAssessment.flesch_kincaid_score}</span>
+                              </div>
+                            )}
                           </div>
+                          
+                          {result.aiAssessment.complexity_appropriateness && (
+                            <div>
+                              <span className="font-medium text-purple-700">Complexity:</span>
+                              <Badge 
+                                variant={result.aiAssessment.complexity_appropriateness === 'appropriate' ? 'default' : 'destructive'}
+                                className="ml-2"
+                              >
+                                {result.aiAssessment.complexity_appropriateness.replace('_', ' ')}
+                              </Badge>
+                            </div>
+                          )}
                           
                           {result.aiAssessment.feedback && (
                             <div>
                               <span className="font-medium text-purple-700">Feedback:</span>
                               <p className="text-purple-600 mt-1">{result.aiAssessment.feedback}</p>
+                            </div>
+                          )}
+                          
+                          {result.aiAssessment.complexity_suggestions && (
+                            <div>
+                              <span className="font-medium text-purple-700">Complexity Guidance:</span>
+                              <p className="text-purple-600 mt-1 text-xs">{result.aiAssessment.complexity_suggestions}</p>
                             </div>
                           )}
                           
@@ -676,8 +788,125 @@ Focus on accuracy, relevance to the question, language complexity, and overall c
                         </div>
                       </div>
                     )}
+                    
+                    {/* Flesch-Kincaid Analysis for text-based questions */}
+                    {result.fleschKincaidAnalysis && (
+                      <div className="mt-3 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                        <div className="flex items-center mb-2">
+                          <Target className="h-4 w-4 text-blue-600 mr-2" />
+                          <span className="font-medium text-blue-800">Text Complexity Analysis</span>
+                          <Badge 
+                            variant={result.fleschKincaidAnalysis.appropriateForLevel ? 'default' : 'secondary'}
+                            className="ml-2"
+                          >
+                            {result.fleschKincaidAnalysis.level}
+                          </Badge>
+                        </div>
+                        
+                        <div className="text-sm space-y-2">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <span className="font-medium text-blue-700">FK Score:</span>
+                              <span className="ml-2 text-blue-600">{result.fleschKincaidAnalysis.fleschKincaid}</span>
+                            </div>
+                            <div>
+                              <span className="font-medium text-blue-700">Readability:</span>
+                              <span className="ml-2 text-blue-600">{result.fleschKincaidAnalysis.readability}</span>
+                            </div>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-4 text-xs">
+                            <div>
+                              <span className="font-medium text-blue-700">Avg Sentence Length:</span>
+                              <span className="ml-2 text-blue-600">{result.fleschKincaidAnalysis.averageSentenceLength} words</span>
+                            </div>
+                            <div>
+                              <span className="font-medium text-blue-700">Avg Syllables/Word:</span>
+                              <span className="ml-2 text-blue-600">{result.fleschKincaidAnalysis.averageSyllablesPerWord}</span>
+                            </div>
+                          </div>
+                          
+                          {!result.fleschKincaidAnalysis.appropriateForLevel && (
+                            <div className="mt-2 p-2 bg-yellow-100 rounded text-xs">
+                              <span className="font-medium text-yellow-800">Suggestion:</span>
+                              <span className="text-yellow-700 ml-1">
+                                {result.fleschKincaidAnalysis.level === 'Basic' 
+                                  ? 'Try using simpler words and shorter sentences.'
+                                  : 'Consider using more complex vocabulary and varied sentence structures.'}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+        
+        {/* Flesch-Kincaid Overall Analysis */}
+        {results.overallFKAnalysis && (
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Target className="h-5 w-5 text-blue-600 mr-2" />
+                Text Complexity Summary
+                <Badge variant="outline" className="ml-2">
+                  {results.unifiedLevel}
+                </Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="grid grid-cols-3 gap-4 text-center">
+                  <div className="p-4 bg-blue-50 rounded-lg">
+                    <div className="text-2xl font-bold text-blue-600">
+                      {results.overallFKAnalysis.averageScore.toFixed(1)}
+                    </div>
+                    <div className="text-sm text-blue-700">Average FK Score</div>
+                  </div>
+                  
+                  <div className="p-4 bg-green-50 rounded-lg">
+                    <div className="text-2xl font-bold text-green-600">
+                      {Math.round(results.overallFKAnalysis.appropriatenessRate * 100)}%
+                    </div>
+                    <div className="text-sm text-green-700">Appropriate Complexity</div>
+                  </div>
+                  
+                  <div className="p-4 bg-purple-50 rounded-lg">
+                    <div className="text-2xl font-bold text-purple-600">
+                      {Object.keys(results.overallFKAnalysis.levelDistribution).length}
+                    </div>
+                    <div className="text-sm text-purple-700">Complexity Levels Used</div>
+                  </div>
+                </div>
+                
+                {Object.keys(results.overallFKAnalysis.levelDistribution).length > 1 && (
+                  <div>
+                    <h4 className="font-medium mb-2">Level Distribution:</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                      {Object.entries(results.overallFKAnalysis.levelDistribution).map(([level, count]) => (
+                        <div key={level} className="flex justify-between p-2 bg-gray-50 rounded">
+                          <span>{level}:</span>
+                          <span className="font-medium">{count} response{count !== 1 ? 's' : ''}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                <div className="p-3 bg-blue-100 rounded-lg">
+                  <p className="text-sm text-blue-800">
+                    <strong>Complexity Guidance:</strong> 
+                    {results.overallFKAnalysis.appropriatenessRate >= 0.8 
+                      ? ' Excellent! Your writing complexity is well-matched to your level.'
+                      : results.overallFKAnalysis.appropriatenessRate >= 0.6
+                      ? ' Good progress! Try to maintain consistent complexity in your responses.'
+                      : ' Focus on writing at an appropriate complexity level for better assessment results.'}
+                  </p>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -700,7 +929,10 @@ Focus on accuracy, relevance to the question, language complexity, and overall c
                       <h4 className="font-medium">Question {assessment.questionIndex + 1}</h4>
                       <div className="flex items-center space-x-2">
                         <Badge variant="outline">{assessment.cefr_level}</Badge>
-                        <span className="text-sm font-medium">{assessment.overall_score}/100</span>
+                        {assessment.unified_level && (
+                          <Badge variant="secondary">{assessment.unified_level}</Badge>
+                        )}
+                        <span className="text-sm font-medium">{assessment.finalScore || assessment.overall_score}/100</span>
                       </div>
                     </div>
                     
@@ -708,8 +940,12 @@ Focus on accuracy, relevance to the question, language complexity, and overall c
                       <p className="text-sm text-gray-700 mb-2">{assessment.feedback}</p>
                     )}
                     
+                    {assessment.complexity_suggestions && (
+                      <p className="text-xs text-blue-600 mb-2 italic">{assessment.complexity_suggestions}</p>
+                    )}
+                    
                     {assessment.skill_breakdown && (
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                      <div className="grid grid-cols-2 md:grid-cols-5 gap-2 text-xs">
                         {Object.entries(assessment.skill_breakdown).map(([skill, score]) => (
                           <div key={skill} className="flex justify-between p-2 bg-white rounded">
                             <span className="capitalize">{skill}:</span>

@@ -186,6 +186,54 @@ const Assessment = ({ onComplete, targetLanguage = 'English' }) => {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // Helper function to safely parse and validate question_data
+  const getQuestionData = (task) => {
+    try {
+      let questionData = task.question_data;
+      
+      // If question_data is a string, parse it
+      if (typeof questionData === 'string') {
+        questionData = JSON.parse(questionData);
+      }
+      
+      // Ensure it's an object
+      if (!questionData || typeof questionData !== 'object') {
+        return null;
+      }
+      
+      return questionData;
+    } catch (error) {
+      console.error('Error parsing question_data:', error);
+      return null;
+    }
+  };
+
+  // Helper function to safely get options array
+  const getQuestionOptions = (task) => {
+    const questionData = getQuestionData(task);
+    if (!questionData || !questionData.options) {
+      return [];
+    }
+    
+    // Ensure options is an array
+    if (Array.isArray(questionData.options)) {
+      return questionData.options;
+    }
+    
+    // If options is a string, try to parse it
+    if (typeof questionData.options === 'string') {
+      try {
+        const parsed = JSON.parse(questionData.options);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (error) {
+        console.error('Error parsing options:', error);
+        return [];
+      }
+    }
+    
+    return [];
+  };
+
   const getTaskIcon = (taskType) => {
     switch (taskType) {
       case 'conversation': return '💬';
@@ -193,6 +241,9 @@ const Assessment = ({ onComplete, targetLanguage = 'English' }) => {
       case 'grammar': return '📝';
       case 'vocabulary': return '📚';
       case 'pronunciation': return '🗣️';
+      case 'multiple-choice': return '☑️';
+      case 'true-false': return '✅';
+      case 'speaking': return '🗣️';
       default: return '📋';
     }
   };
@@ -216,10 +267,10 @@ const Assessment = ({ onComplete, targetLanguage = 'English' }) => {
       className="max-w-2xl mx-auto text-center"
     >
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
           Language Proficiency Assessment
         </h1>
-        <p className="text-lg text-gray-600 mb-6">
+        <p className="text-lg text-gray-600 dark:text-gray-300 mb-6">
           This assessment will help us determine your current {targetLanguage} proficiency level 
           and create a personalized learning path for you.
         </p>
@@ -259,12 +310,12 @@ const Assessment = ({ onComplete, targetLanguage = 'English' }) => {
         </div>
       </Card>
       
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-8">
+      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-8">
         <div className="flex items-start space-x-3">
-          <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5" />
+          <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" />
           <div className="text-left">
-            <h3 className="font-medium text-blue-900 mb-1">Before You Begin</h3>
-            <ul className="text-sm text-blue-800 space-y-1">
+            <h3 className="font-medium text-blue-900 dark:text-blue-100 mb-1">Before You Begin</h3>
+            <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
               <li>• Ensure you have a quiet environment</li>
               <li>• Allow microphone access for speaking tasks</li>
               <li>• Answer naturally and honestly</li>
@@ -301,20 +352,20 @@ const Assessment = ({ onComplete, targetLanguage = 'English' }) => {
         {/* Progress Bar */}
         <div className="mb-6">
           <div className="flex justify-between items-center mb-2">
-            <span className="text-sm font-medium text-gray-700">
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
               Task {currentTaskIndex + 1} of {tasks.length}
             </span>
             {timeRemaining !== null && (
               <span className={`text-sm font-medium ${
-                timeRemaining < 60 ? 'text-red-600' : 'text-gray-600'
+                timeRemaining < 60 ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-300'
               }`}>
                 Time remaining: {formatTime(timeRemaining)}
               </span>
             )}
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
+          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
             <div 
-              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+              className="bg-blue-600 dark:bg-blue-500 h-2 rounded-full transition-all duration-300"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -322,22 +373,50 @@ const Assessment = ({ onComplete, targetLanguage = 'English' }) => {
 
         {/* Task Card */}
         <Card className="p-6">
-          <div className="flex items-center space-x-3 mb-4">
-            <span className="text-3xl">{getTaskIcon(currentTask.task_type)}</span>
-            <div>
-              <h2 className="text-xl font-semibold capitalize">
-                {currentTask.task_type} Assessment
-              </h2>
-              <p className="text-sm text-gray-600">
-                Expected time: {currentTask.expected_duration_minutes} minutes
-              </p>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-3">
+              <span className="text-3xl">{getTaskIcon(currentTask.task_type)}</span>
+              <div>
+                <h2 className="text-xl font-semibold capitalize">
+                  {currentTask.task_type} Assessment
+                </h2>
+                <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
+                  <span>Expected time: {currentTask.expected_duration_minutes} minutes</span>
+                  {currentTask.cefr_level && (
+                    <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-xs font-medium">
+                      {currentTask.cefr_level}
+                    </span>
+                  )}
+                  {currentTask.skill_type && (
+                    <span className="px-2 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-xs font-medium capitalize">
+                      {currentTask.skill_type}
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
           
+          {/* Instructions (if separate from question) */}
+          {(() => {
+            const questionData = getQuestionData(currentTask);
+            return questionData?.instructions && questionData.instructions !== questionData?.question_text && (
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-4">
+                <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-200 mb-2">Instructions:</h3>
+                <p className="text-gray-800 dark:text-gray-200 leading-relaxed text-sm">
+                  {questionData.instructions}
+                </p>
+              </div>
+            );
+          })()}
+          
+          {/* Question/Prompt */}
           <div className="mb-6">
-            <p className="text-gray-800 leading-relaxed">
-              {currentTask.prompt}
-            </p>
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+              <p className="text-gray-800 dark:text-gray-200 leading-relaxed">
+                {getQuestionData(currentTask)?.question_text || currentTask.prompt}
+              </p>
+            </div>
           </div>
           
           {/* Response Area */}
@@ -345,7 +424,7 @@ const Assessment = ({ onComplete, targetLanguage = 'English' }) => {
             {isAudioTask ? (
               <div className="space-y-4">
                 {/* Audio Recording Controls */}
-                <div className="flex items-center justify-center space-x-4 p-6 bg-gray-50 rounded-lg">
+                <div className="flex items-center justify-center space-x-4 p-6 bg-gray-50 dark:bg-gray-800 rounded-lg">
                   <Button
                     onClick={isRecording ? stopRecording : startRecording}
                     variant={isRecording ? 'destructive' : 'default'}
@@ -360,8 +439,8 @@ const Assessment = ({ onComplete, targetLanguage = 'English' }) => {
                   
                   {audioBlob && (
                     <div className="flex items-center space-x-2">
-                      <CheckCircle className="w-5 h-5 text-green-600" />
-                      <span className="text-sm text-green-600">Recording saved</span>
+                      <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
+                      <span className="text-sm text-green-600 dark:text-green-400">Recording saved</span>
                       <Button
                         variant="outline"
                         size="sm"
@@ -375,7 +454,7 @@ const Assessment = ({ onComplete, targetLanguage = 'English' }) => {
                 
                 {/* Optional Text Response */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Additional notes (optional):
                   </label>
                   <textarea
@@ -383,14 +462,65 @@ const Assessment = ({ onComplete, targetLanguage = 'English' }) => {
                     value={responses[currentTask.id] || ''}
                     onChange={(e) => handleResponseChange(e.target.value)}
                     placeholder="Add any additional thoughts or notes here..."
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     rows={3}
                   />
                 </div>
               </div>
+            ) : currentTask.task_type === 'multiple-choice' ? (
+              <div className="space-y-4">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                  Select the best answer:
+                </label>
+                <div className="space-y-3">
+                  {getQuestionOptions(currentTask).map((option, index) => (
+                    <label key={index} className="flex items-start space-x-3 p-3 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
+                      <input
+                        type="radio"
+                        name={`question-${currentTask.id}`}
+                        value={option}
+                        checked={responses[currentTask.id] === option}
+                        onChange={(e) => handleResponseChange(e.target.value)}
+                        className="mt-1 text-blue-600 focus:ring-blue-500"
+                      />
+                      <span className="text-gray-700 dark:text-gray-300">{option}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            ) : currentTask.task_type === 'true-false' ? (
+              <div className="space-y-4">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                  Select True or False:
+                </label>
+                <div className="space-y-3">
+                  <label className="flex items-center space-x-3 p-3 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
+                    <input
+                      type="radio"
+                      name={`question-${currentTask.id}`}
+                      value="true"
+                      checked={responses[currentTask.id] === 'true'}
+                      onChange={(e) => handleResponseChange(e.target.value)}
+                      className="text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="text-gray-700 dark:text-gray-300 font-medium">True</span>
+                  </label>
+                  <label className="flex items-center space-x-3 p-3 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
+                    <input
+                      type="radio"
+                      name={`question-${currentTask.id}`}
+                      value="false"
+                      checked={responses[currentTask.id] === 'false'}
+                      onChange={(e) => handleResponseChange(e.target.value)}
+                      className="text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="text-gray-700 dark:text-gray-300 font-medium">False</span>
+                  </label>
+                </div>
+              </div>
             ) : (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Your response:
                 </label>
                 <textarea
@@ -398,11 +528,11 @@ const Assessment = ({ onComplete, targetLanguage = 'English' }) => {
                   value={responses[currentTask.id] || ''}
                   onChange={(e) => handleResponseChange(e.target.value)}
                   placeholder="Type your response here..."
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   rows={6}
                   required
                 />
-                <div className="mt-2 text-sm text-gray-500">
+                <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">
                   Word count: {(responses[currentTask.id] || '').split(' ').filter(w => w).length}
                 </div>
               </div>
@@ -410,8 +540,8 @@ const Assessment = ({ onComplete, targetLanguage = 'English' }) => {
           </div>
           
           {error && (
-            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-red-800 text-sm">{error}</p>
+            <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+              <p className="text-red-800 dark:text-red-200 text-sm">{error}</p>
             </div>
           )}
           
@@ -432,7 +562,7 @@ const Assessment = ({ onComplete, targetLanguage = 'English' }) => {
             
             <Button
               onClick={submitTaskResponse}
-              disabled={isLoading || (!responses[currentTask.id]?.trim() && !audioBlob)}
+              disabled={isLoading || (!responses[currentTask.id] && !audioBlob)}
             >
               {isLoading ? (
                 <LoadingSpinner size="sm" message="" className="w-4 h-4 mr-2" />
@@ -452,13 +582,13 @@ const Assessment = ({ onComplete, targetLanguage = 'English' }) => {
       className="max-w-4xl mx-auto"
     >
       <div className="text-center mb-8">
-        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <CheckCircle className="w-8 h-8 text-green-600" />
+        <div className="w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto mb-4">
+          <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
         </div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
           Assessment Complete!
         </h1>
-        <p className="text-lg text-gray-600">
+        <p className="text-lg text-gray-600 dark:text-gray-300">
           Here are your results and personalized recommendations.
         </p>
       </div>
@@ -469,13 +599,13 @@ const Assessment = ({ onComplete, targetLanguage = 'English' }) => {
           <h2 className="text-xl font-semibold mb-4">Overall Results</h2>
           <div className="space-y-4">
             <div className="text-center">
-              <div className="text-4xl font-bold text-blue-600 mb-2">
+              <div className="text-4xl font-bold text-blue-600 dark:text-blue-400 mb-2">
                 {results.overallScore}/100
               </div>
               <div className={`text-2xl font-semibold ${getCEFRColor(results.cefrLevel)}`}>
                 {results.cefrLevel} Level
               </div>
-              <div className="text-sm text-gray-600 mt-1">
+              <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                 IELTS Equivalent: {results.ieltsEquivalent}
               </div>
             </div>
@@ -490,9 +620,9 @@ const Assessment = ({ onComplete, targetLanguage = 'English' }) => {
               <div key={skill} className="flex items-center justify-between">
                 <span className="capitalize text-sm font-medium">{skill}</span>
                 <div className="flex items-center space-x-2">
-                  <div className="w-24 bg-gray-200 rounded-full h-2">
+                  <div className="w-24 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                     <div 
-                      className="bg-blue-600 h-2 rounded-full"
+                      className="bg-blue-600 dark:bg-blue-500 h-2 rounded-full"
                       style={{ width: `${score}%` }}
                     />
                   </div>
@@ -510,20 +640,20 @@ const Assessment = ({ onComplete, targetLanguage = 'English' }) => {
           <h2 className="text-xl font-semibold mb-4">Personalized Recommendations</h2>
           <div className="grid md:grid-cols-2 gap-6">
             <div>
-              <h3 className="font-medium text-gray-900 mb-2">Focus Areas</h3>
+              <h3 className="font-medium text-gray-900 dark:text-white mb-2">Focus Areas</h3>
               <ul className="space-y-1">
                 {results.recommendations.focusAreas.map((area, index) => (
-                  <li key={index} className="text-sm text-gray-600 capitalize">
+                  <li key={index} className="text-sm text-gray-600 dark:text-gray-300 capitalize">
                     • {area}
                   </li>
                 ))}
               </ul>
             </div>
             <div>
-              <h3 className="font-medium text-gray-900 mb-2">Suggested Activities</h3>
+              <h3 className="font-medium text-gray-900 dark:text-white mb-2">Suggested Activities</h3>
               <ul className="space-y-1">
                 {results.recommendations.suggestedActivities.map((activity, index) => (
-                  <li key={index} className="text-sm text-gray-600">
+                  <li key={index} className="text-sm text-gray-600 dark:text-gray-300">
                     • {activity}
                   </li>
                 ))}
@@ -545,7 +675,7 @@ const Assessment = ({ onComplete, targetLanguage = 'English' }) => {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8 px-4">
       <AnimatePresence mode="wait">
         {currentStep === 'intro' && renderIntroduction()}
         {currentStep === 'assessment' && renderAssessmentTask()}

@@ -120,7 +120,7 @@ class AIService {
     try {
       // Check backend AI service status first
       const status = await this.getBackendStatus();
-      if (!status.isReady) {
+      if (!status || !status.isReady) {
         console.warn('Backend AI service not ready:', status);
         return 'AI chat is currently unavailable. Please check your API configuration.';
       }
@@ -176,7 +176,7 @@ class AIService {
     try {
       // Check backend AI service status first
       const status = await this.getBackendStatus();
-      if (!status.isReady) {
+      if (!status || !status.isReady) {
         console.warn('Backend AI service not ready:', status);
         return 'AI chat is currently unavailable. Please check your API configuration.';
       }
@@ -365,31 +365,37 @@ Return as JSON format.`;
 
   async determineCEFRLevel(skillScores, options = {}) {
     const { grammar, vocabulary, fluency, pronunciation, writing } = skillScores;
+    const { textContent, isConversational } = options;
     const averageScore = Object.values(skillScores).reduce((sum, score) => sum + score, 0) / Object.values(skillScores).length;
     
-    // CEFR level mapping based on average score
     let cefrLevel;
     let ieltsEquivalent;
     
-    if (averageScore >= 90) {
-      cefrLevel = 'C2';
-      ieltsEquivalent = 8.5;
-    } else if (averageScore >= 80) {
-      cefrLevel = 'C1';
-      ieltsEquivalent = 7.5;
-    } else if (averageScore >= 70) {
-      cefrLevel = 'B2';
-      ieltsEquivalent = 6.5;
-    } else if (averageScore >= 60) {
-      cefrLevel = 'B1';
-      ieltsEquivalent = 5.5;
-    } else if (averageScore >= 45) {
-      cefrLevel = 'A2';
-      ieltsEquivalent = 4.5;
+    // Use unified level service for text-based assessments when available
+    if (textContent && !isConversational) {
+      try {
+        const unifiedLevelService = require('./unifiedLevelService');
+        const unifiedResult = await unifiedLevelService.assignUnifiedLevel(textContent);
+        cefrLevel = unifiedResult.unified_level;
+      } catch (error) {
+        console.warn('Failed to use unified level service, falling back to traditional mapping:', error);
+        cefrLevel = this._mapScoreToCEFR(averageScore);
+      }
     } else {
-      cefrLevel = 'A1';
-      ieltsEquivalent = 3.5;
+      // Traditional CEFR level mapping based on average score
+      cefrLevel = this._mapScoreToCEFR(averageScore);
     }
+    
+    // Map CEFR to IELTS equivalent
+    const cefrToIelts = {
+      'C2': 8.5,
+      'C1': 7.5,
+      'B2': 6.5,
+      'B1': 5.5,
+      'A2': 4.5,
+      'A1': 3.5
+    };
+    ieltsEquivalent = cefrToIelts[cefrLevel] || 3.5;
     
     return {
       cefrLevel,
@@ -398,6 +404,22 @@ Return as JSON format.`;
       skillBreakdown: skillScores,
       recommendations: this._generateRecommendations(cefrLevel, skillScores)
     };
+  }
+
+  _mapScoreToCEFR(averageScore) {
+    if (averageScore >= 90) {
+      return 'C2';
+    } else if (averageScore >= 80) {
+      return 'C1';
+    } else if (averageScore >= 70) {
+      return 'B2';
+    } else if (averageScore >= 60) {
+      return 'B1';
+    } else if (averageScore >= 45) {
+      return 'A2';
+    } else {
+      return 'A1';
+    }
   }
 
   _analyzeConversationFallback(conversationText) {
@@ -579,6 +601,16 @@ Return as JSON format.`;
 
     try {
       const status = await window.electronAPI.invoke('ai:getStatus');
+      // Ensure we always return a proper status object
+      if (!status || typeof status !== 'object') {
+        return {
+          isReady: false,
+          status: 'invalid_response',
+          provider: 'unknown',
+          model: 'unknown',
+          error: 'Invalid status response from backend'
+        };
+      }
       return status;
     } catch (error) {
       console.error('Error getting backend AI status:', error);
