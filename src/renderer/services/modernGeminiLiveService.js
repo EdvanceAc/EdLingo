@@ -54,6 +54,7 @@ class ModernGeminiLiveService extends EventEmitter {
     this.apiKey = null;
     this.responseQueue = [];
     this.audioParts = [];
+    this.userHasInteracted = false;
     
     // Configuration
     this.model = 'models/gemini-2.0-flash-exp';
@@ -72,6 +73,23 @@ class ModernGeminiLiveService extends EventEmitter {
     // Cleanup flags
     this._stoppingAudio = false;
     this._endingSession = false;
+    
+    // Set up user interaction detection
+    this.setupUserInteractionDetection();
+  }
+
+  setupUserInteractionDetection() {
+    const events = ['click', 'touchstart', 'keydown'];
+    const handleInteraction = () => {
+      this.userHasInteracted = true;
+      events.forEach(event => {
+        document.removeEventListener(event, handleInteraction);
+      });
+    };
+    
+    events.forEach(event => {
+      document.addEventListener(event, handleInteraction, { once: true });
+    });
   }
 
   async initialize(apiKey, options = {}) {
@@ -106,10 +124,6 @@ class ModernGeminiLiveService extends EventEmitter {
           if (part.inlineData) {
             const inlineData = part.inlineData;
             this.audioParts.push(inlineData.data || '');
-            
-            // Convert and handle audio
-            const buffer = this.convertToWav(this.audioParts, inlineData.mimeType || '');
-            this.handleAudioResponse({ data: inlineData.data, mimeType: inlineData.mimeType, buffer });
           }
 
           // Handle text responses
@@ -127,6 +141,11 @@ class ModernGeminiLiveService extends EventEmitter {
 
       // Handle turn completion
       if (message.serverContent?.turnComplete) {
+        if (this.audioParts.length > 0) {
+          // Convert accumulated audio parts to WAV
+          const buffer = this.convertToWav(this.audioParts, 'audio/webm;codecs=opus');
+          this.handleAudioResponse({ buffer });
+        }
         // Clear audio parts when turn is complete to prevent accumulation
         this.audioParts = [];
         this.emit('turn-complete');
@@ -401,9 +420,32 @@ class ModernGeminiLiveService extends EventEmitter {
       }
       
       this.audioElement = new Audio(audioUrl);
-      this.audioElement.play().catch(error => {
-        console.error('Audio playback failed:', error);
-      });
+      
+      // Check if user has interacted before attempting to play
+      if (!this.userHasInteracted) {
+        console.warn('Audio playback requires user interaction. Audio will be queued.');
+        this.emit('audio-queued', {
+          type: 'audio',
+          audioUrl,
+          timestamp: Date.now(),
+          message: 'Click anywhere to enable audio playback'
+        });
+        
+        // Set up one-time click handler to play audio
+        const playAudio = () => {
+          this.audioElement.play().catch(error => {
+            console.error('Audio playback failed:', error);
+            this.emit('audio-error', { error: error.message });
+          });
+          document.removeEventListener('click', playAudio);
+        };
+        document.addEventListener('click', playAudio, { once: true });
+      } else {
+        this.audioElement.play().catch(error => {
+          console.error('Audio playback failed:', error);
+          this.emit('audio-error', { error: error.message });
+        });
+      }
       
       // Emit audio event
       this.emit('audio', {
@@ -519,6 +561,30 @@ class ModernGeminiLiveService extends EventEmitter {
     // For compatibility with existing interface
     // The modern service handles TTS automatically
     return { success: true };
+  }
+
+  enableAudio() {
+    // Method to manually enable audio after user interaction
+    this.userHasInteracted = true;
+    this.emit('audio-enabled');
+    return { success: true };
+  }
+
+  async initializeAudioContext() {
+    try {
+      if (!this.audioContext) {
+        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      
+      if (this.audioContext.state === 'suspended') {
+        await this.audioContext.resume();
+      }
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Failed to initialize audio context:', error);
+      return { success: false, error: error.message };
+    }
   }
 
   async toggleSpeechRecognition(options = {}) {

@@ -62,7 +62,7 @@ const LiveConversation = () => {
   const audioStreamRef = useRef(null);
   const sessionStartTime = useRef(null);
 
-  const { addXP } = useProgress();
+  const { addXP, level } = useProgress();
   const { toast } = useToast();
   const { isGeminiAvailable } = useAI();
 
@@ -166,6 +166,34 @@ const LiveConversation = () => {
       setIsAIResponding(false);
     };
 
+    // Audio Event Handlers
+    const handleAudioQueued = (data) => {
+      console.log('Audio queued due to autoplay policy:', data);
+      toast({
+        title: "Audio Requires Interaction",
+        description: data.message || "Click anywhere to enable audio playback",
+        variant: "default"
+      });
+    };
+
+    const handleAudioError = (data) => {
+      console.error('Audio playback error:', data.error);
+      toast({
+        title: "Audio Playback Failed",
+        description: `Audio error: ${data.error}`,
+        variant: "destructive"
+      });
+    };
+
+    const handleAudioEnabled = () => {
+      console.log('Audio playback enabled');
+      toast({
+        title: "Audio Enabled",
+        description: "Audio playback is now active",
+        variant: "default"
+      });
+    };
+
     // Set up Modern Gemini Live Service event listeners
     if (modernGeminiLiveService) {
       modernGeminiLiveService.on('stt-start', handleSTTStart);
@@ -179,6 +207,9 @@ const LiveConversation = () => {
       modernGeminiLiveService.on('message', handleLiveMessage);
       modernGeminiLiveService.on('error', handleLiveError);
       modernGeminiLiveService.on('close', handleLiveClose);
+      modernGeminiLiveService.on('audio-queued', handleAudioQueued);
+      modernGeminiLiveService.on('audio-error', handleAudioError);
+      modernGeminiLiveService.on('audio-enabled', handleAudioEnabled);
     }
 
     return () => {
@@ -195,6 +226,9 @@ const LiveConversation = () => {
         modernGeminiLiveService.off('message', handleLiveMessage);
         modernGeminiLiveService.off('error', handleLiveError);
         modernGeminiLiveService.off('close', handleLiveClose);
+        modernGeminiLiveService.off('audio-queued', handleAudioQueued);
+        modernGeminiLiveService.off('audio-error', handleAudioError);
+        modernGeminiLiveService.off('audio-enabled', handleAudioEnabled);
       }
       
       // Cleanup on unmount
@@ -270,6 +304,11 @@ const LiveConversation = () => {
     }
   }, [isSpeakerEnabled]);
 
+  // Enable audio on user interaction
+  const enableAudio = useCallback(() => {
+    modernGeminiLiveService.enableAudio();
+  }, []);
+
   // Start live session with enhanced STT/TTS
   const startLiveSession = useCallback(async () => {
     console.log('Starting live session...');
@@ -302,11 +341,15 @@ const LiveConversation = () => {
       const initResult = await modernGeminiLiveService.initialize(apiKey);
       console.log('Initialization result:', initResult);
       
+      // Initialize audio context
+      await modernGeminiLiveService.initializeAudioContext();
+      console.log('Audio context initialized');
+      
       // Start enhanced STT/TTS session
       console.log('Starting live session with options...');
       const result = await modernGeminiLiveService.startLiveSession({
         targetLanguage: 'English',
-        userLevel: 'intermediate',
+        userLevel: level ? level.toString() : 'intermediate',
         language: voiceSettings.language,
         temperature: 0.7,
         autoStartSTT: isMicEnabled
@@ -347,7 +390,7 @@ const LiveConversation = () => {
       setIsConnecting(false);
       setIsLoading(false);
     }
-  }, [isGeminiAvailable, toast, voiceSettings.language, isMicEnabled]);
+  }, [isGeminiAvailable, toast, voiceSettings.language, isMicEnabled, level]);
 
   // End live session
   const endLiveSession = useCallback(async () => {
@@ -821,6 +864,15 @@ const LiveConversation = () => {
                   <VolumeX className="w-5 h-5" />
                 </button>
               )}
+              
+              {/* Audio Enable Button */}
+              <button
+                onClick={enableAudio}
+                className="p-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                title="Enable audio playback"
+              >
+                <Volume2 className="w-5 h-5" />
+              </button>
               
               {/* End Session Button */}
               <button

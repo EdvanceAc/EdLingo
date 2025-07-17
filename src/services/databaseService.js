@@ -2,11 +2,24 @@ const { app } = require('electron');
 const path = require('path');
 const fs = require('fs').promises;
 
+// Constants for file names
+const STORAGE_FILE = 'local-storage.json';
+const TEMP_SUFFIX = '.tmp';
+
+class StorageError extends Error {
+  constructor(message, code) {
+    super(message);
+    this.name = 'StorageError';
+    this.code = code;
+  }
+}
+
 class DatabaseService {
   constructor() {
     this.isInitialized = false;
     this.userDataPath = app.getPath('userData');
     this.dbPath = path.join(this.userDataPath, 'edlingo.db');
+    this.storagePath = path.join(this.userDataPath, STORAGE_FILE);
   }
 
   /**
@@ -142,9 +155,14 @@ class DatabaseService {
    * @param {Object} data 
    * @returns {Promise<boolean>}
    */
-  async writeLocalStorage(data) {
-    const storagePath = path.join(this.userDataPath, 'local-storage.json');
-    const tempPath = storagePath + '.tmp';
+  /**
+   * Write local storage data with enhanced error handling
+   * @param {Object} data 
+   * @returns {Promise<boolean>}
+   */
+async writeLocalStorage(data) {
+    const storagePath = this.storagePath;
+    const tempPath = storagePath + TEMP_SUFFIX;
     
     try {
       // Ensure data is valid before writing
@@ -162,12 +180,29 @@ class DatabaseService {
       const verification = await fs.readFile(tempPath, 'utf8');
       JSON.parse(verification); // This will throw if invalid
       
-      // If verification passes, move temp file to final location
-      await fs.rename(tempPath, storagePath);
+      // Check if temp file exists before rename
+      try {
+        await fs.access(tempPath);
+      } catch (accessError) {
+        throw new StorageError(`Temp file not found: ${accessError.message}`, 'TEMP_NOT_FOUND');
+      }
+      
+      try {
+        await fs.rename(tempPath, storagePath);
+      } catch (renameError) {
+        if (renameError.code === 'ENOENT') {
+          console.error('Rename failed with ENOENT, attempting copy fallback');
+          await fs.copyFile(tempPath, storagePath);
+          await fs.unlink(tempPath);
+        } else {
+          throw renameError;
+        }
+      }
       
       return true;
     } catch (error) {
       console.error('Failed to write local storage:', error);
+      throw new StorageError('Write operation failed', 'WRITE_FAILED');
       
       // Clean up temp file if it exists
       try {

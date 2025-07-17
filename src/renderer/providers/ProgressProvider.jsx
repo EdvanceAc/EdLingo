@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../config/supabaseConfig.js';
 
 const ProgressContext = createContext({
   userProgress: {},
@@ -66,7 +68,65 @@ const ACHIEVEMENTS = [
 ];
 
 export function ProgressProvider({ children }) {
+  const { user } = useAuth();
   const [userProgress, setUserProgress] = useState(INITIAL_PROGRESS);
+
+  // Fetch progress from Supabase
+  useEffect(() => {
+    const fetchProgress = async () => {
+      if (!user?.id) return;
+      try {
+        const { data, error } = await supabase
+          .from('user_progress')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+        
+        if (error && error.code !== 'PGRST116') throw error;
+        if (data) {
+          setUserProgress(prev => ({ ...prev, ...data }));
+        } else {
+          // Create initial progress if not exists
+          const initialData = { ...INITIAL_PROGRESS, user_id: user.id };
+          const { error: upsertError } = await supabase
+            .from('user_progress')
+            .upsert(initialData);
+          if (upsertError) throw upsertError;
+          setUserProgress(initialData);
+        }
+      } catch (error) {
+        console.error('Failed to fetch progress:', error);
+      }
+    };
+
+    fetchProgress();
+  }, [user?.id]);
+
+  // Real-time subscription
+  useEffect(() => {
+    if (!user?.id) return;
+    
+    const subscription = supabase
+      .channel('user_progress_changes')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'user_progress',
+        filter: `user_id=eq.${user.id}`
+      }, (payload) => {
+        if (payload.new) {
+          setUserProgress(prev => ({ ...prev, ...payload.new }));
+        }
+      })
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [user?.id]);
+
+  // Remove local save effect
+  // useEffect(() => { ... });
 
   // Load progress from storage on mount
   useEffect(() => {
@@ -202,7 +262,9 @@ export function ProgressProvider({ children }) {
   }, []);
 
   // Add XP and update level
-  const addXP = useCallback((amount, subject = null) => {
+  const addXP = useCallback(async (amount, subject = null) => {
+    if (!user?.id) return;
+    
     setUserProgress(prev => {
       const newTotalXP = prev.totalXP + amount;
       const newLevel = calculateLevel(newTotalXP);
@@ -216,7 +278,6 @@ export function ProgressProvider({ children }) {
         lastStudyDate: new Date().toDateString(),
       };
       
-      // Update subject-specific progress
       if (subject && newProgress.subjects[subject]) {
         const subjectXP = newProgress.subjects[subject].xp + amount;
         const subjectLevel = calculateLevel(subjectXP);
@@ -227,14 +288,12 @@ export function ProgressProvider({ children }) {
         };
       }
       
-      // Check for new achievements
       const newAchievements = checkAchievements(newProgress);
       if (newAchievements.length > 0) {
         newProgress.achievements = [...newProgress.achievements, ...newAchievements.map(a => a.id)];
         newProgress.totalXP += newAchievements.reduce((sum, a) => sum + a.xp, 0);
         newProgress.level = calculateLevel(newProgress.totalXP);
         
-        // Show achievement notification
         newAchievements.forEach(achievement => {
           window.electronAPI?.showNotification?.(`Achievement Unlocked: ${achievement.name}`, {
             body: achievement.description,
@@ -243,12 +302,19 @@ export function ProgressProvider({ children }) {
         });
       }
       
+      // Save to Supabase
+      supabase.from('user_progress').upsert({
+        user_id: user.id,
+        ...newProgress
+      });
+      
       return newProgress;
     });
-  }, [calculateLevel, updateStreak, checkAchievements]);
+  }, [user?.id, calculateLevel, updateStreak, checkAchievements]);
 
-  // Complete a lesson
-  const completeLesson = useCallback((lessonData) => {
+  const completeLesson = useCallback(async (lessonData) => {
+    if (!user?.id) return;
+    
     setUserProgress(prev => {
       const xpGained = lessonData.xp || 50;
       const newProgress = {
@@ -258,27 +324,48 @@ export function ProgressProvider({ children }) {
         dailyProgress: prev.dailyProgress + (lessonData.duration || 5),
       };
       
-      // Update weekly stats
       const today = new Date().toLocaleDateString('en-US', { weekday: 'lowercase' });
       if (newProgress.weeklyStats[today] !== undefined) {
         newProgress.weeklyStats[today] += lessonData.duration || 5;
       }
       
+      // Save to Supabase
+      supabase.from('user_progress').upsert({
+        user_id: user.id,
+        ...newProgress
+      });
+      
       return newProgress;
     });
     
     addXP(lessonData.xp || 50, lessonData.subject);
-  }, [addXP]);
+  }, [user?.id, addXP]);
 
-  // Update general progress
-  const updateProgress = useCallback((updates) => {
-    setUserProgress(prev => ({ ...prev, ...updates }));
-  }, []);
+  const updateProgress = useCallback(async (updates) => {
+    if (!user?.id) return;
+    
+    setUserProgress(prev => {
+      const newProgress = { ...prev, ...updates };
+      supabase.from('user_progress').upsert({
+        user_id: user.id,
+        ...newProgress
+      });
+      return newProgress;
+    });
+  }, [user?.id]);
 
-  // Set daily goal
-  const setDailyGoal = useCallback((minutes) => {
-    setUserProgress(prev => ({ ...prev, daily_goal: minutes }));
-  }, []);
+  const setDailyGoal = useCallback(async (minutes) => {
+    if (!user?.id) return;
+    
+    setUserProgress(prev => {
+      const newProgress = { ...prev, daily_goal: minutes };
+      supabase.from('user_progress').upsert({
+        user_id: user.id,
+        ...newProgress
+      });
+      return newProgress;
+    });
+  }, [user?.id]);
 
   // Get progress statistics
   const getProgressStats = useCallback(() => {

@@ -20,7 +20,7 @@ const Chat = () => {
   const [showGeminiSettings, setShowGeminiSettings] = useState(false);
   // Streaming functionality removed for simple chatbot
   const { isRecording, startRecording, stopRecording, speakText } = useAudio();
-  const { addXP } = useProgress();
+  const { addXP, level: currentLevel } = useProgress();
   const {
     aiStatus,
     isReady,
@@ -77,7 +77,7 @@ const Chat = () => {
         // Use AI provider
         response = await generateResponse(message.trim(), {
           targetLanguage: 'English',
-          userLevel: 'intermediate',
+          userLevel: currentLevel ? currentLevel.toString() : 'intermediate',
           focusArea: 'conversation'
         });
       } else {

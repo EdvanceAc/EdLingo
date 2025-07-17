@@ -1,3 +1,7 @@
+Gemini Live session closed: <empty string> modernGeminiLiveService.js:189:21
+Live session closed: 
+Object { reason: "" }
+LiveConversation.jsx:144:15
 [vite] connecting... client:789:9
 [vite] connected. client:912:15
 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools chunk-YQ5BCTVV.js:21609:25
@@ -7,204 +11,149 @@ Some features may not work properly. Please check your .env file. AppConfig.js:1
 Some features may not work properly. Please check your .env file. AppConfig.js:10:15
 ⚠️ Database services disabled - check environment variables 2 App.jsx:135:19
 ✅ Supabase connected successfully supabaseService.js:20:17
-MCP call failed: mcp.config.usrlocalmcp.Supabase.execute_sql Error: Supabase configuration missing. Please set SUPABASE_URL and SUPABASE_ANON_KEY environment variables.
-    handleSupabaseMCPRequest mcpClient.js:168
-    run_mcp mcpClient.js:25
-    getOrCreateCourse CourseDataService.js:79
-    initializeCourseData CourseDataService.js:41
-    loadCourseData CourseSection.jsx:55
-    CourseSection CourseSection.jsx:39
-    React 8
-    workLoop scheduler.development.js:266
-    flushWork scheduler.development.js:239
-    performWorkUntilDeadline scheduler.development.js:533
-    js scheduler.development.js:571
-    js scheduler.development.js:633
-    __require chunk-V4OQ3NZ2.js:11
-    js index.js:6
-    __require chunk-V4OQ3NZ2.js:11
-    React 2
-    __require chunk-V4OQ3NZ2.js:11
-    js React
-    __require chunk-V4OQ3NZ2.js:11
-    js React
-    __require chunk-V4OQ3NZ2.js:11
-    <anonymous> react-dom_client.js:38
-mcpClient.js:32:13
-MCP call failed: mcp.config.usrlocalmcp.Supabase.execute_sql Error: Supabase configuration missing. Please set SUPABASE_URL and SUPABASE_ANON_KEY environment variables.
-    handleSupabaseMCPRequest mcpClient.js:168
-    run_mcp mcpClient.js:25
-    getOrCreateCourse CourseDataService.js:79
-    initializeCourseData CourseDataService.js:41
-    loadCourseData CourseSection.jsx:55
-    CourseSection CourseSection.jsx:39
-    React 7
-    workLoop scheduler.development.js:266
-    flushWork scheduler.development.js:239
-    performWorkUntilDeadline scheduler.development.js:533
-    js scheduler.development.js:571
-    js scheduler.development.js:633
-    __require chunk-V4OQ3NZ2.js:11
-    js index.js:6
-    __require chunk-V4OQ3NZ2.js:11
-    React 2
-    __require chunk-V4OQ3NZ2.js:11
-    js React
-    __require chunk-V4OQ3NZ2.js:11
-    js React
-    __require chunk-V4OQ3NZ2.js:11
-    <anonymous> react-dom_client.js:38
-mcpClient.js:32:13
-Failed to get or create course: Error: Supabase configuration missing. Please set SUPABASE_URL and SUPABASE_ANON_KEY environment variables.
-    handleSupabaseMCPRequest mcpClient.js:168
-    run_mcp mcpClient.js:25
-    getOrCreateCourse CourseDataService.js:79
-    initializeCourseData CourseDataService.js:41
-    loadCourseData CourseSection.jsx:55
-    CourseSection CourseSection.jsx:39
-    React 8
-    workLoop scheduler.development.js:266
-    flushWork scheduler.development.js:239
-    performWorkUntilDeadline scheduler.development.js:533
-    js scheduler.development.js:571
-    js scheduler.development.js:633
-    __require chunk-V4OQ3NZ2.js:11
-    js index.js:6
-    __require chunk-V4OQ3NZ2.js:11
-    React 2
-    __require chunk-V4OQ3NZ2.js:11
-    js React
-    __require chunk-V4OQ3NZ2.js:11
-    js React
-    __require chunk-V4OQ3NZ2.js:11
-    <anonymous> react-dom_client.js:38
-CourseDataService.js:107:15
-Failed to get or create course: Error: Supabase configuration missing. Please set SUPABASE_URL and SUPABASE_ANON_KEY environment variables.
-    handleSupabaseMCPRequest mcpClient.js:168
-    run_mcp mcpClient.js:25
-    getOrCreateCourse CourseDataService.js:79
-    initializeCourseData CourseDataService.js:41
-    loadCourseData CourseSection.jsx:55
-    CourseSection CourseSection.jsx:39
-    React 7
-    workLoop scheduler.development.js:266
-    flushWork scheduler.development.js:239
-    performWorkUntilDeadline scheduler.development.js:533
-    js scheduler.development.js:571
-    js scheduler.development.js:633
-    __require chunk-V4OQ3NZ2.js:11
-    js index.js:6
-    __require chunk-V4OQ3NZ2.js:11
-    React 2
-    __require chunk-V4OQ3NZ2.js:11
-    js React
-    __require chunk-V4OQ3NZ2.js:11
-    js React
-    __require chunk-V4OQ3NZ2.js:11
-    <anonymous> react-dom_client.js:38
-CourseDataService.js:107:15
-Failed to initialize course data: Error: Supabase configuration missing. Please set SUPABASE_URL and SUPABASE_ANON_KEY environment variables.
-    handleSupabaseMCPRequest mcpClient.js:168
-    run_mcp mcpClient.js:25
-    getOrCreateCourse CourseDataService.js:79
-    initializeCourseData CourseDataService.js:41
-    loadCourseData CourseSection.jsx:55
-    CourseSection CourseSection.jsx:39
-    React 8
-    workLoop scheduler.development.js:266
-    flushWork scheduler.development.js:239
-    performWorkUntilDeadline scheduler.development.js:533
-    js scheduler.development.js:571
-    js scheduler.development.js:633
-    __require chunk-V4OQ3NZ2.js:11
-    js index.js:6
-    __require chunk-V4OQ3NZ2.js:11
-    React 2
-    __require chunk-V4OQ3NZ2.js:11
-    js React
-    __require chunk-V4OQ3NZ2.js:11
-    js React
-    __require chunk-V4OQ3NZ2.js:11
-    <anonymous> react-dom_client.js:38
-CourseDataService.js:66:15
-Failed to initialize course data: Error: Supabase configuration missing. Please set SUPABASE_URL and SUPABASE_ANON_KEY environment variables.
-    handleSupabaseMCPRequest mcpClient.js:168
-    run_mcp mcpClient.js:25
-    getOrCreateCourse CourseDataService.js:79
-    initializeCourseData CourseDataService.js:41
-    loadCourseData CourseSection.jsx:55
-    CourseSection CourseSection.jsx:39
-    React 7
-    workLoop scheduler.development.js:266
-    flushWork scheduler.development.js:239
-    performWorkUntilDeadline scheduler.development.js:533
-    js scheduler.development.js:571
-    js scheduler.development.js:633
-    __require chunk-V4OQ3NZ2.js:11
-    js index.js:6
-    __require chunk-V4OQ3NZ2.js:11
-    React 2
-    __require chunk-V4OQ3NZ2.js:11
-    js React
-    __require chunk-V4OQ3NZ2.js:11
-    js React
-    __require chunk-V4OQ3NZ2.js:11
-    <anonymous> react-dom_client.js:38
-CourseDataService.js:66:15
-Failed to load course data: Error: Supabase configuration missing. Please set SUPABASE_URL and SUPABASE_ANON_KEY environment variables.
-    handleSupabaseMCPRequest mcpClient.js:168
-    run_mcp mcpClient.js:25
-    getOrCreateCourse CourseDataService.js:79
-    initializeCourseData CourseDataService.js:41
-    loadCourseData CourseSection.jsx:55
-    CourseSection CourseSection.jsx:39
-    React 8
-    workLoop scheduler.development.js:266
-    flushWork scheduler.development.js:239
-    performWorkUntilDeadline scheduler.development.js:533
-    js scheduler.development.js:571
-    js scheduler.development.js:633
-    __require chunk-V4OQ3NZ2.js:11
-    js index.js:6
-    __require chunk-V4OQ3NZ2.js:11
-    React 2
-    __require chunk-V4OQ3NZ2.js:11
-    js React
-    __require chunk-V4OQ3NZ2.js:11
-    js React
-    __require chunk-V4OQ3NZ2.js:11
-    <anonymous> react-dom_client.js:38
-CourseSection.jsx:69:15
-Failed to load course data: Error: Supabase configuration missing. Please set SUPABASE_URL and SUPABASE_ANON_KEY environment variables.
-    handleSupabaseMCPRequest mcpClient.js:168
-    run_mcp mcpClient.js:25
-    getOrCreateCourse CourseDataService.js:79
-    initializeCourseData CourseDataService.js:41
-    loadCourseData CourseSection.jsx:55
-    CourseSection CourseSection.jsx:39
-    React 7
-    workLoop scheduler.development.js:266
-    flushWork scheduler.development.js:239
-    performWorkUntilDeadline scheduler.development.js:533
-    js scheduler.development.js:571
-    js scheduler.development.js:633
-    __require chunk-V4OQ3NZ2.js:11
-    js index.js:6
-    __require chunk-V4OQ3NZ2.js:11
-    React 2
-    __require chunk-V4OQ3NZ2.js:11
-    js React
-    __require chunk-V4OQ3NZ2.js:11
-    js React
-    __require chunk-V4OQ3NZ2.js:11
-    <anonymous> react-dom_client.js:38
-CourseSection.jsx:69:15
 Auto-initializing AI service at startup... AIProvider.jsx:48:17
 Initializing AI service... aiService.js:68:15
 Initializing Gemini service... aiService.js:75:19
+Cookie “__cf_bm” has been rejected for invalid domain. websocket
 Gemini service initialized successfully geminiService.js:31:15
 Gemini service initialized successfully aiService.js:79:19
 window.electronAPI: undefined aiService.js:89:15
 window.electronAPI exists: false aiService.js:90:15
 Running in browser mode - AI features will use fallback responses aiService.js:97:17
 AI service initialized successfully aiService.js:103:15
+Starting live session... LiveConversation.jsx:278:13
+Setting connection status to connecting... LiveConversation.jsx:289:15
+API key available: true LiveConversation.jsx:294:15
+Initializing modernGeminiLiveService... LiveConversation.jsx:298:15
+Initialization result: 
+Object { success: true }
+LiveConversation.jsx:300:15
+Audio context initialized LiveConversation.jsx:302:15
+Starting live session with options... LiveConversation.jsx:303:15
+Gemini Live session opened modernGeminiLiveService.js:176:21
+Requesting microphone access... modernGeminiLiveService.js:210:15
+Request to access cookie or storage on “https://generativelanguage.googleapis.com//ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key=AIzaSyDr1onXBzRitEaW27nJAFVe68a68MKaVAM” was blocked because it came from a tracker and Enhanced Tracking Protection is enabled.
+Microphone access granted modernGeminiLiveService.js:227:15
+Live session start result: 
+Object { success: true }
+LiveConversation.jsx:311:15
+Starting microphone recording... modernGeminiLiveService.js:344:17
+STT started LiveConversation.jsx:80:15
+STT final: [Audio sent to AI] LiveConversation.jsx:88:15
+STT ended LiveConversation.jsx:103:15
+Audio playback failed: DOMException: The fetching process for the media resource was aborted by the user agent at the user's request. modernGeminiLiveService.js:444:19
+    handleAudioResponse modernGeminiLiveService.js:444
+    (Async: promise callback)
+    handleAudioResponse modernGeminiLiveService.js:443
+    handleMessage modernGeminiLiveService.js:130
+    onmessage modernGeminiLiveService.js:182
+    handleWebSocketMessage live.ts:67
+    onmessage live.ts:186
+    (Async: EventHandlerNonNull)
+    connect _browser_websocket.ts:38
+    connect live.ts:205
+    startLiveSession modernGeminiLiveService.js:172
+    startLiveSession LiveConversation.jsx:350
+    React 23
+    <anonymous> main.jsx:7
+Audio playback error: The fetching process for the media resource was aborted by the user agent at the user's request. LiveConversation.jsx:161:15
+    handleAudioError LiveConversation.jsx:180
+    emit modernGeminiLiveService.js:31
+    emit modernGeminiLiveService.js:29
+    emit modernGeminiLiveService.js:693
+    handleAudioResponse modernGeminiLiveService.js:445
+    (Async: promise callback)
+    handleAudioResponse modernGeminiLiveService.js:443
+    handleMessage modernGeminiLiveService.js:130
+    onmessage modernGeminiLiveService.js:182
+    handleWebSocketMessage live.ts:67
+    onmessage live.ts:186
+    (Async: EventHandlerNonNull)
+    connect _browser_websocket.ts:38
+    connect live.ts:205
+    startLiveSession modernGeminiLiveService.js:172
+    startLiveSession LiveConversation.jsx:350
+    React 23
+    <anonymous> main.jsx:7
+Audio playback failed: DOMException: The fetching process for the media resource was aborted by the user agent at the user's request. modernGeminiLiveService.js:444:19
+    handleAudioResponse modernGeminiLiveService.js:444
+    (Async: promise callback)
+    handleAudioResponse modernGeminiLiveService.js:443
+    handleMessage modernGeminiLiveService.js:130
+    onmessage modernGeminiLiveService.js:182
+    handleWebSocketMessage live.ts:67
+    onmessage live.ts:186
+    (Async: EventHandlerNonNull)
+    connect _browser_websocket.ts:38
+    connect live.ts:205
+    startLiveSession modernGeminiLiveService.js:172
+    startLiveSession LiveConversation.jsx:350
+    React 23
+    <anonymous> main.jsx:7
+Audio playback error: The fetching process for the media resource was aborted by the user agent at the user's request. LiveConversation.jsx:161:15
+    handleAudioError LiveConversation.jsx:180
+    emit modernGeminiLiveService.js:31
+    emit modernGeminiLiveService.js:29
+    emit modernGeminiLiveService.js:693
+    handleAudioResponse modernGeminiLiveService.js:445
+    (Async: promise callback)
+    handleAudioResponse modernGeminiLiveService.js:443
+    handleMessage modernGeminiLiveService.js:130
+    onmessage modernGeminiLiveService.js:182
+    handleWebSocketMessage live.ts:67
+    onmessage live.ts:186
+    (Async: EventHandlerNonNull)
+    connect _browser_websocket.ts:38
+    connect live.ts:205
+    startLiveSession modernGeminiLiveService.js:172
+    startLiveSession LiveConversation.jsx:350
+    React 23
+    <anonymous> main.jsx:7
+Audio playback failed: DOMException: The fetching process for the media resource was aborted by the user agent at the user's request. modernGeminiLiveService.js:444:19
+Audio playback error: The fetching process for the media resource was aborted by the user agent at the user's request. LiveConversation.jsx:161:15
+    handleAudioError LiveConversation.jsx:180
+    emit modernGeminiLiveService.js:31
+    emit modernGeminiLiveService.js:29
+    emit modernGeminiLiveService.js:693
+    handleAudioResponse modernGeminiLiveService.js:445
+    (Async: promise callback)
+    handleAudioResponse modernGeminiLiveService.js:443
+    handleMessage modernGeminiLiveService.js:130
+    onmessage modernGeminiLiveService.js:182
+    handleWebSocketMessage live.ts:67
+    onmessage live.ts:186
+    (Async: EventHandlerNonNull)
+    connect _browser_websocket.ts:38
+    connect live.ts:205
+    startLiveSession modernGeminiLiveService.js:172
+    startLiveSession LiveConversation.jsx:350
+    React 23
+    <anonymous> main.jsx:7
+Audio playback failed: DOMException: The fetching process for the media resource was aborted by the user agent at the user's request. modernGeminiLiveService.js:444:19
+    handleAudioResponse modernGeminiLiveService.js:444
+    (Async: promise callback)
+    handleAudioResponse modernGeminiLiveService.js:443
+    handleMessage modernGeminiLiveService.js:130
+    onmessage modernGeminiLiveService.js:182
+    handleWebSocketMessage live.ts:67
+    onmessage live.ts:186
+    (Async: EventHandlerNonNull)
+    connect _browser_websocket.ts:38
+    connect live.ts:205
+    startLiveSession modernGeminiLiveService.js:172
+    startLiveSession LiveConversation.jsx:350
+    React 23
+    <anonymous> main.jsx:7
+Audio playback error: The fetching process for the media resource was aborted by the user agent at the user's request. LiveConversation.jsx:161:15
+Audio playback failed: DOMException: The fetching process for the media resource was aborted by the user agent at the user's request. modernGeminiLiveService.js:444:19
+Audio playback error: The fetching process for the media resource was aborted by the user agent at the user's request. LiveConversation.jsx:161:15
+Audio playback failed: DOMException: The fetching process for the media resource was aborted by the user agent at the user's request. modernGeminiLiveService.js:444:19
+Audio playback error: The fetching process for the media resource was aborted by the user agent at the user's request. LiveConversation.jsx:161:15
+Audio playback failed: DOMException: The fetching process for the media resource was aborted by the user agent at the user's request. modernGeminiLiveService.js:444:19
+Audio playback error: The fetching process for the media resource was aborted by the user agent at the user's request. LiveConversation.jsx:161:15
+Audio playback failed: DOMException: The fetching process for the media resource was aborted by the user agent at the user's request. modernGeminiLiveService.js:444:19
+Audio playback error: The fetching process for the media resource was aborted by the user agent at the user's request. LiveConversation.jsx:161:15
+Audio playback failed: DOMException: The fetching process for the media resource was aborted by the user agent at the user's request. modernGeminiLiveService.js:444:19
+Audio playback error: The fetching process for the media resource was aborted by the user agent at the user's request. LiveConversation.jsx:161:15
+Audio playback failed: DOMException: The fetching process for the media resource was aborted by the user agent at the user's request. modernGeminiLiveService.js:444:19
+Audio playback error: The fetching process for the media resource was aborted by the user agent at the user's request. LiveConversation.jsx:161:15

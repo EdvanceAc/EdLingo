@@ -22,7 +22,8 @@ const EnhancedChat = () => {
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [chatMode, setChatMode] = useState('conversation'); // conversation, grammar, vocabulary, pronunciation
-  const [difficulty, setDifficulty] = useState('intermediate');
+  const { level: currentLevel } = useProgress();
+  const [difficulty, setDifficulty] = useState(currentLevel ? currentLevel.toString() : 'intermediate');
   const [showSettings, setShowSettings] = useState(false);
   const { isRecording, startRecording, stopRecording, speakText } = useAudio();
   const { addXP } = useProgress();
