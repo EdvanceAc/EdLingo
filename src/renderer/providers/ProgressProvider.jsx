@@ -384,7 +384,7 @@ export function ProgressProvider({ children }) {
       dailyProgress: userProgress.daily_progress,
       dailyGoal: userProgress.daily_goal,
       dailyGoalProgress: (userProgress.daily_progress / userProgress.daily_goal) * 100,
-      achievements: userProgress.achievements.map(id => 
+      achievements: (userProgress.achievements || []).map(id => 
         ACHIEVEMENTS.find(a => a.id === id)
       ).filter(Boolean),
       weeklyStats: userProgress.weeklyStats,

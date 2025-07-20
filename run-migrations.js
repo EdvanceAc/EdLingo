@@ -22,7 +22,8 @@ async function runMigrations() {
     '006_add_admin_policies.sql',
     '006_add_assessment_columns.sql',
     '008_add_assessment_system.sql',
-    '013_fix_user_profile_creation.sql'
+    '013_fix_user_profile_creation.sql',
+    '018_add_chat_messages_to_user_progress.sql'
 ];
   
   for (const migrationFile of migrationFiles) {
