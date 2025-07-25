@@ -1,4 +1,4 @@
-import { supabase } from './supabaseService.js';
+import { supabase } from '../config/supabaseConfig.js';
 import supabaseStorageService from './supabaseStorageService.js';
 import bcrypt from 'bcryptjs';
 import googleDriveService from './googleDriveService';

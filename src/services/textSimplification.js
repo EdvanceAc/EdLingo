@@ -34,6 +34,23 @@ class TextSimplificationService {
    * @param {string} language - Target language (default: 'Spanish')
    * @returns {Promise<Object>} Simplified text with metadata
    */
+  /**
+   * Get target FKGL range for CEFR level
+   * @param {string} cefrLevel - CEFR level
+   * @returns {Object} {min: number, max: number}
+   */
+  getTargetFkglRange(cefrLevel) {
+    const ranges = {
+      'A1': {min: 0, max: 3},
+      'A2': {min: 3, max: 5},
+      'B1': {min: 5, max: 7},
+      'B2': {min: 7, max: 9},
+      'C1': {min: 9, max: 12},
+      'C2': {min: 12, max: 20}
+    };
+    return ranges[cefrLevel] || {min: 0, max: 3};
+  }
+
   async simplifyText(originalText, targetCefrLevel, language = 'Spanish') {
     if (!originalText || !targetCefrLevel) {
       throw new Error('Original text and target CEFR level are required');
@@ -69,13 +86,27 @@ class TextSimplificationService {
       }
 
       // Generate simplified text using AI
-      const simplifiedText = await this.generateSimplifiedText(
+      let simplifiedText = await this.generateSimplifiedText(
         originalText, 
         targetCefrLevel, 
         language
       );
 
       // Analyze simplified text
+      let simplifiedAnalysis = computeReadability(simplifiedText);
+      const targetRange = this.getTargetFkglRange(targetCefrLevel);
+      let attempts = 0;
+      const maxAttempts = 3;
+
+      while ((simplifiedAnalysis.fkgl < targetRange.min || simplifiedAnalysis.fkgl > targetRange.max) && attempts < maxAttempts) {
+        attempts++;
+        const adjustment = simplifiedAnalysis.fkgl > targetRange.max ? 'simpler' : 'more complex';
+        const adjustedPrompt = this.createSimplificationPrompt(originalText, targetCefrLevel, language) + 
+          `\nThe previous simplification had FKGL ${simplifiedAnalysis.fkgl}. Make it ${adjustment} to reach FKGL between ${targetRange.min} and ${targetRange.max}.`;
+        simplifiedText = await this.generateSimplifiedTextWithPrompt(adjustedPrompt);
+        simplifiedAnalysis = computeReadability(simplifiedText);
+      }
+
       const simplifiedAnalysis = computeReadability(simplifiedText);
       const qualityScore = this.assessSimplificationQuality(
         originalAnalysis, 
@@ -358,6 +389,50 @@ Simplified text:`;
       size: this.cache.size,
       maxSize: 1000 // Could be configurable
     };
+  }
+}
+
+// Export singleton instance
+export default new TextSimplificationService();
+
+// Export class for testing
+export { TextSimplificationService };
+
+/**
+   * Generate simplified text with custom prompt
+   * @param {string} prompt - Custom prompt
+   * @returns {Promise<string>} Simplified text
+   */
+  async generateSimplifiedTextWithPrompt(prompt) {
+    const response = await fetch(this.apiEndpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.apiKey}`
+      },
+      body: JSON.stringify({
+        model: 'gpt-3.5-turbo',
+        messages: [
+          {
+            role: 'system',
+            content: `You are an expert language teacher specializing in text simplification.`
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        max_tokens: 1000,
+        temperature: 0.3
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`AI API request failed: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data.choices[0]?.message?.content?.trim() || '';
   }
 }
 

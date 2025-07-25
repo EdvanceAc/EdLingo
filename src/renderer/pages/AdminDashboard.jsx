@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import QuestionForm from '../../components/admin/QuestionForm';
+import ComprehensiveAdminDashboard from '../../components/admin/ComprehensiveAdminDashboard';
 import {
   Users,
   BookOpen,
@@ -27,6 +28,12 @@ import {
 } from 'lucide-react';
 
 const AdminDashboard = () => {
+  // Use the comprehensive admin dashboard with course management features
+  return <ComprehensiveAdminDashboard />;
+};
+
+// Legacy AdminDashboard component (kept for reference)
+const LegacyAdminDashboard = () => {
   const [stats, setStats] = useState({
     totalStudents: 0,
     activeCourses: 0,

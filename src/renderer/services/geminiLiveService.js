@@ -312,8 +312,40 @@ class GeminiLiveService {
         
         const utterance = new SpeechSynthesisUtterance(text);
         
-        // Configure for more natural speech
-        utterance.rate = options.rate || 0.9; // Slightly slower for clarity
+        // Determine rate based on CEFR level
+        let rate = options.rate || 0.9;
+        if (options.cefrLevel) {
+          switch (options.cefrLevel.toLowerCase()) {
+            case 'a1':
+            case 'basic':
+              rate = 0.7;
+              break;
+            case 'a2':
+            case 'elementary':
+              rate = 0.8;
+              break;
+            case 'b1':
+            case 'pre-intermediate':
+              rate = 0.9;
+              break;
+            case 'b2':
+            case 'intermediate':
+              rate = 1.0;
+              break;
+            case 'c1':
+            case 'upper-intermediate':
+              rate = 1.1;
+              break;
+            case 'c2':
+            case 'advanced':
+              rate = 1.2;
+              break;
+            default:
+              rate = 0.9;
+          }
+        }
+        
+        utterance.rate = rate;
         utterance.pitch = options.pitch || 1.0;
         utterance.volume = options.volume || 0.8;
         utterance.lang = options.language || 'en-US';
@@ -636,4 +668,4 @@ Follow these strictly based on the user's level. Adjust vocabulary size, sentenc
 Train on diverse datasets: Include 100+ examples per level with user inputs, expected outputs, and feedback. Fine-tune until the AI achieves 90% accuracy in level-appropriate responses. Remember, your ultimate goal is to make learning fun and effective!`;
   }
 
-// ... existing code ...
+  // ... existing code ...

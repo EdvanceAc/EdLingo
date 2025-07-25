@@ -1,4 +1,3 @@
-import geminiService from './geminiService.js';
 import aiService from './aiService.js';
 import supabaseService from './supabaseService.js';
 import unifiedLevelService from './unifiedLevelService.js';
@@ -331,14 +330,9 @@ class AssessmentService {
     try {
       let aiResponse;
       
-      // Use Gemini if available, fallback to other AI service
-      if (geminiService.isReady()) {
-        console.log('Using Gemini for assessment analysis');
-        aiResponse = await geminiService.generateResponse(analysisPrompt);
-      } else {
-        console.log('Using fallback AI service for assessment analysis');
-        aiResponse = await aiService.generateResponse(analysisPrompt);
-      }
+      // Use AI service (routes through Supabase)
+      console.log('Using AI service for assessment analysis');
+      aiResponse = await aiService.generateResponse(analysisPrompt);
 
       console.log('AI response received, length:', aiResponse?.length || 0);
 

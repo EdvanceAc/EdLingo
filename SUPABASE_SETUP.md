@@ -1,4 +1,9 @@
-# Supabase Database Setup Guide
+# Supabase Gemini Integration Setup
+
+## ⚠️ IMPORTANT: Environment Variables Required
+
+The Edge Function is currently returning 500 errors because environment variables are not set.
+Please follow the setup steps below to complete the integration.
 
 This guide will help you set up and configure Supabase database integration for EdLingo.
 

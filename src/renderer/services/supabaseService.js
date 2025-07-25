@@ -1,4 +1,5 @@
 import { supabase, checkSupabaseConnection } from '../config/supabaseConfig.js';
+import supabaseStorageService from './supabaseStorageService.js';
 
 /**
  * Supabase Database Service
@@ -721,6 +722,37 @@ class SupabaseService {
       return { success: false, error: 'No authenticated user' };
     } catch (error) {
       console.error('❌ Data sync failed:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  async getCourseByLevel(cefrLevel) {
+    try {
+      const { data, error } = await this.client
+        .from('courses')
+        .select('*')
+        .eq('cefr_level', cefrLevel);
+      
+      if (error) throw error;
+      return { success: true, data };
+    } catch (error) {
+      console.error('Get courses by level error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  async uploadPDFWithHighlights(file, highlights) {
+    try {
+      const metadata = { highlights: JSON.stringify(highlights) };
+      const result = await supabaseStorageService.uploadFile(
+        file,
+        'course-materials',
+        'pdfs',
+        metadata
+      );
+      return { success: true, data: result };
+    } catch (error) {
+      console.error('Upload PDF with highlights error:', error);
       return { success: false, error: error.message };
     }
   }

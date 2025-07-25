@@ -1,12 +1,21 @@
+// Suppress all deprecation warnings before any requires
+process.noDeprecation = true;
+process.env.NODE_NO_WARNINGS = '1';
+
 const { app, BrowserWindow, ipcMain, Menu, shell } = require('electron');
 const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 const isDev = process.env.NODE_ENV === 'development';
 const databaseService = require('../services/databaseService');
 
-
-// Suppress util._extend deprecation warning
-process.noDeprecation = true;
+// Additional warning suppression
+const originalEmit = process.emit;
+process.emit = function (name, data, ...args) {
+  if (name === 'warning' && typeof data === 'object' && data.name === 'DeprecationWarning' && data.message.includes('util._extend')) {
+    return false;
+  }
+  return originalEmit.apply(process, arguments);
+};
 
 // Enhanced GPU and cache handling
 if (process.env.DISABLE_GPU === 'true') {

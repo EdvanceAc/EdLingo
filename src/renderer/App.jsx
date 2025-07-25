@@ -23,6 +23,8 @@ import SignUp from './pages/SignUp';
 import AuthCallback from './pages/AuthCallback';
 import AssessmentPage from './pages/AssessmentPage';
 import AssessmentTest from './pages/AssessmentTest';
+import Courses from './pages/Courses';
+import SupabaseGeminiTest from './components/SupabaseGeminiTest';
 
 // Auth Components
 import ProtectedRoute from './components/auth/ProtectedRoute';
@@ -316,6 +318,22 @@ function App() {
                         } 
                       />
                       <Route 
+                        path="/courses" 
+                        element={
+                          <ProtectedRoute>
+                            <motion.div
+                              key="courses"
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -20 }}
+                              transition={{ duration: 0.3 }}
+                            >
+                              <Courses />
+                            </motion.div>
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
                         path="/settings" 
                         element={
                           <ProtectedRoute>
@@ -375,6 +393,22 @@ function App() {
                           >
                             <DatabaseHealthCheck />
                           </motion.div>
+                        } 
+                      />
+                      <Route 
+                        path="/supabase-gemini-test" 
+                        element={
+                          <ProtectedRoute>
+                            <motion.div
+                              key="supabase-gemini-test"
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -20 }}
+                              transition={{ duration: 0.3 }}
+                            >
+                              <SupabaseGeminiTest />
+                            </motion.div>
+                          </ProtectedRoute>
                         } 
                       />
                   </Routes>

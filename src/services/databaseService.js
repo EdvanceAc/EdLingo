@@ -5,6 +5,11 @@ const fs = require('fs').promises;
 // Constants for file names
 const STORAGE_FILE = 'local-storage.json';
 const TEMP_SUFFIX = '.tmp';
+const LOCK_SUFFIX = '.lock';
+
+// Storage write queue to prevent race conditions
+let writeQueue = Promise.resolve();
+let isWriting = false;
 
 class StorageError extends Error {
   constructor(message, code) {
@@ -83,8 +88,15 @@ class DatabaseService {
         const mergedData = { ...storageStructure, ...existingData };
         await fs.writeFile(storagePath, JSON.stringify(mergedData, null, 2), 'utf8');
       } catch (parseError) {
-        // File is corrupted, recreate it
-        console.log('Corrupted storage file detected, recreating...');
+        // File is corrupted, backup and recreate it
+        console.log('Corrupted storage file detected, creating backup and recreating...');
+        const backupPath = storagePath + '.backup.' + Date.now();
+        try {
+          await fs.copyFile(storagePath, backupPath);
+          console.log('Backup created at:', backupPath);
+        } catch (backupError) {
+          console.warn('Failed to create backup:', backupError);
+        }
         await fs.writeFile(storagePath, JSON.stringify(storageStructure, null, 2), 'utf8');
       }
     } catch (error) {
@@ -156,73 +168,211 @@ class DatabaseService {
    * @returns {Promise<boolean>}
    */
   /**
+   * Sanitize data for safe JSON storage
+   * @param {Object} data 
+   * @returns {Object}
+   */
+  sanitizeDataForStorage(data) {
+    try {
+      // Convert to JSON and back to remove any problematic references
+      const jsonString = JSON.stringify(data, (key, value) => {
+        // Remove circular references and functions
+        if (typeof value === 'function') return undefined;
+        if (typeof value === 'string') {
+          // Clean up potentially corrupted strings and fix JSON issues
+          return value
+            .replace(/[\x00-\x1F\x7F-\x9F]/g, '') // Remove control characters
+            .replace(/["']/g, '') // Remove quotes that might break JSON
+            .replace(/\\/g, '') // Remove backslashes
+            .trim();
+        }
+        if (typeof value === 'object' && value !== null) {
+          // Ensure object keys are valid
+          const cleanObj = {};
+          for (const [k, v] of Object.entries(value)) {
+            const cleanKey = k.replace(/[^a-zA-Z0-9_]/g, '_');
+            cleanObj[cleanKey] = v;
+          }
+          return cleanObj;
+        }
+        return value;
+      });
+      
+      // Additional validation - try to parse the result
+      const parsed = JSON.parse(jsonString);
+      return parsed;
+    } catch (error) {
+      console.warn('Data sanitization failed, using default structure:', error);
+      return this.getDefaultStorageStructure();
+    }
+  }
+
+  /**
    * Write local storage data with enhanced error handling
    * @param {Object} data 
    * @returns {Promise<boolean>}
    */
 async writeLocalStorage(data) {
+    // Queue writes to prevent race conditions
+    return writeQueue = writeQueue.then(async () => {
+      return this._writeLocalStorageInternal(data);
+    });
+  }
+
+  async _writeLocalStorageInternal(data) {
+    if (isWriting) {
+      // If already writing, wait a bit and try again
+      await new Promise(resolve => setTimeout(resolve, 100));
+      return this._writeLocalStorageInternal(data);
+    }
+
+    isWriting = true;
     const storagePath = this.storagePath;
-    const tempPath = storagePath + TEMP_SUFFIX;
+    const backupPath = storagePath + '.backup';
+    const lockPath = storagePath + LOCK_SUFFIX;
     
     try {
+      // Create lock file to prevent concurrent writes
+      await fs.writeFile(lockPath, process.pid.toString(), 'utf8');
+      
+      // Check if we're in a corruption loop - if so, force reset
+      if (!this._corruptionResetAttempted) {
+        try {
+          // Quick test - try to stringify the data
+          JSON.stringify(data);
+        } catch (corruptionError) {
+          console.error('Data corruption detected, forcing storage reset:', corruptionError.message);
+          this._corruptionResetAttempted = true;
+          
+          // Delete corrupted storage and start fresh
+          try {
+            await fs.unlink(storagePath);
+          } catch (unlinkError) {
+            // Ignore if file doesn't exist
+          }
+          
+          // Use default data instead
+          data = this.getDefaultStorageStructure();
+          console.log('Storage reset completed, using default structure');
+        }
+      }
+    
+    try {
+      // Ensure parent directory exists
+      await this.ensureDirectoryExists(this.userDataPath);
+      
       // Ensure data is valid before writing
       if (!data || typeof data !== 'object') {
         data = this.getDefaultStorageStructure();
       }
       
-      // Test JSON serialization first
-      const jsonString = JSON.stringify(data, null, 2);
-      
-      // Write to temporary file first
-      await fs.writeFile(tempPath, jsonString, 'utf8');
-      
-      // Verify temp file by reading and parsing
-      const verification = await fs.readFile(tempPath, 'utf8');
-      JSON.parse(verification); // This will throw if invalid
-      
-      // Check if temp file exists before rename
+      // Clean and validate data before serialization
+      let cleanData;
       try {
-        await fs.access(tempPath);
-      } catch (accessError) {
-        throw new StorageError(`Temp file not found: ${accessError.message}`, 'TEMP_NOT_FOUND');
+        cleanData = this.sanitizeDataForStorage(data);
+      } catch (sanitizeError) {
+        console.error('Data sanitization failed:', sanitizeError);
+        cleanData = this.getDefaultStorageStructure();
       }
       
+      // Test JSON serialization first
+      let jsonString;
       try {
-        await fs.rename(tempPath, storagePath);
-      } catch (renameError) {
-        if (renameError.code === 'ENOENT') {
-          console.error('Rename failed with ENOENT, attempting copy fallback');
-          await fs.copyFile(tempPath, storagePath);
-          await fs.unlink(tempPath);
-        } else {
-          throw renameError;
+        jsonString = JSON.stringify(cleanData, null, 2);
+      } catch (serializeError) {
+        console.error('JSON serialization failed:', serializeError);
+        console.error('Falling back to default structure');
+        // Fallback to default structure
+        const defaultData = this.getDefaultStorageStructure();
+        jsonString = JSON.stringify(defaultData, null, 2);
+      }
+      
+      // Create backup of existing file if it exists
+      try {
+        await fs.access(storagePath);
+        await fs.copyFile(storagePath, backupPath);
+      } catch (backupError) {
+        // Ignore if original file doesn't exist
+      }
+      
+      // Write directly to storage file with retry logic
+      let writeSuccess = false;
+      let retryCount = 0;
+      const maxRetries = 3;
+      
+      while (!writeSuccess && retryCount < maxRetries) {
+        try {
+          await fs.writeFile(storagePath, jsonString, 'utf8');
+          
+          // Allow file system to stabilize
+          await new Promise(resolve => setTimeout(resolve, 50));
+          
+          writeSuccess = true;
+          console.log('Storage write successful');
+          
+          // Clean up backup on success
+          try {
+            await fs.unlink(backupPath);
+          } catch (cleanupError) {
+            // Ignore cleanup errors
+          }
+          
+          break; // Exit retry loop on success
+          
+        } catch (error) {
+          retryCount++;
+          console.warn(`Storage write attempt ${retryCount} failed:`, error.message);
+          
+          if (retryCount >= maxRetries) {
+            console.error('All storage write attempts failed');
+            
+            // Restore from backup if available
+            try {
+              await fs.access(backupPath);
+              await fs.copyFile(backupPath, storagePath);
+              console.log('Restored from backup file');
+            } catch (restoreError) {
+              console.error('Backup restore failed, creating fresh storage');
+              // Complete reset - create fresh file with default data
+              const defaultData = this.getDefaultStorageStructure();
+              const defaultJson = JSON.stringify(defaultData, null, 2);
+              await fs.writeFile(storagePath, defaultJson, 'utf8');
+              console.log('Fresh storage created successfully');
+            }
+            
+            return true;
+          }
+          
+          // Wait a bit before retry
+          await new Promise(resolve => setTimeout(resolve, 200));
         }
       }
       
       return true;
     } catch (error) {
       console.error('Failed to write local storage:', error);
-      throw new StorageError('Write operation failed', 'WRITE_FAILED');
       
-      // Clean up temp file if it exists
+      // Clean up backup file if it exists
       try {
-        await fs.unlink(tempPath);
+        await fs.unlink(backupPath);
       } catch (cleanupError) {
         // Ignore cleanup errors
       }
       
-      // Try to write default structure as fallback
+      throw new StorageError('Write operation failed', 'WRITE_FAILED');
+    } finally {
+      // Always clean up lock file and reset writing flag
       try {
-        const defaultData = this.getDefaultStorageStructure();
-        const defaultJson = JSON.stringify(defaultData, null, 2);
-        await fs.writeFile(tempPath, defaultJson, 'utf8');
-        await fs.rename(tempPath, storagePath);
-        console.log('Wrote default storage structure as fallback');
-        return true;
-      } catch (fallbackError) {
-        console.error('Failed to write fallback storage:', fallbackError);
-        return false;
+        await fs.unlink(lockPath);
+      } catch (lockCleanupError) {
+        // Ignore lock cleanup errors
       }
+      isWriting = false;
+    }
+    } catch (outerError) {
+      console.error('Critical storage error:', outerError);
+      isWriting = false;
+      throw outerError;
     }
   }
 

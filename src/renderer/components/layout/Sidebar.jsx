@@ -13,7 +13,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Zap,
-  ClipboardCheck
+  ClipboardCheck,
+  BookMarked
 } from 'lucide-react';
 import { useProgress } from '../../providers/ProgressProvider';
 
@@ -23,6 +24,12 @@ const navigationItems = [
     href: '/',
     icon: Home,
     description: 'Overview and progress'
+  },
+  {
+    name: 'Courses',
+    href: '/courses',
+    icon: BookMarked,
+    description: 'Structured learning paths'
   },
   {
     name: 'Chat',

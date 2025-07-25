@@ -1,4 +1,4 @@
-import { supabase } from './supabaseService.js';
+import { supabase } from '../config/supabaseConfig.js';
 
 class SupabaseStorageService {
   constructor() {
@@ -79,7 +79,7 @@ class SupabaseStorageService {
    * @param {Function} onProgress 
    * @returns {Promise<Object>}
    */
-  async uploadFile(file, bucketName, category = '', onProgress = null) {
+  async uploadFile(file, bucketName, category = '', metadata = {}, onProgress = null) {
     try {
       // Ensure bucket exists
       const bucketReady = await this.ensureBucket(bucketName);
@@ -93,7 +93,8 @@ class SupabaseStorageService {
         .from(bucketName)
         .upload(fileName, file, {
           cacheControl: '3600',
-          upsert: false
+          upsert: false,
+          metadata: metadata
         });
 
       if (error) {
@@ -117,6 +118,7 @@ class SupabaseStorageService {
         url: urlData.publicUrl,
         bucket: bucketName,
         category: category,
+        metadata: metadata,
         uploadedAt: new Date().toISOString()
       };
     } catch (error) {

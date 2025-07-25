@@ -1,4 +1,4 @@
-import geminiService from './geminiService';
+import supabaseGeminiService from './supabaseGeminiService';
 
 class AIService {
   constructor() {
@@ -12,13 +12,13 @@ class AIService {
     this.geminiApiKey = null;
   }
 
-  // Method to configure Gemini API key
+  // Method to configure Gemini API key (now routes through Supabase)
   async configureGemini(apiKey) {
     try {
-      await geminiService.initialize(apiKey);
+      // Store API key for Supabase Edge Function usage
       this.useGemini = true;
       this.geminiApiKey = apiKey;
-      console.log('Gemini configured successfully');
+      console.log('Gemini configured for Supabase routing');
       return { success: true };
     } catch (error) {
       console.error('Failed to configure Gemini:', error);
@@ -37,7 +37,7 @@ class AIService {
 
   // Method to check if Gemini is available
   isGeminiAvailable() {
-    return this.useGemini && geminiService.isReady();
+    return this.useGemini;
   }
 
   async initialize(options = {}) {
@@ -67,22 +67,16 @@ class AIService {
     try {
       console.log('Initializing AI service...');
       
-      // Check for Gemini API key
+      // Check for Gemini API key (for Supabase routing)
       const geminiApiKey = options.geminiApiKey || import.meta.env.VITE_GEMINI_API_KEY;
       
       if (geminiApiKey) {
-        try {
-          console.log('Initializing Gemini service...');
-          await geminiService.initialize(geminiApiKey);
-          this.useGemini = true;
-          this.geminiApiKey = geminiApiKey;
-          console.log('Gemini service initialized successfully');
-        } catch (error) {
-          console.warn('Failed to initialize Gemini, falling back to other providers:', error);
-          this.useGemini = false;
-        }
+        console.log('Gemini API key available for Supabase routing');
+        this.useGemini = true;
+        this.geminiApiKey = geminiApiKey;
       } else {
         console.log('No Gemini API key provided, using fallback providers');
+        this.useGemini = false;
       }
       
       // Debug: Check what's available in window
@@ -150,22 +144,24 @@ class AIService {
     const userLevel = options.userLevel || 'beginner';
     const targetLanguage = options.targetLanguage || 'English';
 
-    // Try Gemini first if available
-    if (this.useGemini && geminiService.isReady()) {
-      try {
-        console.log('Using Gemini for language learning response');
-        const response = await geminiService.generateLanguageLearningResponse(userMessage, {
-          targetLanguage,
-          userLevel,
-          focusArea: chatMode,
-          includeExplanations: true,
-          includePronunciation: false
-        });
-        return response;
-      } catch (error) {
-        console.error('Gemini failed, falling back to other providers:', error);
-        // Continue to fallback options below
+    // Use Supabase Gemini service as primary method
+    try {
+      console.log('Using Supabase Gemini service for language learning response');
+      const supabaseResult = await supabaseGeminiService.sendMessage(userMessage, {
+        userLevel,
+        focusArea: chatMode
+      });
+      
+      if (supabaseResult.success) {
+        return {
+          success: true,
+          response: supabaseResult.message,
+          provider: 'supabase-gemini',
+          sessionId: supabaseResult.sessionId
+        };
       }
+    } catch (supabaseError) {
+      console.warn('Supabase Gemini service failed:', supabaseError.message);
     }
 
     // If in browser mode, return fallback response
@@ -208,19 +204,24 @@ class AIService {
     const analysisType = options.type || 'grammar';
     const targetLanguage = options.targetLanguage || 'English';
 
-    // Try Gemini first if available
-    if (this.useGemini && geminiService.isReady()) {
+    // Try Supabase Gemini service if available
+    if (this.useGemini) {
       try {
-        console.log('Using Gemini for text analysis');
-        const analysis = await geminiService.analyzeText(text, {
-          targetLanguage,
+        console.log('Using Supabase Gemini service for text analysis');
+        const result = await supabaseGeminiService.sendMessage(`Please analyze this text for language learning purposes: "${text}"`, {
           analysisType,
-          includeCorrections: true,
-          includeSuggestions: true
+          targetLanguage
         });
-        return analysis;
+        
+        if (result.success) {
+          return {
+            success: true,
+            analysis: result.message,
+            provider: 'supabase-gemini'
+          };
+        }
       } catch (error) {
-        console.error('Gemini text analysis failed, using fallback:', error);
+        console.error('Supabase Gemini text analysis failed, using fallback:', error);
         // Continue to fallback analysis below
       }
     }
@@ -260,8 +261,8 @@ class AIService {
 
     const targetLanguage = options.targetLanguage || 'English';
     
-    // Try Gemini first if available
-    if (this.useGemini && geminiService.isReady()) {
+    // Try Supabase Gemini service if available
+    if (this.useGemini) {
       try {
         const prompt = `Analyze this conversation for language proficiency assessment:
 
@@ -278,29 +279,31 @@ Provide a detailed analysis including:
 
 Return as JSON format.`;
         
-        const response = await geminiService.generateResponse(prompt);
+        const result = await supabaseGeminiService.sendMessage(prompt);
         
-        try {
-          const analysis = JSON.parse(response);
-          return {
-            success: true,
-            analysis: {
-              fluency: analysis.fluency || 70,
-              grammar: analysis.grammar || 70,
-              vocabulary: analysis.vocabulary || 70,
-              pronunciation: analysis.pronunciation || 70,
-              cefrLevel: analysis.cefrLevel || 'B1',
-              ieltsEquivalent: analysis.ieltsEquivalent || 5.5,
-              strengths: analysis.strengths || ['Good effort'],
-              improvements: analysis.improvements || ['Continue practicing'],
-              overallScore: Math.round((analysis.fluency + analysis.grammar + analysis.vocabulary + analysis.pronunciation) / 4)
-            }
-          };
-        } catch (parseError) {
-          console.warn('Failed to parse Gemini response, using fallback analysis');
+        if (result.success) {
+          try {
+            const analysis = JSON.parse(result.message);
+            return {
+              success: true,
+              analysis: {
+                fluency: analysis.fluency || 70,
+                grammar: analysis.grammar || 70,
+                vocabulary: analysis.vocabulary || 70,
+                pronunciation: analysis.pronunciation || 70,
+                cefrLevel: analysis.cefrLevel || 'B1',
+                ieltsEquivalent: analysis.ieltsEquivalent || 5.5,
+                strengths: analysis.strengths || ['Good effort'],
+                improvements: analysis.improvements || ['Continue practicing'],
+                overallScore: Math.round((analysis.fluency + analysis.grammar + analysis.vocabulary + analysis.pronunciation) / 4)
+              }
+            };
+          } catch (parseError) {
+            console.warn('Failed to parse Supabase Gemini response, using fallback analysis');
+          }
         }
       } catch (error) {
-        console.error('Gemini conversation analysis failed:', error);
+        console.error('Supabase Gemini conversation analysis failed:', error);
       }
     }
 
@@ -315,8 +318,8 @@ Return as JSON format.`;
 
     const targetLanguage = options.targetLanguage || 'English';
     
-    // Try Gemini first if available
-    if (this.useGemini && geminiService.isReady()) {
+    // Try Supabase Gemini service if available
+    if (this.useGemini) {
       try {
         const prompt = `Evaluate this writing sample for language proficiency assessment:
 
@@ -333,29 +336,31 @@ Provide a detailed evaluation including:
 
 Return as JSON format.`;
         
-        const response = await geminiService.generateResponse(prompt);
+        const result = await supabaseGeminiService.sendMessage(prompt);
         
-        try {
-          const evaluation = JSON.parse(response);
-          return {
-            success: true,
-            evaluation: {
-              grammar: evaluation.grammar || 70,
-              vocabulary: evaluation.vocabulary || 70,
-              coherence: evaluation.coherence || 70,
-              taskAchievement: evaluation.taskAchievement || 70,
-              cefrLevel: evaluation.cefrLevel || 'B1',
-              ieltsEquivalent: evaluation.ieltsEquivalent || 5.5,
-              feedback: evaluation.feedback || 'Good writing effort',
-              suggestions: evaluation.suggestions || ['Continue practicing'],
-              overallScore: Math.round((evaluation.grammar + evaluation.vocabulary + evaluation.coherence + evaluation.taskAchievement) / 4)
-            }
-          };
-        } catch (parseError) {
-          console.warn('Failed to parse Gemini response, using fallback evaluation');
+        if (result.success) {
+          try {
+            const evaluation = JSON.parse(result.message);
+            return {
+              success: true,
+              evaluation: {
+                grammar: evaluation.grammar || 70,
+                vocabulary: evaluation.vocabulary || 70,
+                coherence: evaluation.coherence || 70,
+                taskAchievement: evaluation.taskAchievement || 70,
+                cefrLevel: evaluation.cefrLevel || 'B1',
+                ieltsEquivalent: evaluation.ieltsEquivalent || 5.5,
+                feedback: evaluation.feedback || 'Good writing effort',
+                suggestions: evaluation.suggestions || ['Continue practicing'],
+                overallScore: Math.round((evaluation.grammar + evaluation.vocabulary + evaluation.coherence + evaluation.taskAchievement) / 4)
+              }
+            };
+          } catch (parseError) {
+            console.warn('Failed to parse Supabase Gemini response, using fallback evaluation');
+          }
         }
       } catch (error) {
-        console.error('Gemini writing evaluation failed:', error);
+        console.error('Supabase Gemini writing evaluation failed:', error);
       }
     }
 
@@ -635,18 +640,19 @@ Return as JSON format.`;
       browserMode: this.browserMode,
       modelName: this.modelName,
       useGemini: this.useGemini,
-      geminiReady: this.useGemini ? geminiService.isReady() : false
+      geminiReady: this.useGemini && !!this.geminiApiKey
     };
   }
 
   async getFullStatus() {
     const baseStatus = this.getStatus();
     
-    // Add Gemini status
+    // Add Gemini status (via Supabase)
     const geminiStatus = this.useGemini ? {
-      isReady: geminiService.isReady(),
-      model: geminiService.getModel(),
-      hasApiKey: !!this.geminiApiKey
+      isReady: !!this.geminiApiKey,
+      model: 'gemini-1.5-flash',
+      hasApiKey: !!this.geminiApiKey,
+      routeType: 'supabase'
     } : null;
     
     if (this.browserMode) {

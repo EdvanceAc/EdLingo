@@ -31,7 +31,7 @@ const INITIAL_PROGRESS = {
   daily_goal: 30, // minutes
   daily_progress: 0,
   lastStudyDate: null,
-  lessonsCompleted: 0,
+  total_lessons_completed: 0,
   wordsLearned: 0,
   pronunciationAccuracy: 0,
   chat_messages: 0,
@@ -208,13 +208,13 @@ export function ProgressProvider({ children }) {
     const newAchievements = [];
     
     ACHIEVEMENTS.forEach(achievement => {
-      if (newProgress.achievements.includes(achievement.id)) return;
+      if (Array.isArray(newProgress.achievements) && newProgress.achievements.includes(achievement.id)) return;
       
       let earned = false;
       
       switch (achievement.id) {
         case 'first_lesson':
-          earned = newProgress.lessonsCompleted >= 1;
+          earned = newProgress.total_lessons_completed >= 1;
           break;
         case 'streak_3':
           earned = newProgress.streak >= 3;

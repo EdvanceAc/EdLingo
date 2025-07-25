@@ -21,6 +21,7 @@ export const AIProvider = ({ children }) => {
     useGemini: false
   });
   const [conversationHistory, setConversationHistory] = useState([]);
+  const [currentSessionId, setCurrentSessionId] = useState(null);
   const [isInitializing, setIsInitializing] = useState(false);
 
   useEffect(() => {
@@ -117,17 +118,37 @@ export const AIProvider = ({ children }) => {
     }
 
     try {
-      const response = await aiService.generateLanguageLearningResponse(message, {
+      const result = await aiService.generateLanguageLearningResponse(message, {
         targetLanguage: options.targetLanguage || 'English',
         userLevel: options.userLevel || 'intermediate',
         focusArea: options.focusArea || 'conversation'
       });
 
+      // Handle different response formats
+      let response;
+      let sessionId = currentSessionId;
+      
+      if (result && typeof result === 'object') {
+        if (result.success) {
+          response = result.response;
+          // Update session ID if using Supabase Gemini service
+          if (result.provider === 'supabase-gemini' && result.sessionId) {
+            sessionId = result.sessionId;
+            setCurrentSessionId(sessionId);
+          }
+        } else {
+          response = result.response || result.error || 'Sorry, I encountered an error.';
+        }
+      } else {
+        // Handle string responses from other providers
+        response = result;
+      }
+
       // Update conversation history
       const newHistory = [
         ...conversationHistory.slice(-8), // Keep last 8 messages
         { role: 'user', content: message, timestamp: new Date() },
-        { role: 'assistant', content: response, timestamp: new Date() }
+        { role: 'assistant', content: response, timestamp: new Date(), sessionId }
       ];
       setConversationHistory(newHistory);
 
@@ -157,6 +178,16 @@ export const AIProvider = ({ children }) => {
 
   const clearConversationHistory = () => {
     setConversationHistory([]);
+    setCurrentSessionId(null);
+  };
+
+  const startNewSession = () => {
+    setCurrentSessionId(null);
+    setConversationHistory([]);
+  };
+
+  const getCurrentSessionId = () => {
+    return currentSessionId;
   };
 
   const configureGemini = async (apiKey) => {
@@ -209,6 +240,9 @@ export const AIProvider = ({ children }) => {
     conversationHistory,
     clearConversationHistory,
     getConversationContext,
+    startNewSession,
+    getCurrentSessionId,
+    currentSessionId,
     
     // Utilities
     getStatusMessage: () => {
