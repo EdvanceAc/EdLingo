@@ -4636,6 +4636,20 @@ After running this SQL, refresh the admin dashboard to see the user management w
                 const maxStudentsElement = document.getElementById('maxStudents');
                 if (maxStudentsElement) maxStudentsElement.value = 30;
                 
+                // Populate Skills Focus checkboxes for test course
+                const skillsCheckboxes = document.querySelectorAll('input[name="skills"]');
+                skillsCheckboxes.forEach(checkbox => {
+                    checkbox.checked = false; // Reset all checkboxes first
+                });
+                // Set test skills focus: speaking and listening
+                const testSkills = ['speaking', 'listening'];
+                testSkills.forEach(skill => {
+                    const checkbox = document.querySelector(`input[name="skills"][value="${skill}"]`);
+                    if (checkbox) {
+                        checkbox.checked = true;
+                    }
+                });
+                
                 // Update modal title and button
                 const modalTitleElement = document.getElementById('courseModalTitle');
                 const submitBtnElement = document.getElementById('finishBtn');
@@ -4777,6 +4791,20 @@ After running this SQL, refresh the admin dashboard to see the user management w
                 // Populate max students field
                 const maxStudentsElement = document.getElementById('maxStudents');
                 if (maxStudentsElement) maxStudentsElement.value = course.max_students || 25;
+
+                // Populate Skills Focus checkboxes
+                const skillsCheckboxes = document.querySelectorAll('input[name="skills"]');
+                skillsCheckboxes.forEach(checkbox => {
+                    checkbox.checked = false; // Reset all checkboxes first
+                });
+                if (course.skills_focus && Array.isArray(course.skills_focus)) {
+                    course.skills_focus.forEach(skill => {
+                        const checkbox = document.querySelector(`input[name="skills"][value="${skill}"]`);
+                        if (checkbox) {
+                            checkbox.checked = true;
+                        }
+                    });
+                }
 
                 // Update modal title and button
                 const modalTitleElement = document.getElementById('courseModalTitle');

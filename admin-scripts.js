@@ -145,6 +145,13 @@ function collectCourseFormData() {
         formData.price = parseFloat(document.getElementById('coursePrice')?.value) || 0;
         formData.currency = document.getElementById('courseCurrency')?.value || 'USD';
         
+        // Skills Focus checkboxes
+        const skillsChecked = [];
+        document.querySelectorAll('input[name="skills"]:checked').forEach(checkbox => {
+            skillsChecked.push(checkbox.value);
+        });
+        formData.skills_focus = skillsChecked;
+        
         // Step 2: Course Content & Lessons
         formData.learning_objectives = document.getElementById('learningObjectives')?.value || '';
         formData.prerequisites = document.getElementById('prerequisites')?.value || '';
