@@ -4632,6 +4632,10 @@ After running this SQL, refresh the admin dashboard to see the user management w
                 if (durationElement) durationElement.value = 12;
                 if (hoursElement) hoursElement.value = 5;
                 
+                // Populate max students field for test course
+                const maxStudentsElement = document.getElementById('maxStudents');
+                if (maxStudentsElement) maxStudentsElement.value = 30;
+                
                 // Update modal title and button
                 const modalTitleElement = document.getElementById('courseModalTitle');
                 const submitBtnElement = document.getElementById('finishBtn');
@@ -4769,6 +4773,10 @@ After running this SQL, refresh the admin dashboard to see the user management w
                 if (languageElement) languageElement.value = course.language || 'Spanish';
                 if (durationElement) durationElement.value = course.duration_weeks || course.duration || 8;
                 if (hoursElement) hoursElement.value = course.hours_per_week || 3;
+                
+                // Populate max students field
+                const maxStudentsElement = document.getElementById('maxStudents');
+                if (maxStudentsElement) maxStudentsElement.value = course.max_students || 25;
 
                 // Update modal title and button
                 const modalTitleElement = document.getElementById('courseModalTitle');
