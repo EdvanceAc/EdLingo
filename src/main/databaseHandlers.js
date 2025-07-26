@@ -1,7 +1,52 @@
 const { ipcMain } = require('electron');
-const databaseService = require('./databaseService'); // Adjust path as needed
+const databaseService = require('./databaseService');
 
 function setupDatabaseHandlers() {
+  // Initialize database service
+  databaseService.initialize().catch(error => {
+    console.error('Failed to initialize database service:', error);
+  });
+
+  // Course Management Handlers
+  ipcMain.handle('db:createCourse', async (event, courseData, isDraft = false) => {
+    try {
+      const course = await databaseService.createCourse(courseData, isDraft);
+      return { success: true, course };
+    } catch (error) {
+      console.error('Error creating course:', error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle('db:getCourses', async (event) => {
+    try {
+      const courses = await databaseService.getCourses();
+      return { success: true, courses };
+    } catch (error) {
+      console.error('Error getting courses:', error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle('db:updateCourse', async (event, courseId, updates) => {
+    try {
+      const course = await databaseService.updateCourse(courseId, updates);
+      return { success: true, course };
+    } catch (error) {
+      console.error('Error updating course:', error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle('db:deleteCourse', async (event, courseId) => {
+    try {
+      const success = await databaseService.deleteCourse(courseId);
+      return { success, deleted: success };
+    } catch (error) {
+      console.error('Error deleting course:', error);
+      return { success: false, error: error.message };
+    }
+  });
   ipcMain.handle('db:getUserProgress', async (event, userId) => {
     try {
       const progress = await databaseService.getUserProgress(userId);
